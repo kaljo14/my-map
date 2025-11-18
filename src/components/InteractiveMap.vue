@@ -103,6 +103,20 @@
         </div>
       </div>
 
+      <!-- Add Barbershop Section -->
+      <div class="opportunity-section">
+        <h3>Add Barbershop</h3>
+        <p class="opportunity-description">
+          Click the button below to enable adding a new barbershop location by clicking on the map.
+        </p>
+        <button 
+          @click="toggleAddShopMode" 
+          :class="['opportunity-btn', { active: isAddShopMode }]"
+        >
+          {{ isAddShopMode ? 'Cancel Adding Barbershop' : 'Add Barbershop' }}
+        </button>
+      </div>
+
       <!-- Price Distribution -->
       <div class="distribution-section">
         <h3>Price Distribution</h3>
@@ -132,6 +146,7 @@
       :center="center"
       :use-global-leaflet="true"
       :max-zoom="18"
+      @click="onMapClick"
     >
       <l-control-layers />
       <l-tile-layer
@@ -150,10 +165,9 @@
             :key="shop.id"
             :lat-lng="[shop.lat, shop.lng]"
           >
-            <l-icon :icon-anchor="[25, 41]" class-name="barbershop-marker">
-              <div class="marker-content" :class="getRatingClass(shop.rating)">
-                <div class="marker-rating">★ {{ shop.rating }}</div>
-                <div class="marker-price">€{{ shop.price }}</div>
+            <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
+              <div class="shop-marker-content saved">
+                💈
               </div>
           </l-icon>
           <l-popup>
@@ -216,7 +230,66 @@
           </l-popup>
         </l-marker>
       </l-marker-cluster-group>
+
+      <!-- Temporary Pin for New Shop -->
+      <l-marker
+        v-if="newShopPin"
+        :lat-lng="[newShopPin.lat, newShopPin.lng]"
+      >
+        <l-icon :icon-anchor="[20, 40]" class-name="new-shop-marker">
+          <div class="shop-marker-content new">
+            📍
+          </div>
+        </l-icon>
+      </l-marker>
+
+      <!-- User Added Shops -->
+      <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
+        <l-marker
+          v-for="(shop, index) in userAddedShops"
+          :key="`shop-${index}`"
+          :lat-lng="[shop.lat, shop.lng]"
+        >
+          <l-icon :icon-anchor="[20, 40]" class-name="saved-shop-marker">
+            <div class="shop-marker-content saved">
+              💈
+            </div>
+          </l-icon>
+          <l-popup>
+            <div class="popup-content">
+              <h3 class="popup-title">{{ shop.name }}</h3>
+              <div class="popup-info">
+                <div class="info-row">
+                  <strong>Added:</strong> {{ new Date(shop.timestamp).toLocaleDateString() }}
+                </div>
+              </div>
+            </div>
+          </l-popup>
+        </l-marker>
+      </l-marker-cluster-group>
     </l-map>
+
+    <!-- Add Shop Modal -->
+    <div v-if="showShopModal" class="shop-modal-overlay">
+      <div class="shop-modal">
+        <h3>Add Barbershop Location</h3>
+        <div class="form-group">
+          <label>Barbershop Name:</label>
+          <input 
+            v-model="newShopName" 
+            type="text" 
+            placeholder="e.g. Cool Cuts"
+            class="modal-input"
+            ref="shopInput"
+            @keyup.enter="saveShop"
+          />
+        </div>
+        <div class="modal-actions">
+          <button @click="cancelAddShop" class="cancel-btn">Cancel</button>
+          <button @click="saveShop" class="save-btn">Save Barbershop</button>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 </template>
@@ -460,6 +533,77 @@ const opportunityZones = computed((): OpportunityZone[] => {
 
 const toggleOpportunityZones = () => {
   showOpportunityZones.value = !showOpportunityZones.value;
+};
+
+// --- Barbershop / Pin Functionality ---
+
+interface ShopLocation {
+  lat: number;
+  lng: number;
+  name: string;
+  timestamp: number;
+}
+
+const showShopModal = ref(false);
+const newShopPin = ref<{lat: number, lng: number} | null>(null);
+const newShopName = ref("");
+const userAddedShops = ref<ShopLocation[]>([]);
+const isAddShopMode = ref(false);
+
+const toggleAddShopMode = () => {
+  isAddShopMode.value = !isAddShopMode.value;
+  if (!isAddShopMode.value) {
+    newShopPin.value = null;
+    showShopModal.value = false;
+  }
+};
+
+const onMapClick = (e: any) => {
+  if (!isAddShopMode.value) return;
+
+  // e.latlng contains the coordinates
+  newShopPin.value = {
+    lat: e.latlng.lat,
+    lng: e.latlng.lng
+  };
+  newShopName.value = "";
+  showShopModal.value = true;
+};
+
+const cancelAddShop = () => {
+  showShopModal.value = false;
+  newShopPin.value = null;
+  isAddShopMode.value = false; // Exit mode on cancel
+};
+
+const saveShop = async () => {
+  if (!newShopPin.value) return;
+
+  const shopData: ShopLocation = {
+    lat: newShopPin.value.lat,
+    lng: newShopPin.value.lng,
+    name: newShopName.value || "Untitled Barbershop",
+    timestamp: Date.now()
+  };
+
+  // --- API CALL PLACEHOLDER ---
+  try {
+    // TODO: Implement actual API call here
+    // await fetch('/api/shops', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(shopData)
+    // });
+    console.log("Sending barbershop to API (placeholder):", shopData);
+  } catch (error) {
+    console.error("Failed to save barbershop:", error);
+  }
+  // ----------------------------
+
+  userAddedShops.value.push(shopData);
+  showShopModal.value = false;
+  newShopPin.value = null;
+  isAddShopMode.value = false; // Exit mode after saving
 };
 </script>
 
@@ -798,6 +942,104 @@ const toggleOpportunityZones = () => {
   font-weight: 600;
   font-size: 0.9rem;
   border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Shop Modal Styles */
+.shop-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  backdrop-filter: blur(4px);
+}
+
+.shop-modal {
+  background: #1e293b;
+  padding: 24px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.shop-modal h3 {
+  margin: 0 0 20px;
+  color: #f8fafc;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.modal-input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(15, 23, 42, 0.6);
+  color: white;
+  font-size: 1rem;
+  margin-bottom: 24px;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.cancel-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: transparent;
+  color: #cbd5e0;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.cancel-btn:hover {
+  background: rgba(148, 163, 184, 0.1);
+  color: white;
+}
+
+.save-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transition: all 0.2s;
+}
+
+.save-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.shop-marker-content {
+  font-size: 24px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+  transition: transform 0.2s;
+}
+
+.shop-marker-content:hover {
+  transform: scale(1.2);
 }
 
 .distribution-section {
