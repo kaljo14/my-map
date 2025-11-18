@@ -133,10 +133,15 @@
       :use-global-leaflet="true"
       :max-zoom="18"
     >
+      <l-control-layers />
       <l-tile-layer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        v-for="layer in baseLayers"
+        :key="layer.name"
+        :name="layer.name"
+        :url="layer.url"
+        :visible="layer.visible"
         layer-type="base"
-        name="OpenStreetMap"
+        :attribution="layer.attribution"
       ></l-tile-layer>
 
       <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
@@ -224,8 +229,11 @@ import {
   LMarker,
   LIcon,
   LPopup,
+  LControlLayers,
 } from "@vue-leaflet/vue-leaflet";
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
+
+import { baseLayers } from "@/stores/mapConfig";
 
 const zoom = ref(12);
 const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
