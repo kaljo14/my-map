@@ -170,26 +170,79 @@
                 💈
               </div>
           </l-icon>
-          <l-popup>
-              <div class="popup-content">
-                <h3 class="popup-title">{{ shop.name }}</h3>
-                <div class="popup-rating">
-                  <span class="stars">{{ getStars(shop.rating) }}</span>
-                  <span class="rating-value">{{ shop.rating }}/5.0</span>
+          <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+              <div class="popup-content enhanced">
+                <!-- Photo Header -->
+                <div v-if="shop.photo_url" class="popup-photo">
+                  <img :src="shop.photo_url" :alt="shop.name" @error="(e) => e.target.style.display='none'" />
                 </div>
+                
+                <!-- Title and Rating with Edit Button -->
+                <div class="popup-header">
+                  <div class="popup-header-content">
+                    <h3 class="popup-title">{{ shop.name }}</h3>
+                    <div class="popup-rating">
+                      <span class="stars">{{ getStars(shop.rating || 0) }}</span>
+                      <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
+                      <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
+                    </div>
+                  </div>
+                  <div class="edit-menu-container">
+                    <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
+                      ⚙️
+                    </button>
+                    <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
+                      <button @click="editBarbershop(shop)" class="dropdown-item">
+                        ✏️ Edit Info
+                      </button>
+                      <button @click="confirmDelete(shop)" class="dropdown-item delete">
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status Badge -->
+                <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
+                  {{ shop.is_open_now ? '🟢 Open Now' : '🔴 Closed' }}
+                </div>
+
+                <!-- Info Grid -->
                 <div class="popup-info">
-                  <div class="info-row">
-                    <strong>Price:</strong> €{{ shop.price }}
-                  </div>
-                  <div class="info-row">
-                    <strong>Services:</strong> {{ shop.services.join(", ") }}
-                  </div>
-                  <div class="info-row">
-                    <strong>Reviews:</strong> {{ shop.reviews }}
+                  <div class="info-row" v-if="shop.price_level">
+                    <strong>💰 Price:</strong> {{ '€'.repeat(shop.price_level) }}
                   </div>
                   <div class="info-row" v-if="shop.address">
-                    <strong>Address:</strong> {{ shop.address }}
+                    <strong>📍 Address:</strong> {{ shop.address }}
                   </div>
+                  <div class="info-row" v-if="shop.formatted_phone_number">
+                    <strong>📞 Phone:</strong> 
+                    <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
+                  </div>
+                  <div class="info-row" v-if="shop.opening_hours_text">
+                    <strong>🕒 Hours:</strong>
+                    <div class="hours-list">
+                      <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
+                        {{ line }}
+                      </div>
+                      <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
+                        +{{ shop.opening_hours_text.split('\n').length - 3 }} more days
+                      </div>
+                    </div>
+                  </div>
+                  <div class="info-row" v-if="shop.services && shop.services.length > 0">
+                    <strong>🏷️ Services:</strong> {{ shop.services.slice(0, 3).join(', ') }}
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="popup-actions">
+                  <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
+                    🌐 Website
+                  </a>
+                  <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
+                    🗺️ Directions
+                  </a>
                 </div>
               </div>
           </l-popup>
@@ -290,6 +343,19 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="shop-modal-overlay">
+      <div class="shop-modal">
+        <h3>⚠️ Confirm Deletion</h3>
+        <p class="confirm-message">Are you sure you want to delete <strong>{{ shopToDelete?.name }}</strong>?</p>
+        <p class="confirm-warning">This action cannot be undone.</p>
+        <div class="modal-actions">
+          <button @click="cancelDelete" class="cancel-btn">Cancel</button>
+          <button @click="deleteBarbershop" class="delete-btn">Delete</button>
+        </div>
+      </div>
+    </div>
     </div>
   </div>
 </template>
@@ -312,16 +378,36 @@ const zoom = ref(12);
 const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
 
 interface Barbershop {
-  id: string | number;
+  place_id: string;
   name: string;
   lat: number;
   lng: number;
-  price: number;
-  rating: number;
-  reviews: number;
-  services: string[];
   address?: string;
   business_status?: string;
+  rating?: number;
+  user_ratings_total?: number;
+  price_level?: number;
+  formatted_phone_number?: string;
+  international_phone_number?: string;
+  website?: string;
+  google_maps_url?: string;
+  opening_hours?: string;
+  photos?: string;
+  icon_url?: string;
+  types?: string;
+  reviews?: string;
+  editorial_summary?: string;
+  curbside_pickup?: boolean;
+  delivery?: boolean;
+  dine_in?: boolean;
+  takeout?: boolean;
+  reservable?: boolean;
+  wheelchair_accessible?: boolean;
+  utc_offset_minutes?: number;
+  // Legacy fields for compatibility
+  id?: string | number;
+  price?: number;
+  services?: string[];
 }
 
 const barbershops = ref<Barbershop[]>([]);
@@ -333,29 +419,89 @@ const fetchBarbershops = async () => {
   try {
     isLoading.value = true;
     error.value = null;
-    const response = await fetch('http://localhost:8080/api/barbershops');
     
+    const response = await fetch('http://localhost:8080/api/barbershops');
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
-    barbershops.value = data.map((shop: any) => ({
-      id: shop.place_id, // Map place_id to id
-      name: shop.name,
-      lat: shop.lat,
-      lng: shop.lng,
-      address: shop.address,
-      business_status: shop.business_status,
-      rating: shop.rating || 0,
-      // Default values for fields missing in API
-      price: 0, // Assuming price is not directly from API for now, or will be added later
-      reviews: 0, // Assuming reviews is not directly from API for now, or will be added later
-      services: [] // Assuming services is not directly from API for now, or will be added later
-    }));
+    barbershops.value = data.map((shop: any) => {
+      // Parse JSON string fields
+      let parsedOpeningHours = null;
+      let parsedPhotos = null;
+      let parsedTypes = null;
+      let parsedReviews = null;
+      
+      try {
+        if (shop.opening_hours && typeof shop.opening_hours === 'string') {
+          parsedOpeningHours = JSON.parse(shop.opening_hours);
+        }
+      } catch (e) {
+        console.warn('Failed to parse opening_hours for', shop.name);
+      }
+      
+      try {
+        if (shop.photos && typeof shop.photos === 'string') {
+          parsedPhotos = JSON.parse(shop.photos);
+        }
+      } catch (e) {
+        console.warn('Failed to parse photos for', shop.name);
+      }
+      
+      try {
+        if (shop.types && typeof shop.types === 'string') {
+          parsedTypes = JSON.parse(shop.types);
+        }
+      } catch (e) {
+        console.warn('Failed to parse types for', shop.name);
+      }
+      
+      try {
+        if (shop.reviews && typeof shop.reviews === 'string') {
+          parsedReviews = JSON.parse(shop.reviews);
+        }
+      } catch (e) {
+        console.warn('Failed to parse reviews for', shop.name);
+      }
+      
+      // Extract photo URL (using Google Places API photo reference)
+      const photoUrl = parsedPhotos && parsedPhotos[0]?.photo_reference
+        ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=400&photo_reference=${parsedPhotos[0].photo_reference}&key=YOUR_API_KEY`
+        : null;
+      
+      // Extract opening hours text
+      const openingHoursText = parsedOpeningHours?.weekday_text?.join('\n') || null;
+      const isOpenNow = parsedOpeningHours?.open_now || null;
+      
+      // Extract types as readable services
+      const services = parsedTypes?.filter((t: string) => 
+        !['point_of_interest', 'establishment'].includes(t)
+      ).map((t: string) => 
+        t.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())
+      ) || [];
+      
+      return {
+        ...shop,
+        // Ensure required fields have defaults
+        id: shop.place_id || shop.id,
+        rating: shop.rating || 0,
+        user_ratings_total: shop.user_ratings_total || 0,
+        price_level: shop.price_level || 0,
+        // Parsed fields
+        photo_url: photoUrl,
+        opening_hours_text: openingHoursText,
+        is_open_now: isOpenNow,
+        parsed_reviews: parsedReviews,
+        // Legacy compatibility
+        price: shop.price_level || shop.price || 0,
+        reviews: shop.user_ratings_total || shop.reviews || 0,
+        services: services.length > 0 ? services : (shop.services || [])
+      };
+    });
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to fetch barbershops';
-    console.error('Error fetching barbershops:', err);
+    console.error('Failed to fetch barbershops:', err);
+    error.value = 'Failed to load barbershops. Please try again later.';
   } finally {
     isLoading.value = false;
   }
@@ -554,6 +700,11 @@ const newShopName = ref("");
 const userAddedShops = ref<ShopLocation[]>([]);
 const isAddShopMode = ref(false);
 
+// Edit menu state
+const activeEditMenu = ref<string | null>(null);
+const showDeleteConfirm = ref(false);
+const shopToDelete = ref<Barbershop | null>(null);
+
 const toggleAddShopMode = () => {
   isAddShopMode.value = !isAddShopMode.value;
   if (!isAddShopMode.value) {
@@ -623,6 +774,66 @@ const saveShop = async () => {
   showShopModal.value = false;
   newShopPin.value = null;
   isAddShopMode.value = false; // Exit mode after saving
+};
+
+// Edit menu functions
+const toggleEditMenu = (placeId: string) => {
+  if (activeEditMenu.value === placeId) {
+    activeEditMenu.value = null;
+  } else {
+    activeEditMenu.value = placeId;
+  }
+};
+
+const editBarbershop = (shop: Barbershop) => {
+  // Close the edit menu
+  activeEditMenu.value = null;
+  
+  // TODO: Implement edit functionality
+  // For now, just show an alert
+  alert(`Edit functionality for ${shop.name} will be implemented soon!`);
+};
+
+const confirmDelete = (shop: Barbershop) => {
+  // Close the edit menu
+  activeEditMenu.value = null;
+  
+  // Show confirmation dialog
+  shopToDelete.value = shop;
+  showDeleteConfirm.value = true;
+};
+
+const cancelDelete = () => {
+  showDeleteConfirm.value = false;
+  shopToDelete.value = null;
+};
+
+const deleteBarbershop = async () => {
+  if (!shopToDelete.value) return;
+
+  const placeId = shopToDelete.value.place_id;
+  
+  try {
+    const response = await fetch(`http://localhost:8080/api/barbershops/${placeId}`, {
+      method: 'DELETE'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    console.log(`Barbershop ${shopToDelete.value.name} deleted successfully`);
+
+    // Refresh the barbershops list
+    await fetchBarbershops();
+    
+    // Close the confirmation dialog
+    showDeleteConfirm.value = false;
+    shopToDelete.value = null;
+  } catch (error) {
+    console.error('Failed to delete barbershop:', error);
+    alert('Failed to delete barbershop. Please try again.');
+  }
 };
 </script>
 
@@ -1185,14 +1396,154 @@ const saveShop = async () => {
 
 /* Popup Styles */
 .popup-content {
-  min-width: 200px;
+  min-width: 250px;
+  max-width: 350px;
+}
+
+.popup-content.enhanced {
+  min-width: 300px;
+  max-width: 400px;
+}
+
+.popup-photo {
+  margin: -12px -12px 12px -12px;
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+  height: 180px;
+}
+
+.popup-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Popup Header with Edit Button */
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.popup-header-content {
+  flex: 1;
 }
 
 .popup-title {
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   font-weight: bold;
   margin-bottom: 8px;
   color: #1a202c;
+}
+
+/* Edit Menu */
+.edit-menu-container {
+  position: relative;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+.edit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
+}
+
+.edit-btn:active {
+  transform: translateY(0);
+}
+
+.edit-dropdown {
+  position: absolute;
+  top: 42px;
+  right: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 10px 16px;
+  background: white;
+  border: none;
+  text-align: left;
+  font-size: 0.9rem;
+  color: #1a202c;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.dropdown-item.delete {
+  color: #dc2626;
+}
+
+.dropdown-item.delete:hover {
+  background: #fef2f2;
+}
+
+/* Delete Confirmation Modal */
+.confirm-message {
+  font-size: 1rem;
+  color: #1a202c;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.confirm-message strong {
+  color: #dc2626;
+}
+
+.confirm-warning {
+  font-size: 0.9rem;
+  color: #64748b;
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+.delete-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
 }
 
 .popup-rating {
@@ -1208,25 +1559,125 @@ const saveShop = async () => {
 }
 
 .rating-value {
-  font-size: 0.9rem;
-  color: #4a5568;
+  font-size: 0.95rem;
   font-weight: 600;
+  color: #1a202c;
+}
+
+.rating-count {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-badge.open {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.editorial-summary {
+  font-size: 0.9rem;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  font-style: italic;
 }
 
 .popup-info {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
 .info-row {
-  font-size: 0.875rem;
-  color: #2d3748;
-  line-height: 1.5;
+  font-size: 0.9rem;
+  color: #1a202c;
+  line-height: 1.6;
 }
 
 .info-row strong {
-  color: #1a202c;
+  color: #475569;
+  font-weight: 600;
+}
+
+.info-row a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+.info-row a:hover {
+  text-decoration: underline;
+}
+
+.hours-list {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.hours-line {
+  color: #475569;
+}
+
+.hours-more {
+  color: #64748b;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.amenities {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+
+.amenity {
+  font-size: 1.5rem;
+  cursor: help;
+  transition: transform 0.2s;
+}
+
+.amenity:hover {
+  transform: scale(1.2);
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.3);
 }
 
 /* Cluster Styles */
