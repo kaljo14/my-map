@@ -295,7 +295,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   LMap,
   LTileLayer,
@@ -312,7 +312,7 @@ const zoom = ref(12);
 const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
 
 interface Barbershop {
-  id: number;
+  id: string | number;
   name: string;
   lat: number;
   lng: number;
@@ -321,35 +321,49 @@ interface Barbershop {
   reviews: number;
   services: string[];
   address?: string;
+  business_status?: string;
 }
 
-const barbershops: Barbershop[] = [
-  { id: 1, name: "Gentleman's Cut", lat: 42.701, lng: 23.32, price: 25, rating: 4.8, reviews: 127, services: ["Haircut", "Beard Trim", "Hot Towel"], address: "Vitosha Blvd 15" },
-  { id: 2, name: "Classic Barbershop", lat: 42.695, lng: 23.33, price: 20, rating: 4.5, reviews: 89, services: ["Haircut", "Beard Trim"], address: "Graf Ignatiev St 8" },
-  { id: 3, name: "Modern Man", lat: 42.688, lng: 23.31, price: 30, rating: 4.9, reviews: 203, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling"], address: "Rakovski St 45" },
-  { id: 4, name: "Old School Barbers", lat: 42.71, lng: 23.34, price: 18, rating: 4.3, reviews: 56, services: ["Haircut", "Beard Trim"], address: "Slivnitsa Blvd 22" },
-  { id: 5, name: "Elite Cuts", lat: 42.68, lng: 23.35, price: 35, rating: 4.7, reviews: 145, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling", "Facial"], address: "Tsarigradsko Shose 125" },
-  { id: 6, name: "Barber House", lat: 42.692, lng: 23.29, price: 22, rating: 4.4, reviews: 78, services: ["Haircut", "Beard Trim", "Hair Styling"], address: "Maria Luiza Blvd 12" },
-  { id: 7, name: "The Razor's Edge", lat: 42.708, lng: 23.3, price: 28, rating: 4.6, reviews: 112, services: ["Haircut", "Beard Trim", "Hot Towel", "Straight Razor"], address: "Patriarch Evtimii Blvd 3" },
-  { id: 8, name: "City Barbers", lat: 42.675, lng: 23.325, price: 15, rating: 4.1, reviews: 43, services: ["Haircut"], address: "Knyaz Boris I St 18" },
-  { id: 9, name: "Premium Barbershop", lat: 42.715, lng: 23.315, price: 40, rating: 4.9, reviews: 189, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling", "Facial", "Massage"], address: "James Bourchier Blvd 47" },
-  { id: 10, name: "Quick Cuts", lat: 42.685, lng: 23.36, price: 12, rating: 3.9, reviews: 34, services: ["Haircut"], address: "Bulgaria Blvd 88" },
-  { id: 11, name: "Style Masters", lat: 42.699, lng: 23.28, price: 26, rating: 4.5, reviews: 98, services: ["Haircut", "Beard Trim", "Hair Styling"], address: "Dondukov Blvd 29" },
-  { id: 12, name: "Royal Barbers", lat: 42.705, lng: 23.355, price: 32, rating: 4.7, reviews: 156, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling"], address: "Cherni Vrah Blvd 100" },
-  { id: 13, name: "Budget Cuts", lat: 42.67, lng: 23.34, price: 10, rating: 3.7, reviews: 28, services: ["Haircut"], address: "Opalchenska St 5" },
-  { id: 14, name: "Luxury Barbers", lat: 42.72, lng: 23.33, price: 45, rating: 5.0, reviews: 234, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling", "Facial", "Massage", "Manicure"], address: "Sofia Ring Mall" },
-  { id: 15, name: "Neighborhood Barbers", lat: 42.682, lng: 23.305, price: 16, rating: 4.2, reviews: 52, services: ["Haircut", "Beard Trim"], address: "Hristo Botev Blvd 14" },
-  { id: 16, name: "Trendy Cuts", lat: 42.696, lng: 23.345, price: 24, rating: 4.6, reviews: 134, services: ["Haircut", "Beard Trim", "Hair Styling"], address: "Vasil Levski Blvd 33" },
-  { id: 17, name: "Executive Barbers", lat: 42.712, lng: 23.295, price: 38, rating: 4.8, reviews: 167, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling", "Facial"], address: "Tsar Osvoboditel Blvd 7" },
-  { id: 18, name: "Family Barbershop", lat: 42.678, lng: 23.318, price: 14, rating: 4.0, reviews: 41, services: ["Haircut", "Beard Trim"], address: "Pirotska St 22" },
-  { id: 19, name: "Artisan Barbers", lat: 42.703, lng: 23.365, price: 29, rating: 4.7, reviews: 143, services: ["Haircut", "Beard Trim", "Hot Towel", "Straight Razor"], address: "Ivan Vazov St 11" },
-  { id: 20, name: "Urban Cuts", lat: 42.69, lng: 23.37, price: 21, rating: 4.4, reviews: 87, services: ["Haircut", "Beard Trim", "Hair Styling"], address: "Ekzarh Yosif St 19" },
-  { id: 21, name: "Pro Barbers", lat: 42.704, lng: 23.32, price: 27, rating: 4.6, reviews: 109, services: ["Haircut", "Beard Trim", "Hot Towel"], address: "Alabin St 25" },
-  { id: 22, name: "Vintage Barbers", lat: 42.687, lng: 23.34, price: 23, rating: 4.5, reviews: 95, services: ["Haircut", "Beard Trim", "Straight Razor"], address: "Solunska St 8" },
-  { id: 23, name: "Express Cuts", lat: 42.693, lng: 23.31, price: 13, rating: 3.8, reviews: 37, services: ["Haircut"], address: "Stamboliyski Blvd 42" },
-  { id: 24, name: "Master Barbers", lat: 42.707, lng: 23.345, price: 31, rating: 4.8, reviews: 178, services: ["Haircut", "Beard Trim", "Hot Towel", "Hair Styling"], address: "Shipka St 6" },
-  { id: 25, name: "Corner Barbershop", lat: 42.681, lng: 23.33, price: 17, rating: 4.1, reviews: 49, services: ["Haircut", "Beard Trim"], address: "Lyuben Karavelov St 15" },
-];
+const barbershops = ref<Barbershop[]>([]);
+const isLoading = ref(true);
+const error = ref<string | null>(null);
+
+// Fetch barbershops from API
+const fetchBarbershops = async () => {
+  try {
+    isLoading.value = true;
+    error.value = null;
+    const response = await fetch('http://localhost:8080/api/barbershops');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    barbershops.value = data.map((shop: any) => ({
+      id: shop.place_id, // Map place_id to id
+      name: shop.name,
+      lat: shop.lat,
+      lng: shop.lng,
+      address: shop.address,
+      business_status: shop.business_status,
+      rating: shop.rating || 0,
+      // Default values for fields missing in API
+      price: 0, // Assuming price is not directly from API for now, or will be added later
+      reviews: 0, // Assuming reviews is not directly from API for now, or will be added later
+      services: [] // Assuming services is not directly from API for now, or will be added later
+    }));
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to fetch barbershops';
+    console.error('Error fetching barbershops:', err);
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchBarbershops();
+});
 
 const filters = ref({
   minRating: 0,
@@ -360,14 +374,14 @@ const filters = ref({
 
 const availableServices = computed(() => {
   const allServices = new Set<string>();
-  barbershops.forEach(shop => {
+  barbershops.value.forEach(shop => {
     shop.services.forEach(service => allServices.add(service));
   });
   return Array.from(allServices).sort();
 });
 
 const filteredBarbershops = computed(() => {
-  return barbershops.filter(shop => {
+  return barbershops.value.filter(shop => {
     if (shop.rating < filters.value.minRating) return false;
     if (filters.value.minPrice !== null && shop.price < filters.value.minPrice) return false;
     if (filters.value.maxPrice !== null && shop.price > filters.value.maxPrice) return false;
@@ -441,9 +455,10 @@ const resetFilters = () => {
   };
 };
 
-// Opportunity Zones
+// --- Opportunity Zones Logic ---
+// Calculate areas with low density of barbershops
+const searchRadius = ref(1.5); // km
 const showOpportunityZones = ref(false);
-const searchRadius = ref(2.5); // km
 
 interface OpportunityZone {
   lat: number;
@@ -451,7 +466,6 @@ interface OpportunityZone {
   nearestDistance: number;
 }
 
-// Calculate distance between two coordinates using Haversine formula
 const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
   const R = 6371; // Earth's radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -464,18 +478,6 @@ const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: numbe
   return R * c;
 };
 
-// Find nearest barbershop distance for a given point
-const findNearestBarbershopDistance = (lat: number, lng: number): number => {
-  let minDistance = Infinity;
-  filteredBarbershops.value.forEach(shop => {
-    const distance = calculateDistance(lat, lng, shop.lat, shop.lng);
-    if (distance < minDistance) {
-      minDistance = distance;
-    }
-  });
-  return minDistance;
-};
-
 // Generate opportunity zones using a grid approach
 const opportunityZones = computed((): OpportunityZone[] => {
   if (!showOpportunityZones.value) return [];
@@ -483,8 +485,8 @@ const opportunityZones = computed((): OpportunityZone[] => {
   const zones: OpportunityZone[] = [];
   
   // Define Sofia bounds
-  const minLat = 42.65;
-  const maxLat = 42.73;
+  const latStart = 42.62;
+  const latEnd = 42.75;
   const minLng = 23.27;
   const maxLng = 23.38;
   
@@ -493,16 +495,22 @@ const opportunityZones = computed((): OpportunityZone[] => {
   const gridStep = 0.015;
   
   // Check each grid point
-  for (let lat = minLat; lat <= maxLat; lat += gridStep) {
+  for (let lat = latStart; lat <= latEnd; lat += gridStep) {
     for (let lng = minLng; lng <= maxLng; lng += gridStep) {
-      const nearestDistance = findNearestBarbershopDistance(lat, lng);
+      // Find distance to nearest barbershop
+      let minDistance = Infinity;
       
-      // If no barbershops within search radius, it's an opportunity
-      if (nearestDistance >= searchRadius.value) {
+      barbershops.value.forEach(shop => {
+        const dist = calculateDistance(lat, lng, shop.lat, shop.lng);
+        if (dist < minDistance) minDistance = dist;
+      });
+      
+      // If nearest shop is further than radius, it's an opportunity zone
+      if (minDistance > searchRadius.value) {
         zones.push({
           lat,
           lng,
-          nearestDistance,
+          nearestDistance: minDistance
         });
       }
     }
@@ -514,15 +522,11 @@ const opportunityZones = computed((): OpportunityZone[] => {
   const minZoneDistance = 0.5; // km
   
   zones.forEach(zone => {
-    const isFarEnough = filteredZones.every(existingZone => {
-      const distance = calculateDistance(
-        zone.lat, zone.lng,
-        existingZone.lat, existingZone.lng
-      );
-      return distance >= minZoneDistance;
-    });
+    const isTooClose = filteredZones.some(existing => 
+      calculateDistance(zone.lat, zone.lng, existing.lat, existing.lng) < minZoneDistance
+    );
     
-    if (isFarEnough) {
+    if (!isTooClose) {
       filteredZones.push(zone);
     }
   });
@@ -579,28 +583,43 @@ const cancelAddShop = () => {
 const saveShop = async () => {
   if (!newShopPin.value) return;
 
-  const shopData: ShopLocation = {
+  const shopData = {
+    name: newShopName.value || "Untitled Barbershop",
     lat: newShopPin.value.lat,
     lng: newShopPin.value.lng,
-    name: newShopName.value || "Untitled Barbershop",
-    timestamp: Date.now()
+    address: "", // Empty for now, as it's not collected in the modal
+    business_status: "OPERATIONAL", // Default status for a new shop
+    rating: 0 // Default rating for a new shop
   };
 
-  // --- API CALL PLACEHOLDER ---
   try {
-    // TODO: Implement actual API call here
-    // await fetch('/api/shops', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(shopData)
-    // });
-    console.log("Sending barbershop to API (placeholder):", shopData);
+    const response = await fetch('http://localhost:8080/api/barbershops', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(shopData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const savedShop = await response.json();
+    console.log("Barbershop saved successfully:", savedShop);
+
+    // Add to local state for immediate display
+    userAddedShops.value.push({
+      ...savedShop,
+      timestamp: Date.now()
+    });
+
+    // Refresh the main barbershops list to include the newly added shop
+    await fetchBarbershops();
   } catch (error) {
     console.error("Failed to save barbershop:", error);
+    alert("Failed to save barbershop. Please try again.");
+    return; // Don't close modal on error
   }
-  // ----------------------------
 
-  userAddedShops.value.push(shopData);
   showShopModal.value = false;
   newShopPin.value = null;
   isAddShopMode.value = false; // Exit mode after saving
