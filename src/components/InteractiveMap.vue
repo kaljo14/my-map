@@ -2,7 +2,16 @@
   <div class="map-container">
     <!-- Analysis Panel -->
     <div class="analysis-panel">
-      <h2 class="panel-title">Barbershop Analysis - Sofia</h2>
+      <div class="panel-header">
+        <h2 class="panel-title">Barbershop Analysis</h2>
+        <div class="auth-controls">
+          <button v-if="!isAuthenticated" @click="login" class="auth-btn login">Login</button>
+          <div v-else class="user-info">
+            <span class="username">{{ userProfile?.username || 'User' }}</span>
+            <button @click="logout" class="auth-btn logout">Logout</button>
+          </div>
+        </div>
+      </div>
       
       <!-- Statistics -->
       <div class="stats-section">
@@ -115,6 +124,21 @@
         >
           {{ isAddShopMode ? 'Cancel Adding Barbershop' : 'Add Barbershop' }}
         </button>
+
+      </div>
+
+      <!-- Grid Layer Control -->
+      <div class="opportunity-section">
+        <h3>Grid Layer</h3>
+        <p class="opportunity-description">
+          Toggle the visibility of the geospatial grid overlay.
+        </p>
+        <button 
+          @click="toggleGrid" 
+          :class="['opportunity-btn', { active: showGrid }]"
+        >
+          {{ showGrid ? 'Hide Grid' : 'Show Grid' }}
+        </button>
       </div>
 
       <!-- Price Distribution -->
@@ -145,8 +169,9 @@
       :zoom="zoom"
       :center="center"
       :use-global-leaflet="true"
-      :max-zoom="18"
+
       @click="onMapClick"
+      @ready="onMapReady"
     >
       <l-control-layers />
       <l-tile-layer
@@ -174,7 +199,7 @@
               <div class="popup-content enhanced">
                 <!-- Photo Header -->
                 <div v-if="shop.photo_url" class="popup-photo">
-                  <img :src="shop.photo_url" :alt="shop.name" @error="(e) => e.target.style.display='none'" />
+                  <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
                 </div>
                 
                 <!-- Title and Rating with Edit Button -->
@@ -187,7 +212,7 @@
                       <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
                     </div>
                   </div>
-                  <div class="edit-menu-container">
+                  <div class="edit-menu-container" v-if="isAuthenticated">
                     <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
                       ⚙️
                     </button>
@@ -370,9 +395,14 @@ import {
   LPopup,
   LControlLayers,
 } from "@vue-leaflet/vue-leaflet";
+import L from "leaflet";
+import "leaflet.vectorgrid";
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
 import { baseLayers } from "@/stores/mapConfig";
+import auth from "@/services/auth";
+
+const { isAuthenticated, userProfile, login, logout } = auth;
 
 const zoom = ref(12);
 const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
@@ -404,6 +434,11 @@ interface Barbershop {
   reservable?: boolean;
   wheelchair_accessible?: boolean;
   utc_offset_minutes?: number;
+  // Parsed/Computed fields
+  opening_hours_text?: string | null;
+  is_open_now?: boolean | null;
+  photo_url?: string | null;
+  parsed_reviews?: any[] | null;
   // Legacy fields for compatibility
   id?: string | number;
   price?: number;
@@ -420,7 +455,8 @@ const fetchBarbershops = async () => {
     isLoading.value = true;
     error.value = null;
     
-    const response = await fetch('http://localhost:8080/api/barbershops');
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    const response = await fetch(`${apiBaseUrl}/api/barbershops`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -507,6 +543,111 @@ const fetchBarbershops = async () => {
   }
 };
 
+const showGrid = ref(false);
+let gridLayer: any = null;
+const mapInstance = ref<L.Map | null>(null);
+
+const toggleGrid = () => {
+  showGrid.value = !showGrid.value;
+  
+  if (!mapInstance.value) return;
+
+  if (showGrid.value) {
+    if (!gridLayer) {
+      // Color stops for population density
+      const populationStops = [
+        { value: 0, color: '#3288bd' },      // 0: Blue (Low)
+        { value: 1000, color: '#66c2a5' },   // 1k: Greenish Cyan
+        { value: 5000, color: '#abdda4' },   // 5k: Light Green
+        { value: 10000, color: '#e6f598' },  // 10k: Yellow-Green
+        { value: 15000, color: '#fee08b' },  // 15k: Yellow
+        { value: 20000, color: '#fdae61' },  // 20k: Orange
+        { value: 25000, color: '#f46d43' }   // 25k+: Red
+      ];
+
+      // Helper to interpolate colors
+      const interpolateColor = (value: number, stops: {value: number, color: string}[]) => {
+        // Find the two stops the value is between
+        for (let i = 0; i < stops.length - 1; i++) {
+          const start = stops[i]!;
+          const end = stops[i + 1]!;
+          
+          if (value >= start.value && value <= end.value) {
+            // Calculate ratio
+            const ratio = (value - start.value) / (end.value - start.value);
+            
+            // Parse hex colors
+            const startColor = parseInt(start.color.slice(1), 16);
+            const endColor = parseInt(end.color.slice(1), 16);
+            
+            // Interpolate RGB components
+            const r = Math.round(((startColor >> 16) & 0xFF) * (1 - ratio) + ((endColor >> 16) & 0xFF) * ratio);
+            const g = Math.round(((startColor >> 8) & 0xFF) * (1 - ratio) + ((endColor >> 8) & 0xFF) * ratio);
+            const b = Math.round((startColor & 0xFF) * (1 - ratio) + (endColor & 0xFF) * ratio);
+            
+            return `rgb(${r}, ${g}, ${b})`;
+          }
+        }
+        
+        // Handle out of bounds
+        if (!stops.length) return '#000000';
+        if (value < stops[0]!.value) return stops[0]!.color;
+        if (value > stops[stops.length - 1]!.value) return stops[stops.length - 1]!.color;
+        
+        return stops[0]!.color; // Fallback
+      };
+
+      // @ts-ignore - leaflet.vectorgrid types might be missing
+      const tileServerUrl = import.meta.env.VITE_TILE_SERVER_URL || 'http://localhost:8080';
+      gridLayer = L.vectorGrid.protobuf(`${tileServerUrl}/data/grid/{z}/{x}/{y}.pbf`, {
+        pane: 'overlayPane',
+        vectorTileLayerStyles: {
+          grid: function(properties: any) {
+            const population = properties.T || 0;
+            return {
+              fillColor: interpolateColor(population, populationStops),
+              fillOpacity: 0.4,
+              stroke: true,
+              fill: true,
+              color: 'white',
+              weight: 0.1 // Thinner border for better visualization
+            }
+          }
+        },
+        interactive: true,
+        getFeatureId: function(f: any) { return f.properties.GRD_ID; },
+        maxNativeZoom: 8
+      });
+
+      gridLayer.on('click', function(e: any) {
+        const props = e.layer.properties;
+        L.popup()
+          .setLatLng(e.latlng)
+          .setContent(`
+            <div class="grid-popup">
+              <h3>Grid Cell</h3>
+              <table class="grid-properties">
+                <tr><td><strong>Population:</strong></td><td>${props.T}</td></tr>
+                <tr><td><strong>Men:</strong></td><td>${props.M}</td></tr>
+                <tr><td><strong>Women:</strong></td><td>${props.F}</td></tr>
+              </table>
+            </div>
+          `)
+          .openOn(mapInstance.value! as any);
+      });
+    }
+    (gridLayer as any).addTo(mapInstance.value as any);
+  } else {
+    if (gridLayer) {
+      (gridLayer as any).remove();
+    }
+  }
+};
+
+const onMapReady = (map: L.Map) => {
+  mapInstance.value = map;
+};
+
 onMounted(() => {
   fetchBarbershops();
 });
@@ -521,19 +662,19 @@ const filters = ref({
 const availableServices = computed(() => {
   const allServices = new Set<string>();
   barbershops.value.forEach(shop => {
-    shop.services.forEach(service => allServices.add(service));
+    (shop.services || []).forEach(service => allServices.add(service));
   });
   return Array.from(allServices).sort();
 });
 
 const filteredBarbershops = computed(() => {
   return barbershops.value.filter(shop => {
-    if (shop.rating < filters.value.minRating) return false;
-    if (filters.value.minPrice !== null && shop.price < filters.value.minPrice) return false;
-    if (filters.value.maxPrice !== null && shop.price > filters.value.maxPrice) return false;
+    if ((shop.rating || 0) < filters.value.minRating) return false;
+    if (filters.value.minPrice !== null && (shop.price || 0) < filters.value.minPrice) return false;
+    if (filters.value.maxPrice !== null && (shop.price || 0) > filters.value.maxPrice) return false;
     if (filters.value.services.length > 0) {
       const hasService = filters.value.services.some(service => 
-        shop.services.includes(service)
+        (shop.services || []).includes(service)
       );
       if (!hasService) return false;
     }
@@ -543,13 +684,13 @@ const filteredBarbershops = computed(() => {
 
 const averageRating = computed(() => {
   if (filteredBarbershops.value.length === 0) return 0;
-  const sum = filteredBarbershops.value.reduce((acc, shop) => acc + shop.rating, 0);
+  const sum = filteredBarbershops.value.reduce((acc, shop) => acc + (shop.rating || 0), 0);
   return sum / filteredBarbershops.value.length;
 });
 
 const averagePrice = computed(() => {
   if (filteredBarbershops.value.length === 0) return 0;
-  const sum = filteredBarbershops.value.reduce((acc, shop) => acc + shop.price, 0);
+  const sum = filteredBarbershops.value.reduce((acc, shop) => acc + (shop.price || 0), 0);
   return sum / filteredBarbershops.value.length;
 });
 
@@ -564,11 +705,11 @@ const priceDistribution = computed(() => {
   };
   
   filteredBarbershops.value.forEach(shop => {
-    if (shop.price <= 15) ranges["€0-15"]++;
-    else if (shop.price <= 20) ranges["€16-20"]++;
-    else if (shop.price <= 25) ranges["€21-25"]++;
-    else if (shop.price <= 30) ranges["€26-30"]++;
-    else if (shop.price <= 35) ranges["€31-35"]++;
+    if ((shop.price || 0) <= 15) ranges["€0-15"]++;
+    else if ((shop.price || 0) <= 20) ranges["€16-20"]++;
+    else if ((shop.price || 0) <= 25) ranges["€21-25"]++;
+    else if ((shop.price || 0) <= 30) ranges["€26-30"]++;
+    else if ((shop.price || 0) <= 35) ranges["€31-35"]++;
     else ranges["€36+"]++;
   });
   
@@ -579,12 +720,7 @@ const maxPriceCount = computed(() => {
   return Math.max(...Object.values(priceDistribution.value), 1);
 });
 
-const getRatingClass = (rating: number) => {
-  if (rating >= 4.5) return "rating-excellent";
-  if (rating >= 4.0) return "rating-good";
-  if (rating >= 3.5) return "rating-average";
-  return "rating-poor";
-};
+
 
 const getStars = (rating: number) => {
   const fullStars = Math.floor(rating);
@@ -744,7 +880,8 @@ const saveShop = async () => {
   };
 
   try {
-    const response = await fetch('http://localhost:8080/api/barbershops', {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    const response = await fetch(`${apiBaseUrl}/api/barbershops`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(shopData)
@@ -814,7 +951,8 @@ const deleteBarbershop = async () => {
   const placeId = shopToDelete.value.place_id;
   
   try {
-    const response = await fetch(`http://localhost:8080/api/barbershops/${placeId}`, {
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    const response = await fetch(`${apiBaseUrl}/api/barbershops/${placeId}`, {
       method: 'DELETE'
     });
 
@@ -872,15 +1010,69 @@ const deleteBarbershop = async () => {
   background: rgba(148, 163, 184, 0.5);
 }
 
+.panel-header {
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 20px 24px;
+}
+
 .panel-title {
   font-size: 1.75rem;
   font-weight: 700;
-  margin: 0;
-  padding: 24px 24px 20px;
+  margin: 0 0 16px 0;
   color: #f8fafc;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
   letter-spacing: -0.5px;
+}
+
+.auth-controls {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.auth-btn {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.auth-btn.login {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.auth-btn.login:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.auth-btn.logout {
+  background: rgba(148, 163, 184, 0.1);
+  color: #cbd5e0;
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.auth-btn.logout:hover {
+  background: rgba(148, 163, 184, 0.2);
+  color: white;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.username {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 .stats-section {
@@ -1773,5 +1965,32 @@ const deleteBarbershop = async () => {
   font-size: 0.875rem;
   color: #1f2937;
   line-height: 1.5;
+}
+
+.grid-popup {
+  min-width: 200px;
+}
+
+.grid-popup h3 {
+  margin: 0 0 10px 0;
+  color: #ff7800;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.grid-properties {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grid-properties td {
+  padding: 4px 0;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.grid-properties td:first-child {
+  padding-right: 10px;
+  color: #666;
 }
 </style>
