@@ -1,6 +1,7 @@
 <template>
   <div class="map-container">
     <AppHeader
+      v-if="!isMobile"
       :isAuthenticated="isAuthenticated"
       :userProfile="userProfile"
       @login="login"
@@ -11,9 +12,7 @@
       <!-- Sidebar Wrapper -->
       <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }">
         <AnalysisPanel
-          :filteredCount="filteredBarbershops.length"
-          :averageRating="averageRating"
-          :averagePrice="averagePrice"
+          :isMobile="isMobile"
           :filters="filters"
           :availableServices="availableServices"
           :searchRadius="searchRadius"
@@ -41,6 +40,11 @@
 
       <!-- Map -->
       <div class="map-wrapper">
+        <MapStats 
+          :isMobile="isMobile"
+          :filteredCount="filteredBarbershops.length"
+          :averageRating="averageRating"
+        />
         <l-map
           :zoom="zoom"
           :center="center"
@@ -275,6 +279,7 @@ import ShopModal from "./map/ShopModal.vue";
 import DeleteConfirmModal from "./map/DeleteConfirmModal.vue";
 import MapControls from "./map/MapControls.vue";
 import AppHeader from "./map/AppHeader.vue";
+import MapStats from "./map/MapStats.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
@@ -282,6 +287,20 @@ const zoom = ref(12);
 const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
 const mapInstance = ref<L.Map | null>(null);
 const isSidebarOpen = ref(true);
+const isMobile = ref(false);
+
+const checkMobile = () => {
+  isMobile.value = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
+};
+
+onMounted(() => {
+  checkMobile();
+  // Set initial sidebar state: Open on desktop, Closed on mobile
+  isSidebarOpen.value = !isMobile.value;
+  
+  window.addEventListener('resize', checkMobile);
+  fetchBarbershops();
+});
 
 const onMapReady = (map: L.Map) => {
   mapInstance.value = map;
@@ -332,10 +351,6 @@ const {
   cancelDelete,
   deleteBarbershop
 } = useShopManagement(fetchBarbershops);
-
-onMounted(() => {
-  fetchBarbershops();
-});
 
 const getStars = (rating: number) => {
   const fullStars = Math.floor(rating);

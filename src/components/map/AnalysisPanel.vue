@@ -1,22 +1,5 @@
 <template>
   <div class="analysis-panel">
-    <!-- Statistics -->
-    <div class="stats-section">
-      <h3>Statistics</h3>
-      <div class="stat-card">
-        <div class="stat-value">{{ filteredCount }}</div>
-        <div class="stat-label">Total Barbershops</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">{{ averageRating.toFixed(1) }}</div>
-        <div class="stat-label">Avg Rating</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value">€{{ averagePrice.toFixed(0) }}</div>
-        <div class="stat-label">Avg Price</div>
-      </div>
-    </div>
-
     <!-- Filters -->
     <div class="filters-section">
       <h3>Filters</h3>
@@ -148,9 +131,7 @@
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps<{
-  filteredCount: number;
-  averageRating: number;
-  averagePrice: number;
+  isMobile: boolean;
   filters: {
     minRating: number;
     minPrice: number | null;
