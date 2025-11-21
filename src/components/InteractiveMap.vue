@@ -242,11 +242,13 @@
 
     <!-- Delete Confirmation Modal -->
     <DeleteConfirmModal
-      :show="showDeleteConfirm"
+      :isOpen="showDeleteConfirm"
       :shopName="shopToDelete?.name"
+      @confirm="confirmDelete"
       @cancel="cancelDelete"
-      @confirm="deleteBarbershop"
     />
+
+    <BottomNav v-if="isMobile" @logout="logout" />
   </div>
 </template>
 
@@ -280,6 +282,7 @@ import DeleteConfirmModal from "./map/DeleteConfirmModal.vue";
 import MapControls from "./map/MapControls.vue";
 import AppHeader from "./map/AppHeader.vue";
 import MapStats from "./map/MapStats.vue";
+import BottomNav from "./map/BottomNav.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
