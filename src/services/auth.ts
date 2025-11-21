@@ -1,8 +1,12 @@
 import Keycloak from 'keycloak-js';
 import { ref } from 'vue';
 
+const keycloakUrl = (window as any).KEYCLOAK_URL === "__KEYCLOAK_URL_PLACEHOLDER__"
+    ? 'http://localhost:8081' // Default for local dev
+    : (window as any).KEYCLOAK_URL;
+
 const keycloak = new Keycloak({
-    url: 'http://localhost:8081',
+    url: keycloakUrl,
     realm: 'barbershop-realm',
     clientId: 'barbershop-app',
 });

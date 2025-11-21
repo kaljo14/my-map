@@ -1,0 +1,52 @@
+server {
+    listen 80;
+    server_name localhost;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Gzip compression
+    gzip on;
+    gzip_min_length 1000;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+
+    location / {
+        try_files $uri $uri/ /index.html;
+        
+        # Replace the placeholder in index.html with the actual environment variable
+        # The ${KEYCLOAK_URL} will be replaced by envsubst before Nginx starts
+        sub_filter '__KEYCLOAK_URL_PLACEHOLDER__' '${KEYCLOAK_URL}';
+        sub_filter_once on;
+        sub_filter_types text/html;
+    }
+
+    # Proxy for Places API
+    location /api/places/ {
+        # ${PLACES_API_URL} will be replaced at runtime
+        proxy_pass ${PLACES_API_URL}; 
+        proxy_ssl_server_name on;
+        proxy_set_header Host ${PLACES_API_URL};; # You might want to make this dynamic too if the host changes
+    }
+
+    # Proxy for Tile Server
+    location /api/tiles/ {
+        # ${TILES_API_URL} will be replaced at runtime
+        proxy_pass ${TILES_API_URL};
+        proxy_ssl_server_name on;
+        proxy_set_header Host${TILES_API_URL};
+    }
+
+
+
+    # Cache static assets
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
+        expires 1y;
+        add_header Cache-Control "public, no-transform";
+    }
+
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
+    }
+}

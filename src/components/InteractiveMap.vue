@@ -401,6 +401,7 @@ import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
 import { baseLayers } from "@/stores/mapConfig";
 import auth from "@/services/auth";
+import httpClient from "@/services/httpClient";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
@@ -455,8 +456,8 @@ const fetchBarbershops = async () => {
     isLoading.value = true;
     error.value = null;
     
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-    const response = await fetch(`${apiBaseUrl}/api/barbershops`);
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/places';
+    const response = await httpClient.get(`${apiBaseUrl}/api/barbershops`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -598,7 +599,15 @@ const toggleGrid = () => {
       };
 
       // @ts-ignore - leaflet.vectorgrid types might be missing
-      const tileServerUrl = import.meta.env.VITE_TILE_SERVER_URL || 'http://localhost:8080';
+      const tileServerUrl = import.meta.env.VITE_TILE_SERVER_URL || '/api/tiles';
+      
+      // Get JWT token for authentication
+      const token = auth.getToken();
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       gridLayer = L.vectorGrid.protobuf(`${tileServerUrl}/data/grid/{z}/{x}/{y}.pbf`, {
         pane: 'overlayPane',
         vectorTileLayerStyles: {
@@ -616,7 +625,11 @@ const toggleGrid = () => {
         },
         interactive: true,
         getFeatureId: function(f: any) { return f.properties.GRD_ID; },
-        maxNativeZoom: 8
+        maxNativeZoom: 8,
+        // Add fetchOptions to include JWT token in tile requests
+        fetchOptions: {
+          headers: headers
+        }
       });
 
       gridLayer.on('click', function(e: any) {
@@ -880,12 +893,8 @@ const saveShop = async () => {
   };
 
   try {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-    const response = await fetch(`${apiBaseUrl}/api/barbershops`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(shopData)
-    });
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/places';
+    const response = await httpClient.post(`${apiBaseUrl}/api/barbershops`, shopData);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -951,10 +960,8 @@ const deleteBarbershop = async () => {
   const placeId = shopToDelete.value.place_id;
   
   try {
-    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
-    const response = await fetch(`${apiBaseUrl}/api/barbershops/${placeId}`, {
-      method: 'DELETE'
-    });
+    const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/places';
+    const response = await httpClient.delete(`${apiBaseUrl}/api/barbershops/${placeId}`);
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
