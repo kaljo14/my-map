@@ -6,7 +6,14 @@
       :class="{ active: showGrid }"
       title="Toggle Grid Layer"
     >
-      <span class="icon">▦</span>
+      <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 3h18v18H3V3z" fill="none" stroke="currentColor" stroke-width="2"/>
+        <!-- Choropleth regions with different opacities -->
+        <path d="M5 5h6v6H5V5z" fill="currentColor" fill-opacity="0.2"/>
+        <path d="M13 5h6v6h-6V5z" fill="currentColor" fill-opacity="0.6"/>
+        <path d="M5 13h6v6H5v-6z" fill="currentColor" fill-opacity="0.8"/>
+        <path d="M13 13h6v6h-6v-6z" fill="currentColor" fill-opacity="0.4"/>
+      </svg>
     </button>
   </l-control>
 </template>
@@ -33,9 +40,10 @@ defineEmits<{
 .grid-toggle-btn {
   background-color: #fff;
   border: 2px solid rgba(0,0,0,0.2);
-  border-radius: 4px;
-  width: 34px; /* Match Leaflet control size */
-  height: 34px;
+  background-clip: padding-box;
+  border-radius: 5px;
+  width: 50px; /* Slightly larger than standard */
+  height: 50px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -56,11 +64,13 @@ defineEmits<{
 
 .grid-toggle-btn.active .icon {
   color: #6366f1;
+  fill: #6366f1;
 }
 
 .icon {
-  font-size: 20px;
+  width: 28px;
+  height: 28px;
   color: #4a5568;
-  font-weight: bold;
+  fill: #4a5568;
 }
 </style>
