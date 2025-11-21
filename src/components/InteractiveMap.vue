@@ -8,25 +8,36 @@
     />
     
     <div class="content-wrapper">
-      <!-- Analysis Panel -->
-      <AnalysisPanel
-        :filteredCount="filteredBarbershops.length"
-        :averageRating="averageRating"
-        :averagePrice="averagePrice"
-        :filters="filters"
-        :availableServices="availableServices"
-        :searchRadius="searchRadius"
-        :showOpportunityZones="showOpportunityZones"
-        :opportunityZonesCount="opportunityZones.length"
-        :isAddShopMode="isAddShopMode"
-        :priceDistribution="priceDistribution"
-        :maxPriceCount="maxPriceCount"
-        @update:filters="filters = $event"
-        @resetFilters="resetFilters"
-        @update:searchRadius="searchRadius = $event"
-        @toggleOpportunityZones="toggleOpportunityZones"
-        @toggleAddShopMode="toggleAddShopMode"
-      />
+      <!-- Sidebar Wrapper -->
+      <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }">
+        <AnalysisPanel
+          :filteredCount="filteredBarbershops.length"
+          :averageRating="averageRating"
+          :averagePrice="averagePrice"
+          :filters="filters"
+          :availableServices="availableServices"
+          :searchRadius="searchRadius"
+          :showOpportunityZones="showOpportunityZones"
+          :opportunityZonesCount="opportunityZones.length"
+          :isAddShopMode="isAddShopMode"
+          :priceDistribution="priceDistribution"
+          :maxPriceCount="maxPriceCount"
+          @update:filters="filters = $event"
+          @resetFilters="resetFilters"
+          @update:searchRadius="searchRadius = $event"
+          @toggleOpportunityZones="toggleOpportunityZones"
+          @toggleAddShopMode="toggleAddShopMode"
+        />
+        
+        <!-- Sidebar Toggle Handle -->
+        <button 
+          class="sidebar-toggle" 
+          @click="isSidebarOpen = !isSidebarOpen"
+          title="Toggle Sidebar"
+        >
+          <span class="toggle-icon">{{ isSidebarOpen ? '◀' : '▶' }}</span>
+        </button>
+      </div>
 
       <!-- Map -->
       <div class="map-wrapper">
@@ -270,6 +281,7 @@ const { isAuthenticated, userProfile, login, logout } = auth;
 const zoom = ref(12);
 const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
 const mapInstance = ref<L.Map | null>(null);
+const isSidebarOpen = ref(true);
 
 const onMapReady = (map: L.Map) => {
   mapInstance.value = map;
@@ -344,6 +356,57 @@ const getStars = (rating: number) => {
   display: flex;
   flex: 1;
   overflow: hidden;
+  position: relative;
+}
+
+.sidebar-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 380px;
+  z-index: 2000;
+  transition: transform 0.3s ease-in-out;
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-wrapper.closed {
+  transform: translateX(-100%);
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 50%;
+  right: -32px; /* Increased width */
+  width: 32px;
+  height: 64px; /* Taller for better grab area */
+  transform: translateY(-50%);
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.3); /* More visible border */
+  border-left: none;
+  border-radius: 0 12px 12px 0; /* More rounded */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #e2e8f0; /* Brighter icon */
+  box-shadow: 6px 0 12px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  padding-left: 4px; /* Push icon slightly to the right */
+}
+
+.sidebar-toggle:hover {
+  background: #334155;
+  color: white;
+  width: 36px; /* Expands more on hover */
+  right: -36px;
+  box-shadow: 8px 0 16px rgba(0,0,0,0.3);
+}
+
+.toggle-icon {
+  font-size: 14px; /* Larger icon */
+  font-weight: bold;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .map-wrapper {

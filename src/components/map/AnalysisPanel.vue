@@ -195,13 +195,12 @@ const toggleService = (service: string) => {
 
 <style scoped>
 .analysis-panel {
-  width: 380px;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
   color: white;
   padding: 0;
   overflow-y: auto;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
   border-right: 1px solid rgba(148, 163, 184, 0.1);
 }
 
