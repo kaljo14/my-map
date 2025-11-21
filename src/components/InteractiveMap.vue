@@ -1,216 +1,220 @@
 <template>
   <div class="map-container">
-    <!-- Analysis Panel -->
-    <AnalysisPanel
+    <AppHeader
       :isAuthenticated="isAuthenticated"
       :userProfile="userProfile"
-      :filteredCount="filteredBarbershops.length"
-      :averageRating="averageRating"
-      :averagePrice="averagePrice"
-      :filters="filters"
-      :availableServices="availableServices"
-      :searchRadius="searchRadius"
-      :showOpportunityZones="showOpportunityZones"
-      :opportunityZonesCount="opportunityZones.length"
-      :isAddShopMode="isAddShopMode"
-      :showGrid="showGrid"
-      :priceDistribution="priceDistribution"
-      :maxPriceCount="maxPriceCount"
       @login="login"
       @logout="logout"
-      @update:filters="filters = $event"
-      @resetFilters="resetFilters"
-      @update:searchRadius="searchRadius = $event"
-      @toggleOpportunityZones="toggleOpportunityZones"
-      @toggleAddShopMode="toggleAddShopMode"
     />
+    
+    <div class="content-wrapper">
+      <!-- Analysis Panel -->
+      <AnalysisPanel
+        :filteredCount="filteredBarbershops.length"
+        :averageRating="averageRating"
+        :averagePrice="averagePrice"
+        :filters="filters"
+        :availableServices="availableServices"
+        :searchRadius="searchRadius"
+        :showOpportunityZones="showOpportunityZones"
+        :opportunityZonesCount="opportunityZones.length"
+        :isAddShopMode="isAddShopMode"
+        :priceDistribution="priceDistribution"
+        :maxPriceCount="maxPriceCount"
+        @update:filters="filters = $event"
+        @resetFilters="resetFilters"
+        @update:searchRadius="searchRadius = $event"
+        @toggleOpportunityZones="toggleOpportunityZones"
+        @toggleAddShopMode="toggleAddShopMode"
+      />
 
-    <!-- Map -->
-    <div class="map-wrapper">
-      <l-map
-        :zoom="zoom"
-        :center="center"
-        :use-global-leaflet="true"
-        @click="onMapClick"
-        @ready="onMapReady"
-      >
-        <l-control-layers />
-        <MapControls 
-          :showGrid="showGrid"
-          @toggleGrid="toggleGrid(mapInstance as any)"
-        />
-        <l-tile-layer
-          v-for="layer in baseLayers"
-          :key="layer.name"
-          :name="layer.name"
-          :url="layer.url"
-          :visible="layer.visible"
-          layer-type="base"
-          :attribution="layer.attribution"
-        ></l-tile-layer>
-
-        <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
-          <l-marker
-            v-for="shop in filteredBarbershops"
-            :key="shop.id"
-            :lat-lng="[shop.lat, shop.lng]"
-          >
-            <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
-              <div class="shop-marker-content saved">
-                💈
-              </div>
-            </l-icon>
-            <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-              <div class="popup-content enhanced">
-                <!-- Photo Header -->
-                <div v-if="shop.photo_url" class="popup-photo">
-                  <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
-                </div>
-                
-                <!-- Title and Rating with Edit Button -->
-                <div class="popup-header">
-                  <div class="popup-header-content">
-                    <h3 class="popup-title">{{ shop.name }}</h3>
-                    <div class="popup-rating">
-                      <span class="stars">{{ getStars(shop.rating || 0) }}</span>
-                      <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                      <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
-                    </div>
-                  </div>
-                  <div class="edit-menu-container" v-if="isAuthenticated">
-                    <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
-                      ⚙️
-                    </button>
-                    <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
-                      <button @click="editBarbershop(shop)" class="dropdown-item">
-                        ✏️ Edit Info
-                      </button>
-                      <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Status Badge -->
-                <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                  {{ shop.is_open_now ? '🟢 Open Now' : '🔴 Closed' }}
-                </div>
-
-                <!-- Info Grid -->
-                <div class="popup-info">
-                  <div class="info-row" v-if="shop.price_level">
-                    <strong>💰 Price:</strong> {{ '€'.repeat(shop.price_level) }}
-                  </div>
-                  <div class="info-row" v-if="shop.address">
-                    <strong>📍 Address:</strong> {{ shop.address }}
-                  </div>
-                  <div class="info-row" v-if="shop.formatted_phone_number">
-                    <strong>📞 Phone:</strong> 
-                    <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-                  </div>
-                  <div class="info-row" v-if="shop.opening_hours_text">
-                    <strong>🕒 Hours:</strong>
-                    <div class="hours-list">
-                      <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
-                        {{ line }}
-                      </div>
-                      <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                        +{{ shop.opening_hours_text.split('\n').length - 3 }} more days
-                      </div>
-                    </div>
-                  </div>
-                  <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                    <strong>🏷️ Services:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-                  </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="popup-actions">
-                  <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                    🌐 Website
-                  </a>
-                  <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                    🗺️ Directions
-                  </a>
-                </div>
-              </div>
-            </l-popup>
-          </l-marker>
-        </l-marker-cluster-group>
-
-        <!-- Opportunity Zone Markers -->
-        <l-marker-cluster-group v-if="showOpportunityZones" :options="{ spiderfyOnMaxZoom: true }">
-          <l-marker
-            v-for="(zone, index) in opportunityZones"
-            :key="`zone-${index}`"
-            :lat-lng="[zone.lat, zone.lng]"
-          >
-            <l-icon :icon-anchor="[20, 40]" class-name="opportunity-marker">
-              <div class="opportunity-marker-content">
-                <div class="opportunity-icon">📍</div>
-                <div class="opportunity-label">Opportunity</div>
-              </div>
-            </l-icon>
-            <l-popup>
-              <div class="popup-content">
-                <h3 class="popup-title opportunity-title">📍 Opportunity Zone</h3>
-                <div class="popup-info">
-                  <div class="info-row">
-                    <strong>No barbershops within:</strong> {{ searchRadius }}km
-                  </div>
-                  <div class="info-row">
-                    <strong>Nearest barbershop:</strong> {{ zone.nearestDistance.toFixed(2) }}km away
-                  </div>
-                  <div class="info-row">
-                    <strong>Coordinates:</strong> {{ zone.lat.toFixed(4) }}, {{ zone.lng.toFixed(4) }}
-                  </div>
-                  <div class="opportunity-note">
-                    💡 This area has low competition and could be a good location for a new barbershop!
-                  </div>
-                </div>
-              </div>
-            </l-popup>
-          </l-marker>
-        </l-marker-cluster-group>
-
-        <!-- Temporary Pin for New Shop -->
-        <l-marker
-          v-if="newShopPin"
-          :lat-lng="[newShopPin.lat, newShopPin.lng]"
+      <!-- Map -->
+      <div class="map-wrapper">
+        <l-map
+          :zoom="zoom"
+          :center="center"
+          :use-global-leaflet="true"
+          @click="onMapClick"
+          @ready="onMapReady"
         >
-          <l-icon :icon-anchor="[20, 40]" class-name="new-shop-marker">
-            <div class="shop-marker-content new">
-              📍
-            </div>
-          </l-icon>
-        </l-marker>
+          <l-control-layers />
+          <MapControls 
+            :showGrid="showGrid"
+            @toggleGrid="toggleGrid(mapInstance as any)"
+          />
+          <l-tile-layer
+            v-for="layer in baseLayers"
+            :key="layer.name"
+            :name="layer.name"
+            :url="layer.url"
+            :visible="layer.visible"
+            layer-type="base"
+            :attribution="layer.attribution"
+          ></l-tile-layer>
 
-        <!-- User Added Shops -->
-        <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
-          <l-marker
-            v-for="(shop, index) in userAddedShops"
-            :key="`shop-${index}`"
-            :lat-lng="[shop.lat, shop.lng]"
-          >
-            <l-icon :icon-anchor="[20, 40]" class-name="saved-shop-marker">
-              <div class="shop-marker-content saved">
-                💈
-              </div>
-            </l-icon>
-            <l-popup>
-              <div class="popup-content">
-                <h3 class="popup-title">{{ shop.name }}</h3>
-                <div class="popup-info">
-                  <div class="info-row">
-                    <strong>Added:</strong> {{ new Date(shop.timestamp).toLocaleDateString() }}
+          <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
+            <l-marker
+              v-for="shop in filteredBarbershops"
+              :key="shop.id"
+              :lat-lng="[shop.lat, shop.lng]"
+            >
+              <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
+                <div class="shop-marker-content saved">
+                  💈
+                </div>
+              </l-icon>
+              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                <div class="popup-content enhanced">
+                  <!-- Photo Header -->
+                  <div v-if="shop.photo_url" class="popup-photo">
+                    <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
+                  </div>
+                  
+                  <!-- Title and Rating with Edit Button -->
+                  <div class="popup-header">
+                    <div class="popup-header-content">
+                      <h3 class="popup-title">{{ shop.name }}</h3>
+                      <div class="popup-rating">
+                        <span class="stars">{{ getStars(shop.rating || 0) }}</span>
+                        <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
+                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
+                      </div>
+                    </div>
+                    <div class="edit-menu-container" v-if="isAuthenticated">
+                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
+                        ⚙️
+                      </button>
+                      <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
+                        <button @click="editBarbershop(shop)" class="dropdown-item">
+                          ✏️ Edit Info
+                        </button>
+                        <button @click="confirmDelete(shop)" class="dropdown-item delete">
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Status Badge -->
+                  <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
+                    {{ shop.is_open_now ? '🟢 Open Now' : '🔴 Closed' }}
+                  </div>
+
+                  <!-- Info Grid -->
+                  <div class="popup-info">
+                    <div class="info-row" v-if="shop.price_level">
+                      <strong>💰 Price:</strong> {{ '€'.repeat(shop.price_level) }}
+                    </div>
+                    <div class="info-row" v-if="shop.address">
+                      <strong>📍 Address:</strong> {{ shop.address }}
+                    </div>
+                    <div class="info-row" v-if="shop.formatted_phone_number">
+                      <strong>📞 Phone:</strong> 
+                      <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
+                    </div>
+                    <div class="info-row" v-if="shop.opening_hours_text">
+                      <strong>🕒 Hours:</strong>
+                      <div class="hours-list">
+                        <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
+                          {{ line }}
+                        </div>
+                        <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
+                          +{{ shop.opening_hours_text.split('\n').length - 3 }} more days
+                        </div>
+                      </div>
+                    </div>
+                    <div class="info-row" v-if="shop.services && shop.services.length > 0">
+                      <strong>🏷️ Services:</strong> {{ shop.services.slice(0, 3).join(', ') }}
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="popup-actions">
+                    <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
+                      🌐 Website
+                    </a>
+                    <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
+                      🗺️ Directions
+                    </a>
                   </div>
                 </div>
+              </l-popup>
+            </l-marker>
+          </l-marker-cluster-group>
+
+          <!-- Opportunity Zone Markers -->
+          <l-marker-cluster-group v-if="showOpportunityZones" :options="{ spiderfyOnMaxZoom: true }">
+            <l-marker
+              v-for="(zone, index) in opportunityZones"
+              :key="`zone-${index}`"
+              :lat-lng="[zone.lat, zone.lng]"
+            >
+              <l-icon :icon-anchor="[20, 40]" class-name="opportunity-marker">
+                <div class="opportunity-marker-content">
+                  <div class="opportunity-icon">📍</div>
+                  <div class="opportunity-label">Opportunity</div>
+                </div>
+              </l-icon>
+              <l-popup>
+                <div class="popup-content">
+                  <h3 class="popup-title opportunity-title">📍 Opportunity Zone</h3>
+                  <div class="popup-info">
+                    <div class="info-row">
+                      <strong>No barbershops within:</strong> {{ searchRadius }}km
+                    </div>
+                    <div class="info-row">
+                      <strong>Nearest barbershop:</strong> {{ zone.nearestDistance.toFixed(2) }}km away
+                    </div>
+                    <div class="info-row">
+                      <strong>Coordinates:</strong> {{ zone.lat.toFixed(4) }}, {{ zone.lng.toFixed(4) }}
+                    </div>
+                    <div class="opportunity-note">
+                      💡 This area has low competition and could be a good location for a new barbershop!
+                    </div>
+                  </div>
+                </div>
+              </l-popup>
+            </l-marker>
+          </l-marker-cluster-group>
+
+          <!-- Temporary Pin for New Shop -->
+          <l-marker
+            v-if="newShopPin"
+            :lat-lng="[newShopPin.lat, newShopPin.lng]"
+          >
+            <l-icon :icon-anchor="[20, 40]" class-name="new-shop-marker">
+              <div class="shop-marker-content new">
+                📍
               </div>
-            </l-popup>
+            </l-icon>
           </l-marker>
-        </l-marker-cluster-group>
-      </l-map>
+
+          <!-- User Added Shops -->
+          <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
+            <l-marker
+              v-for="(shop, index) in userAddedShops"
+              :key="`shop-${index}`"
+              :lat-lng="[shop.lat, shop.lng]"
+            >
+              <l-icon :icon-anchor="[20, 40]" class-name="saved-shop-marker">
+                <div class="shop-marker-content saved">
+                  💈
+                </div>
+              </l-icon>
+              <l-popup>
+                <div class="popup-content">
+                  <h3 class="popup-title">{{ shop.name }}</h3>
+                  <div class="popup-info">
+                    <div class="info-row">
+                      <strong>Added:</strong> {{ new Date(shop.timestamp).toLocaleDateString() }}
+                    </div>
+                  </div>
+                </div>
+              </l-popup>
+            </l-marker>
+          </l-marker-cluster-group>
+        </l-map>
+      </div>
     </div>
 
     <!-- Add Shop Modal -->
@@ -259,6 +263,7 @@ import AnalysisPanel from "./map/AnalysisPanel.vue";
 import ShopModal from "./map/ShopModal.vue";
 import DeleteConfirmModal from "./map/DeleteConfirmModal.vue";
 import MapControls from "./map/MapControls.vue";
+import AppHeader from "./map/AppHeader.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
@@ -330,8 +335,15 @@ const getStars = (rating: number) => {
 <style scoped>
 .map-container {
   display: flex;
+  flex-direction: column;
   height: 100vh;
   width: 100%;
+}
+
+.content-wrapper {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 .map-wrapper {
