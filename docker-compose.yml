@@ -1,11 +1,18 @@
 version: '3'
 services:
   frontend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: my-map-frontend-dev
+    command: npm run dev -- --host
     ports:
-      - "8888:80"
+      - "8888:5173"
+    volumes:
+      - ./:/app
+      - /app/node_modules
     environment:
-      - PLACES_API_URL=http://host.docker.internal:8080/ # Use host.docker.internal to reach localhost from container
-      - TILES_API_URL=http://host.docker.internal:4000/
+      - VITE_API_BASE_URL=/api/places
+      - VITE_TILE_SERVER_URL=/api/tiles
       - KEYCLOAK_URL=http://localhost:8081
     restart: always

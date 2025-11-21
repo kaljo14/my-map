@@ -13,13 +13,14 @@ export default defineConfig({
   server: {
     proxy: {
       '/api/places': {
-        target: 'http://localhost:8080',
+        target: 'http://host.docker.internal:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/places/, '/api/places') // Keep the path as is if backend expects it, or adjust if needed
+        rewrite: (path) => path.replace(/^\/api\/places/, '')
       },
       '/api/tiles': {
-        target: 'http://localhost:8080',
+        target: 'http://host.docker.internal:4000',
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/tiles/, '')
       }
     }
   }
