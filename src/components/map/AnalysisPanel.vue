@@ -130,19 +130,7 @@
 
     </div>
 
-    <!-- Grid Layer Control -->
-    <div class="opportunity-section">
-      <h3>Grid Layer</h3>
-      <p class="opportunity-description">
-        Toggle the visibility of the geospatial grid overlay.
-      </p>
-      <button 
-        @click="$emit('toggleGrid')" 
-        :class="['opportunity-btn', { active: showGrid }]"
-      >
-        {{ showGrid ? 'Hide Grid' : 'Show Grid' }}
-      </button>
-    </div>
+
 
     <!-- Price Distribution -->
     <div class="distribution-section">
@@ -187,7 +175,6 @@ const props = defineProps<{
   showOpportunityZones: boolean;
   opportunityZonesCount: number;
   isAddShopMode: boolean;
-  showGrid: boolean;
   priceDistribution: Record<string, number>;
   maxPriceCount: number;
 }>();
@@ -200,7 +187,6 @@ const emit = defineEmits<{
   (e: 'update:searchRadius', radius: number): void;
   (e: 'toggleOpportunityZones'): void;
   (e: 'toggleAddShopMode'): void;
-  (e: 'toggleGrid'): void;
 }>();
 
 const updateFilter = (key: string, value: string | number) => {

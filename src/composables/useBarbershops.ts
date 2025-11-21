@@ -180,7 +180,7 @@ export function useBarbershops() {
     });
 
     const priceDistribution = computed(() => {
-        const ranges: Record<string, number> = {
+        const ranges = {
             "€0-15": 0,
             "€16-20": 0,
             "€21-25": 0,

@@ -23,7 +23,6 @@
       @update:searchRadius="searchRadius = $event"
       @toggleOpportunityZones="toggleOpportunityZones"
       @toggleAddShopMode="toggleAddShopMode"
-      @toggleGrid="toggleGrid(mapInstance)"
     />
 
     <!-- Map -->
@@ -36,6 +35,10 @@
         @ready="onMapReady"
       >
         <l-control-layers />
+        <MapControls 
+          :showGrid="showGrid"
+          @toggleGrid="toggleGrid(mapInstance as any)"
+        />
         <l-tile-layer
           v-for="layer in baseLayers"
           :key="layer.name"
@@ -255,6 +258,7 @@ import { useShopManagement } from "@/composables/useShopManagement";
 import AnalysisPanel from "./map/AnalysisPanel.vue";
 import ShopModal from "./map/ShopModal.vue";
 import DeleteConfirmModal from "./map/DeleteConfirmModal.vue";
+import MapControls from "./map/MapControls.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
@@ -269,8 +273,6 @@ const onMapReady = (map: L.Map) => {
 // Use Composables
 const {
   barbershops,
-  isLoading,
-  error,
   filters,
   fetchBarbershops,
   availableServices,
