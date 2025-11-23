@@ -93,16 +93,61 @@ export function useMapGrid() {
 
                 gridLayer.on('click', function (e: any) {
                     const props = e.layer.properties;
+                    const total = props.T || 1; // Avoid division by zero
+                    const pctYouth = Math.round(((props.Y_LT15 || 0) / total) * 100);
+                    const pctWorking = Math.round(((props.Y15_64 || 0) / total) * 100);
+                    const pctSeniors = Math.round(((props.Y_GE65 || 0) / total) * 100);
+
                     L.popup()
                         .setLatLng(e.latlng)
                         .setContent(`
-              <div class="grid-popup">
-                <h3>Grid Cell</h3>
-                <table class="grid-properties">
-                  <tr><td><strong>Population:</strong></td><td>${props.T}</td></tr>
-                  <tr><td><strong>Men:</strong></td><td>${props.M}</td></tr>
-                  <tr><td><strong>Women:</strong></td><td>${props.F}</td></tr>
-                </table>
+              <div class="grid-popup" style="font-family: system-ui, sans-serif; min-width: 220px;">
+                <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 16px;">Grid Statistics</h3>
+                
+                <div style="margin-bottom: 16px; background: #f8fafc; padding: 8px; border-radius: 6px;">
+                  <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
+                    ${props.T.toLocaleString()} <span style="font-size: 12px; font-weight: 400; color: #64748b;">Residents</span>
+                  </div>
+                  <div style="display: flex; gap: 12px; font-size: 13px; color: #475569;">
+                    <span title="Men">👨 ${(props.M || 0).toLocaleString()}</span>
+                    <span title="Women">👩 ${(props.F || 0).toLocaleString()}</span>
+                  </div>
+                </div>
+
+                <h4 style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600;">Age Distribution</h4>
+                
+                <!-- Youth -->
+                <div style="margin-bottom: 8px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
+                    <span>Youth (<15)</span>
+                    <span style="font-weight: 600;">${(props.Y_LT15 || 0).toLocaleString()} (${pctYouth}%)</span>
+                  </div>
+                  <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${pctYouth}%; background: #4ade80; height: 100%;"></div>
+                  </div>
+                </div>
+
+                <!-- Working Age -->
+                <div style="margin-bottom: 8px;">
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
+                    <span>Working (15-64)</span>
+                    <span style="font-weight: 600;">${(props.Y15_64 || 0).toLocaleString()} (${pctWorking}%)</span>
+                  </div>
+                  <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${pctWorking}%; background: #60a5fa; height: 100%;"></div>
+                  </div>
+                </div>
+
+                <!-- Seniors -->
+                <div>
+                  <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
+                    <span>Seniors (65+)</span>
+                    <span style="font-weight: 600;">${(props.Y_GE65 || 0).toLocaleString()} (${pctSeniors}%)</span>
+                  </div>
+                  <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
+                    <div style="width: ${pctSeniors}%; background: #f472b6; height: 100%;"></div>
+                  </div>
+                </div>
               </div>
             `)
                         .openOn(mapInstance! as any);
