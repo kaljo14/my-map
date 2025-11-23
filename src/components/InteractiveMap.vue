@@ -242,9 +242,9 @@
 
     <!-- Delete Confirmation Modal -->
     <DeleteConfirmModal
-      :isOpen="showDeleteConfirm"
+      :show="showDeleteConfirm"
       :shopName="shopToDelete?.name"
-      @confirm="confirmDelete"
+      @confirm="deleteBarbershop"
       @cancel="cancelDelete"
     />
 
@@ -298,8 +298,8 @@ const checkMobile = () => {
 
 onMounted(() => {
   checkMobile();
-  // Set initial sidebar state: Open on desktop, Closed on mobile
-  isSidebarOpen.value = !isMobile.value;
+  // Set initial sidebar state: Closed for everyone
+  isSidebarOpen.value = false;
   
   window.addEventListener('resize', checkMobile);
   fetchBarbershops();
@@ -317,7 +317,6 @@ const {
   availableServices,
   filteredBarbershops,
   averageRating,
-  averagePrice,
   priceDistribution,
   maxPriceCount,
   resetFilters
