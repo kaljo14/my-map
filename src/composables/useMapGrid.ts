@@ -13,11 +13,11 @@ export function useMapGrid() {
   const populationStops = [
     { value: 0, color: '#3288bd' },      // 0: Blue (Low)
     { value: 1000, color: '#66c2a5' },   // 1k: Greenish Cyan
-    { value: 5000, color: '#abdda4' },   // 5k: Light Green
-    { value: 10000, color: '#e6f598' },  // 10k: Yellow-Green
-    { value: 15000, color: '#fee08b' },  // 15k: Yellow
-    { value: 20000, color: '#fdae61' },  // 20k: Orange
-    { value: 25000, color: '#f46d43' }   // 25k+: Red
+    { value: 4000, color: '#abdda4' },   // 5k: Light Green
+    { value: 8000, color: '#e6f598' },  // 10k: Yellow-Green
+    { value: 12000, color: '#fee08b' },  // 15k: Yellow
+    { value: 16000, color: '#fdae61' },  // 20k: Orange
+    { value: 20000, color: '#f46d43' }   // 25k+: Red
   ];
 
   // Helper to interpolate colors

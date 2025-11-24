@@ -23,11 +23,15 @@
           :isAddShopMode="isAddShopMode"
           :priceDistribution="priceDistribution"
           :maxPriceCount="maxPriceCount"
+          :showBarbershops="showBarbershops"
+          :enableClustering="enableClustering"
           @update:filters="filters = $event"
           @resetFilters="resetFilters"
           @update:searchRadius="searchRadius = $event"
           @toggleOpportunityZones="toggleOpportunityZones"
           @toggleAddShopMode="toggleAddShopMode"
+          @toggleShowBarbershops="showBarbershops = !showBarbershops"
+          @toggleClustering="enableClustering = !enableClustering"
         />
         
         <!-- Sidebar Toggle Handle -->
@@ -73,7 +77,11 @@
 
           <!-- Analysis Grid Layer is now handled by the composable using vector tiles -->
 
-          <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
+          <!-- Barbershops Layer (Clustered) -->
+          <l-marker-cluster-group 
+            v-if="showBarbershops && enableClustering" 
+            :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
+          >
             <l-marker
               v-for="shop in filteredBarbershops"
               :key="shop.id"
@@ -163,8 +171,99 @@
             </l-marker>
           </l-marker-cluster-group>
 
+          <!-- Barbershops Layer (Non-Clustered) -->
+          <l-layer-group v-if="showBarbershops && !enableClustering">
+            <l-marker
+              v-for="shop in filteredBarbershops"
+              :key="shop.id"
+              :lat-lng="[shop.lat, shop.lng]"
+            >
+              <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
+                <div class="shop-marker-content saved">
+                  💈
+                </div>
+              </l-icon>
+              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                <div class="popup-content enhanced">
+                  <!-- Photo Header -->
+                  <div v-if="shop.photo_url" class="popup-photo">
+                    <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
+                  </div>
+                  
+                  <!-- Title and Rating with Edit Button -->
+                  <div class="popup-header">
+                    <div class="popup-header-content">
+                      <h3 class="popup-title">{{ shop.name }}</h3>
+                      <div class="popup-rating">
+                        <span class="stars">{{ getStars(shop.rating || 0) }}</span>
+                        <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
+                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
+                      </div>
+                    </div>
+                    <div class="edit-menu-container" v-if="isAuthenticated">
+                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
+                        ⚙️
+                      </button>
+                      <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
+                        <button @click="editBarbershop(shop)" class="dropdown-item">
+                          ✏️ Edit Info
+                        </button>
+                        <button @click="confirmDelete(shop)" class="dropdown-item delete">
+                          🗑️ Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Status Badge -->
+                  <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
+                    {{ shop.is_open_now ? '🟢 Open Now' : '🔴 Closed' }}
+                  </div>
+
+                  <!-- Info Grid -->
+                  <div class="popup-info">
+                    <div class="info-row" v-if="shop.price_level">
+                      <strong>💰 Price:</strong> {{ '€'.repeat(shop.price_level) }}
+                    </div>
+                    <div class="info-row" v-if="shop.address">
+                      <strong>📍 Address:</strong> {{ shop.address }}
+                    </div>
+                    <div class="info-row" v-if="shop.formatted_phone_number">
+                      <strong>📞 Phone:</strong> 
+                      <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
+                    </div>
+                    <div class="info-row" v-if="shop.opening_hours_text">
+                      <strong>🕒 Hours:</strong>
+                      <div class="hours-list">
+                        <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
+                          {{ line }}
+                        </div>
+                        <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
+                          +{{ shop.opening_hours_text.split('\n').length - 3 }} more days
+                        </div>
+                      </div>
+                    </div>
+                    <div class="info-row" v-if="shop.services && shop.services.length > 0">
+                      <strong>🏷️ Services:</strong> {{ shop.services.slice(0, 3).join(', ') }}
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="popup-actions">
+                    <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
+                      🌐 Website
+                    </a>
+                    <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
+                      🗺️ Directions
+                    </a>
+                  </div>
+                </div>
+              </l-popup>
+            </l-marker>
+          </l-layer-group>
+
           <!-- Opportunity Zone Markers -->
-          <l-marker-cluster-group v-if="showOpportunityZones" :options="{ spiderfyOnMaxZoom: true }">
+          <l-marker-cluster-group v-if="showOpportunityZones" :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }">
             <l-marker
               v-for="(zone, index) in opportunityZones"
               :key="`zone-${index}`"
@@ -211,7 +310,7 @@
           </l-marker>
 
           <!-- User Added Shops -->
-          <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
+          <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }">
             <l-marker
               v-for="(shop, index) in userAddedShops"
               :key="`shop-${index}`"
@@ -267,6 +366,7 @@ import {
   LIcon,
   LPopup,
   LControlLayers,
+  LLayerGroup,
 } from "@vue-leaflet/vue-leaflet";
 import L from "leaflet";
 import "leaflet.vectorgrid";
@@ -298,6 +398,8 @@ const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
 const mapInstance = ref<L.Map | null>(null);
 const isSidebarOpen = ref(true);
 const isMobile = ref(false);
+const showBarbershops = ref(true);
+const enableClustering = ref(true);
 
 const checkMobile = () => {
   isMobile.value = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;

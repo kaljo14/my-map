@@ -46,6 +46,7 @@ export function useBarbershops() {
 
     const filters = ref({
         minRating: 0,
+        minReviews: 0,
         minPrice: null as number | null,
         maxPrice: null as number | null,
         services: [] as string[],
@@ -155,6 +156,7 @@ export function useBarbershops() {
     const filteredBarbershops = computed(() => {
         return barbershops.value.filter(shop => {
             if ((shop.rating || 0) < filters.value.minRating) return false;
+            if ((shop.user_ratings_total || 0) < filters.value.minReviews) return false;
             if (filters.value.minPrice !== null && (shop.price || 0) < filters.value.minPrice) return false;
             if (filters.value.maxPrice !== null && (shop.price || 0) > filters.value.maxPrice) return false;
             if (filters.value.services.length > 0) {
@@ -208,6 +210,7 @@ export function useBarbershops() {
     const resetFilters = () => {
         filters.value = {
             minRating: 0,
+            minReviews: 0,
             minPrice: null,
             maxPrice: null,
             services: [],

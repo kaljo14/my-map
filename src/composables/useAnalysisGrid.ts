@@ -6,6 +6,7 @@ import auth from '@/services/auth';
 export function useAnalysisGrid() {
     const showAnalysisGrid = ref(false);
     let densityLayer: any = null;
+    let labelLayer: any = null;
 
     // Color stops for density score (matching population grid style)
     const densityStops = [
@@ -55,12 +56,53 @@ export function useAnalysisGrid() {
         return interpolateColor(score, densityStops);
     };
 
-    const toggleAnalysisGrid = (mapInstance: L.Map | null) => {
+    const fetchGridLabels = async (mapInstance: L.Map) => {
+        if (labelLayer) return; // Already fetched
+
+        try {
+            const response = await fetch('http://localhost:8001/analysis/grid');
+            if (!response.ok) throw new Error('Failed to fetch grid labels');
+
+            const data = await response.json();
+            labelLayer = L.layerGroup();
+
+            L.geoJSON(data, {
+                onEachFeature: (feature: any, layer: any) => {
+                    if (feature.properties && feature.properties.barbershop_count > 0) {
+                        // Calculate center of polygon
+                        const center = layer.getBounds().getCenter();
+
+                        // Create label
+                        const label = L.marker(center, {
+                            icon: L.divIcon({
+                                className: 'grid-label',
+                                html: `<span>✂️ ${feature.properties.barbershop_count}</span>`,
+                                iconSize: [40, 20],
+                                iconAnchor: [20, 10]
+                            }),
+                            interactive: false // Don't block clicks to the grid
+                        });
+
+                        labelLayer!.addLayer(label);
+                    }
+                }
+            });
+
+            if (showAnalysisGrid.value && mapInstance) {
+                labelLayer!.addTo(mapInstance);
+            }
+        } catch (err) {
+            console.error('Error fetching grid labels:', err);
+        }
+    };
+
+    const toggleAnalysisGrid = async (mapInstance: L.Map | null) => {
         showAnalysisGrid.value = !showAnalysisGrid.value;
 
         if (!mapInstance) return;
 
         if (showAnalysisGrid.value) {
+            // 1. Show Vector Grid (Tiles)
             if (!densityLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
                 const tileServerUrl = import.meta.env.VITE_TILE_SERVER_URL || '/api/tiles';
@@ -106,22 +148,22 @@ export function useAnalysisGrid() {
                     // Determine market status based on gradient
                     let marketStatus = '';
                     let statusEmoji = '';
-                    if (densityScore >= 2000) {
+                    if (densityScore >= 4000) {
                         marketStatus = 'Very High Opportunity';
                         statusEmoji = '🔥';
-                    } else if (densityScore >= 1500) {
+                    } else if (densityScore >= 3000) {
                         marketStatus = 'High Opportunity';
                         statusEmoji = '🔴';
-                    } else if (densityScore >= 1000) {
+                    } else if (densityScore >= 2000) {
                         marketStatus = 'Good Opportunity';
                         statusEmoji = '🟠';
-                    } else if (densityScore >= 750) {
+                    } else if (densityScore >= 1500) {
                         marketStatus = 'Moderate';
                         statusEmoji = '🟡';
-                    } else if (densityScore >= 500) {
+                    } else if (densityScore >= 1000) {
                         marketStatus = 'Balanced';
                         statusEmoji = '🟢';
-                    } else if (densityScore >= 250) {
+                    } else if (densityScore >= 500) {
                         marketStatus = 'Competitive';
                         statusEmoji = '🔵';
                     } else {
@@ -160,10 +202,10 @@ export function useAnalysisGrid() {
 
                 <div style="font-size: 11px; color: #94a3b8; margin-top: 8px; padding-top: 8px; border-top: 1px solid #e2e8f0;">
                   <strong>Density Scale:</strong><br>
-                  🔥 2000+: Very High | 🔴 1500+: High<br>
-                  🟠 1000+: Good | 🟡 750+: Moderate<br>
-                  🟢 500+: Balanced | 🔵 250+: Competitive<br>
-                  ❄️ <250: Saturated
+                  🔥 4000+: Very High | 🔴 3000+: High<br>
+                  🟠 2000+: Good | 🟡 1500+: Moderate<br>
+                  🟢 1000+: Balanced | 🔵 500+: Competitive<br>
+                  ❄️ <500: Saturated
                 </div>
               </div>
             `)
@@ -171,9 +213,20 @@ export function useAnalysisGrid() {
                 });
             }
             (densityLayer as any).addTo(mapInstance as any);
+
+            // 2. Fetch and Show Labels (GeoJSON)
+            if (!labelLayer) {
+                await fetchGridLabels(mapInstance);
+            } else {
+                labelLayer.addTo(mapInstance);
+            }
+
         } else {
             if (densityLayer) {
                 (densityLayer as any).remove();
+            }
+            if (labelLayer) {
+                labelLayer.remove();
             }
         }
     };

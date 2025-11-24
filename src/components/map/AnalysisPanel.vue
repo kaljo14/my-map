@@ -1,9 +1,45 @@
 <template>
   <div class="analysis-panel">
+    <!-- Map Settings -->
+    <div class="filters-section">
+      <h3>Map Settings</h3>
+      <div class="checkbox-group">
+        <label>
+          <input 
+            type="checkbox" 
+            :checked="showBarbershops"
+            @change="$emit('toggleShowBarbershops')"
+          />
+          Show Barbershops
+        </label>
+        <label>
+          <input 
+            type="checkbox" 
+            :checked="enableClustering"
+            @change="$emit('toggleClustering')"
+            :disabled="!showBarbershops"
+          />
+          Enable Clustering
+        </label>
+      </div>
+    </div>
+
     <!-- Filters -->
     <div class="filters-section">
       <h3>Filters</h3>
       
+      <div class="filter-group">
+        <label>Reviews (min):</label>
+        <input 
+          type="number" 
+          min="0" 
+          :value="filters.minReviews"
+          @input="updateFilter('minReviews', ($event.target as HTMLInputElement).value)"
+          class="price-input"
+          placeholder="0"
+        />
+      </div>
+
       <div class="filter-group">
         <label>Rating (min):</label>
         <input 
@@ -134,6 +170,7 @@ const props = defineProps<{
   isMobile: boolean;
   filters: {
     minRating: number;
+    minReviews: number;
     minPrice: number | null;
     maxPrice: number | null;
     services: string[];
@@ -145,6 +182,8 @@ const props = defineProps<{
   isAddShopMode: boolean;
   priceDistribution: Record<string, number>;
   maxPriceCount: number;
+  showBarbershops: boolean;
+  enableClustering: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -153,11 +192,14 @@ const emit = defineEmits<{
   (e: 'update:searchRadius', radius: number): void;
   (e: 'toggleOpportunityZones'): void;
   (e: 'toggleAddShopMode'): void;
+  (e: 'toggleShowBarbershops'): void;
+  (e: 'toggleClustering'): void;
 }>();
 
 const updateFilter = (key: string, value: string | number) => {
   const newFilters = { ...props.filters };
   if (key === 'minRating') newFilters.minRating = Number(value);
+  if (key === 'minReviews') newFilters.minReviews = Number(value);
   if (key === 'minPrice') newFilters.minPrice = value === '' ? null : Number(value);
   if (key === 'maxPrice') newFilters.maxPrice = value === '' ? null : Number(value);
   emit('update:filters', newFilters);
