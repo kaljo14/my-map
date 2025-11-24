@@ -4,8 +4,10 @@
       v-if="!isMobile"
       :isAuthenticated="isAuthenticated"
       :userProfile="userProfile"
+      :showAnalysisGrid="showAnalysisGrid"
       @login="login"
       @logout="logout"
+      @toggleAnalysisGrid="toggleAnalysisGrid(mapInstance as any)"
     />
     
     <div class="content-wrapper">
@@ -55,7 +57,9 @@
           <l-control-layers />
           <MapControls 
             :showGrid="showGrid"
+            :selectedThreshold="selectedThreshold"
             @toggleGrid="toggleGrid(mapInstance as any)"
+            @updateThreshold="updateThreshold"
           />
           <l-tile-layer
             v-for="layer in baseLayers"
@@ -66,6 +70,8 @@
             layer-type="base"
             :attribution="layer.attribution"
           ></l-tile-layer>
+
+          <!-- Analysis Grid Layer is now handled by the composable using vector tiles -->
 
           <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true }">
             <l-marker
@@ -272,6 +278,7 @@ import auth from "@/services/auth";
 // Composables
 import { useBarbershops } from "@/composables/useBarbershops";
 import { useMapGrid } from "@/composables/useMapGrid";
+import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useOpportunityZones } from "@/composables/useOpportunityZones";
 import { useShopManagement } from "@/composables/useShopManagement";
 
@@ -324,8 +331,20 @@ const {
 
 const {
   showGrid,
-  toggleGrid
+  toggleGrid,
+  updateGridFilter
 } = useMapGrid();
+
+const {
+  showAnalysisGrid,
+  toggleAnalysisGrid
+} = useAnalysisGrid();
+
+const selectedThreshold = ref(0);
+const updateThreshold = (value: number) => {
+  selectedThreshold.value = value;
+  updateGridFilter(value);
+};
 
 const {
   searchRadius,
