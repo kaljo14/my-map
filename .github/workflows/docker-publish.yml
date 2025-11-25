@@ -25,4 +25,4 @@ jobs:
         with:
           context: .
           push: true
-          tags: your-dockerhub-username/my-map:latest,your-dockerhub-username/my-map:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/my-map:latest,${{ secrets.DOCKERHUB_USERNAME }}/my-map:${{ github.sha }}
