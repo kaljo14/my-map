@@ -6,6 +6,7 @@
       :userProfile="userProfile"
       @login="login"
       @logout="logout"
+      @help="startTour(true)"
     />
     
     <div class="content-wrapper">
@@ -34,6 +35,7 @@
         
         <!-- Sidebar Toggle Handle -->
         <button 
+          id="sidebar-toggle"
           class="sidebar-toggle" 
           @click="isSidebarOpen = !isSidebarOpen"
           title="Toggle Sidebar"
@@ -59,6 +61,7 @@
         >
           <l-control-layers />
           <MapControls 
+            ref="mapControlsRef"
             :showGrid="showGrid"
             :showAnalysisGrid="showAnalysisGrid"
             :selectedThreshold="selectedThreshold"
@@ -359,7 +362,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import {
   LMap,
   LTileLayer,
@@ -370,6 +373,8 @@ import {
   LLayerGroup,
 } from "@vue-leaflet/vue-leaflet";
 import L from "leaflet";
+import { driver } from "driver.js";
+import "driver.js/dist/driver.css";
 
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
@@ -406,6 +411,107 @@ const checkMobile = () => {
   isMobile.value = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
 };
 
+const mapControlsRef = ref();
+
+const startTour = (skipCheck = false) => {
+  // Check if tour has been shown before (unless manually triggered)
+  if (!skipCheck && localStorage.getItem('tourCompleted') === 'true') {
+    return;
+  }
+
+  const driverObj = driver({
+    showProgress: true,
+    animate: true,
+    allowClose: false,
+    onDestroyed: () => {
+      // Mark tour as completed when it ends
+      localStorage.setItem('tourCompleted', 'true');
+    },
+    steps: [
+      { 
+        element: '#sidebar-toggle', 
+        popover: { 
+          title: 'Sidebar', 
+          description: 'Click this button to open the sidebar and see filters.',
+          side: "right", 
+          align: 'center'
+        },
+        onHighlightStarted: () => {
+          if (isSidebarOpen.value) isSidebarOpen.value = false;
+        }
+      },
+      { 
+        element: '.analysis-panel', 
+        popover: { 
+          title: 'Analysis Filters', 
+          description: 'Use these filters to adjust the map view.',
+          side: "right", 
+          align: 'start'
+        },
+        onHighlightStarted: () => {
+          if (!isSidebarOpen.value) isSidebarOpen.value = true;
+        }
+      },
+      { 
+        element: '#map-controls-toggle', 
+        popover: { 
+          title: 'Map Controls', 
+          description: 'Click here to open grid settings.',
+          side: "left", 
+          align: 'start'
+        },
+        onHighlightStarted: () => {
+           if (mapControlsRef.value?.menuOpen) mapControlsRef.value.toggleMenu();
+        }
+      },
+      { 
+        element: '.popover-menu', 
+        popover: { 
+          title: 'Grid Settings', 
+          description: 'Toggle population and analysis grids here.',
+          side: "left", 
+          align: 'start'
+        },
+        onHighlightStarted: async () => {
+           if (!mapControlsRef.value?.menuOpen) {
+             mapControlsRef.value?.toggleMenu();
+             // Wait for menu to render
+             await new Promise(resolve => setTimeout(resolve, 100));
+           }
+        }
+      }
+    ]
+  });
+  
+  driverObj.drive();
+  
+  // Add click listeners to advance tour
+  const advanceOnSidebarClick = () => {
+    if (driverObj.getActiveStep()?.element === '#sidebar-toggle') {
+      // Wait for sidebar to start opening
+      setTimeout(() => driverObj.moveNext(), 100);
+    }
+  };
+  
+  const advanceOnControlsClick = () => {
+    if (driverObj.getActiveStep()?.element === '#map-controls-toggle') {
+      setTimeout(() => driverObj.moveNext(), 100);
+    }
+  };
+
+  // We need to attach these listeners, but since elements might not be highlighted yet, 
+  // we rely on the user clicking the actual element which triggers the Vue event handler.
+  // The Vue event handlers (toggleSidebar, toggleMenu) will run.
+  // We can hook into the state changes or just add a global click listener that checks target.
+  
+  // Better approach: Watch for state changes while tour is active?
+  // Or just let the user click "Next" if they want, but the popover says "Click the button".
+  // If I want "Clicking the button advances the tour":
+  
+  document.getElementById('sidebar-toggle')?.addEventListener('click', advanceOnSidebarClick);
+  document.getElementById('map-controls-toggle')?.addEventListener('click', advanceOnControlsClick);
+};
+
 onMounted(() => {
   checkMobile();
   // Set initial sidebar state: Closed for everyone
@@ -414,6 +520,15 @@ onMounted(() => {
   window.addEventListener('resize', checkMobile);
   fetchBarbershops();
 });
+
+watch(isAuthenticated, (newValue) => {
+  if (newValue) {
+    // Small delay to ensure UI is ready
+    setTimeout(() => {
+      startTour();
+    }, 1000);
+  }
+}, { immediate: true });
 
 const onMapReady = (map: L.Map) => {
   mapInstance.value = map;

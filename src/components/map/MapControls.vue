@@ -3,6 +3,7 @@
     <div class="control-container" v-click-outside="closeMenu">
       <!-- Main Toggle Button -->
       <button 
+        id="map-controls-toggle"
         @click="toggleMenu" 
         class="main-btn"
         :class="{ active: menuOpen || showGrid }"
@@ -117,6 +118,11 @@ const vClickOutside = {
     document.body.removeEventListener('click', el.clickOutsideEvent);
   },
 };
+
+defineExpose({
+  menuOpen,
+  toggleMenu
+});
 </script>
 
 <style scoped>

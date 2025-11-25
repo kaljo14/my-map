@@ -8,6 +8,10 @@
 
     
     <div class="header-right">
+      <button @click="$emit('help')" class="nav-btn help-btn" style="margin-right: 12px;">
+        <span class="icon">❓</span>
+        <span>Help</span>
+      </button>
       <div class="auth-controls">
         <button v-if="!isAuthenticated" @click="$emit('login')" class="auth-btn login">
           Login
@@ -34,8 +38,8 @@ defineProps<{
 
 defineEmits<{
   (e: 'login'): void;
-  (e: 'login'): void;
   (e: 'logout'): void;
+  (e: 'help'): void;
 }>();
 </script>
 
