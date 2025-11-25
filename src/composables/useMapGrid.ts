@@ -52,8 +52,12 @@ export function useMapGrid() {
     return stops[0]!.color; // Fallback
   };
 
-  const toggleGrid = (mapInstance: L.Map | null) => {
-    showGrid.value = !showGrid.value;
+  const toggleGrid = (mapInstance: L.Map | null, forceState?: boolean) => {
+    if (forceState !== undefined) {
+      showGrid.value = forceState;
+    } else {
+      showGrid.value = !showGrid.value;
+    }
 
     if (!mapInstance) {
       console.warn('toggleGrid: mapInstance is null');
@@ -179,7 +183,7 @@ export function useMapGrid() {
     if (showGrid.value && gridLayer && mapRef) {
       gridLayer.remove();
       gridLayer = null;
-      toggleGrid(mapRef);
+      toggleGrid(mapRef, true);
     }
   };
 
