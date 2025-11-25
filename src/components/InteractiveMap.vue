@@ -62,8 +62,8 @@
             :showGrid="showGrid"
             :showAnalysisGrid="showAnalysisGrid"
             :selectedThreshold="selectedThreshold"
-            @toggleGrid="toggleGrid(mapInstance as any)"
-            @toggleAnalysisGrid="toggleAnalysisGrid(mapInstance as any)"
+            @toggleGrid="handleToggleGrid"
+            @toggleAnalysisGrid="handleToggleAnalysisGrid"
             @updateThreshold="updateThreshold"
           />
           <l-tile-layer
@@ -443,8 +443,18 @@ const {
   toggleAnalysisGrid: toggleAnalysisGridComposable
 } = useAnalysisGrid();
 
-const toggleAnalysisGrid = (map: L.Map | null) => {
-  toggleAnalysisGridComposable(map);
+const handleToggleGrid = () => {
+  if (showAnalysisGrid.value) {
+    toggleAnalysisGridComposable(mapInstance.value);
+  }
+  toggleGrid(mapInstance.value);
+};
+
+const handleToggleAnalysisGrid = () => {
+  if (showGrid.value) {
+    toggleGrid(mapInstance.value);
+  }
+  toggleAnalysisGridComposable(mapInstance.value);
 };
 
 const selectedThreshold = ref(0);

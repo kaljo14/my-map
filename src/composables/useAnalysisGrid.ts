@@ -6,7 +6,9 @@ import TilesAPI from '@/api/tiles';
 export function useAnalysisGrid() {
     const showAnalysisGrid = ref(false);
     let densityLayer: any = null;
-    let labelLayer: any = null;
+    let labelLayer: L.LayerGroup | null = null;
+    // Store labels by tile key to manage lifecycle
+    const tileLabels: Record<string, L.Layer[]> = {};
 
     // Color stops for density score (matching population grid style)
     const densityStops = [
@@ -56,43 +58,6 @@ export function useAnalysisGrid() {
         return interpolateColor(score, densityStops);
     };
 
-    const fetchGridLabels = async (mapInstance: L.Map) => {
-        if (labelLayer) return; // Already fetched
-
-        try {
-            const data = await TilesAPI.getGridLabels();
-            labelLayer = L.layerGroup();
-
-            L.geoJSON(data, {
-                onEachFeature: (feature: any, layer: any) => {
-                    if (feature.properties && feature.properties.barbershop_count > 0) {
-                        // Calculate center of polygon
-                        const center = layer.getBounds().getCenter();
-
-                        // Create label
-                        const label = L.marker(center, {
-                            icon: L.divIcon({
-                                className: 'grid-label',
-                                html: `<span>✂️ ${feature.properties.barbershop_count}</span>`,
-                                iconSize: [40, 20],
-                                iconAnchor: [20, 10]
-                            }),
-                            interactive: false // Don't block clicks to the grid
-                        });
-
-                        labelLayer!.addLayer(label);
-                    }
-                }
-            });
-
-            if (showAnalysisGrid.value && mapInstance) {
-                labelLayer!.addTo(mapInstance);
-            }
-        } catch (err) {
-            console.error('Error fetching grid labels:', err);
-        }
-    };
-
     const toggleAnalysisGrid = async (mapInstance: L.Map | null) => {
         showAnalysisGrid.value = !showAnalysisGrid.value;
 
@@ -102,6 +67,13 @@ export function useAnalysisGrid() {
         }
 
         if (showAnalysisGrid.value) {
+            // Initialize label layer if needed
+            if (!labelLayer) {
+                labelLayer = L.layerGroup().addTo(mapInstance);
+            } else {
+                labelLayer.addTo(mapInstance);
+            }
+
             // 1. Show Vector Grid (Tiles)
             if (!densityLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
@@ -130,6 +102,76 @@ export function useAnalysisGrid() {
                     // Add fetchOptions to include JWT token in tile requests
                     fetchOptions: {
                         headers: headers
+                    }
+                });
+
+                // Handle tile loading to extract labels
+                densityLayer.on('tileload', (e: any) => {
+                    const key = densityLayer._tileCoordsToKey(e.coords);
+                    // Access the internal vector tile data
+                    // Note: This relies on internal implementation details of L.vectorGrid
+                    const vectorTile = densityLayer._vectorTiles[key];
+
+                    if (vectorTile && vectorTile.layers && vectorTile.layers.density) {
+                        const layer = vectorTile.layers.density;
+                        const labels: L.Layer[] = [];
+
+                        for (let i = 0; i < layer.length; i++) {
+                            const feature = layer.feature(i);
+                            if (feature.properties.barbershop_count > 0) {
+                                // Calculate centroid
+                                const geometry = feature.loadGeometry();
+                                if (!geometry || geometry.length === 0) continue;
+
+                                // Simple centroid calculation (average of points in the first ring)
+                                const ring = geometry[0];
+                                let x = 0, y = 0;
+                                for (const point of ring) {
+                                    x += point.x;
+                                    y += point.y;
+                                }
+                                x /= ring.length;
+                                y /= ring.length;
+
+                                // Convert tile coordinates to LatLng
+                                // Leaflet tiles are 256px, vector tiles usually 4096 extent
+                                const extent = layer.extent || 4096;
+                                const ratio = 256 / extent;
+
+                                const tilePixelPoint = L.point(x * ratio, y * ratio);
+                                const globalPixelPoint = tilePixelPoint.add(
+                                    L.point(e.coords.x * 256, e.coords.y * 256)
+                                );
+                                const latLng = mapInstance.unproject(globalPixelPoint, e.coords.z);
+
+                                // Create label
+                                const label = L.marker(latLng, {
+                                    icon: L.divIcon({
+                                        className: 'grid-label',
+                                        html: `<div class="label-content">✂️ ${feature.properties.barbershop_count}</div>`,
+                                        iconSize: [40, 24],
+                                        iconAnchor: [20, 12]
+                                    }),
+                                    interactive: false,
+                                    zIndexOffset: 1000
+                                });
+
+                                labels.push(label);
+                                labelLayer!.addLayer(label);
+                            }
+                        }
+
+                        tileLabels[key] = labels;
+                    }
+                });
+
+                // Handle tile unloading to remove labels
+                densityLayer.on('tileunload', (e: any) => {
+                    const key = densityLayer._tileCoordsToKey(e.coords);
+                    const labels = tileLabels[key];
+                    if (labels) {
+                        labels.forEach(label => labelLayer!.removeLayer(label));
+                        delete tileLabels[key];
                     }
                 });
 
@@ -208,19 +250,17 @@ export function useAnalysisGrid() {
             }
             (densityLayer as any).addTo(mapInstance as any);
 
-            // 2. Fetch and Show Labels (GeoJSON)
-            if (!labelLayer) {
-                await fetchGridLabels(mapInstance);
-            } else {
-                labelLayer.addTo(mapInstance);
-            }
-
         } else {
             if (densityLayer) {
                 (densityLayer as any).remove();
             }
             if (labelLayer) {
+                labelLayer.clearLayers();
                 labelLayer.remove();
+                // Clear stored labels
+                for (const key in tileLabels) {
+                    delete tileLabels[key];
+                }
             }
         }
     };
