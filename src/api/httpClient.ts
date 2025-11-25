@@ -1,4 +1,4 @@
-import auth from './auth';
+import auth from '@/services/auth';
 
 /**
  * HTTP client that automatically attaches authentication token to requests

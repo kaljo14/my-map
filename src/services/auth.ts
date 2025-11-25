@@ -15,6 +15,18 @@ const isAuthenticated = ref(false);
 const userProfile = ref<any>(null);
 
 const initKeycloak = async () => {
+    if (import.meta.env.DEV) {
+        console.log('Bypassing Keycloak in DEV mode');
+        isAuthenticated.value = true;
+        userProfile.value = {
+            username: 'dev-user',
+            email: 'dev@example.com',
+            firstName: 'Dev',
+            lastName: 'User'
+        };
+        return;
+    }
+
     try {
         const authenticated = await keycloak.init({
             onLoad: 'login-required',
@@ -45,6 +57,9 @@ const logout = () => {
 };
 
 const getToken = () => {
+    if (import.meta.env.DEV) {
+        return 'mock-dev-token';
+    }
     return keycloak.token;
 };
 

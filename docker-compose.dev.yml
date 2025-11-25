@@ -1,0 +1,17 @@
+version: '3'
+services:
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "8888:8888"
+    environment:
+      - PLACES_API_URL=http://host.docker.internal:8080/ # Use host.docker.internal to reach localhost from container
+      - TILES_API_URL=http://host.docker.internal:4000/
+      - KEYCLOAK_URL=http://localhost:8081
+      - CHOKIDAR_USEPOLLING=true 
+    command: sh -c "npm install && npm run dev -- --host"
+    restart: always
