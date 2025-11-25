@@ -1,42 +1,12 @@
 import { ref, computed } from 'vue';
-import httpClient from '@/services/httpClient';
+import PlacesAPI, { type Barbershop as ApiBarbershop } from '@/api/places';
 
-export interface Barbershop {
-    place_id: string;
-    name: string;
-    lat: number;
-    lng: number;
-    address?: string;
-    business_status?: string;
-    rating?: number;
-    user_ratings_total?: number;
-    price_level?: number;
-    formatted_phone_number?: string;
-    international_phone_number?: string;
-    website?: string;
-    google_maps_url?: string;
-    opening_hours?: string;
-    photos?: string;
-    icon_url?: string;
-    types?: string;
-    reviews?: string;
-    editorial_summary?: string;
-    curbside_pickup?: boolean;
-    delivery?: boolean;
-    dine_in?: boolean;
-    takeout?: boolean;
-    reservable?: boolean;
-    wheelchair_accessible?: boolean;
-    utc_offset_minutes?: number;
+export interface Barbershop extends ApiBarbershop {
     // Parsed/Computed fields
     opening_hours_text?: string | null;
     is_open_now?: boolean | null;
     photo_url?: string | null;
     parsed_reviews?: any[] | null;
-    // Legacy fields for compatibility
-    id?: string | number;
-    price?: number;
-    services?: string[];
 }
 
 export function useBarbershops() {
@@ -57,13 +27,7 @@ export function useBarbershops() {
             isLoading.value = true;
             error.value = null;
 
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/places';
-            const response = await httpClient.get(`${apiBaseUrl}/api/barbershops`);
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await PlacesAPI.getBarbershops();
             barbershops.value = data.map((shop: any) => {
                 // Parse JSON string fields
                 let parsedOpeningHours = null;

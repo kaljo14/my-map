@@ -10,6 +10,14 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  optimizeDeps: {
+    include: [
+      'leaflet',
+      'leaflet.markercluster',
+      'leaflet.vectorgrid',
+      '@vue-leaflet/vue-leaflet',
+    ]
+  },
   server: {
     port: 8888,
     proxy: {

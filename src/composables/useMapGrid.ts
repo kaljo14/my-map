@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import L from 'leaflet';
 import 'leaflet.vectorgrid';
-import auth from '@/services/auth';
+import TilesAPI from '@/api/tiles';
 
 export function useMapGrid() {
   const showGrid = ref(false);
@@ -62,16 +62,10 @@ export function useMapGrid() {
     if (showGrid.value) {
       if (!gridLayer) {
         // @ts-ignore - leaflet.vectorgrid types might be missing
-        const tileServerUrl = import.meta.env.VITE_TILE_SERVER_URL || '/api/tiles';
+        const tileUrl = TilesAPI.getTileUrlTemplate();
+        const headers = TilesAPI.getAuthHeaders();
 
-        // Get JWT token for authentication
-        const token = auth.getToken();
-        const headers: Record<string, string> = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
-        gridLayer = L.vectorGrid.protobuf(`${tileServerUrl}/data/grid/{z}/{x}/{y}.pbf`, {
+        gridLayer = L.vectorGrid.protobuf(tileUrl, {
           pane: 'overlayPane',
           vectorTileLayerStyles: {
             grid: function (properties: any) {

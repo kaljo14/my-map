@@ -1,5 +1,5 @@
 import { ref } from 'vue';
-import httpClient from '@/services/httpClient';
+import httpClient from '@/api/httpClient';
 import type { Barbershop } from './useBarbershops';
 
 export interface ShopLocation {

@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import L from 'leaflet';
 import 'leaflet.vectorgrid';
-import auth from '@/services/auth';
+import TilesAPI from '@/api/tiles';
 
 export function useAnalysisGrid() {
     const showAnalysisGrid = ref(false);
@@ -60,10 +60,7 @@ export function useAnalysisGrid() {
         if (labelLayer) return; // Already fetched
 
         try {
-            const response = await fetch('http://localhost:8001/analysis/grid');
-            if (!response.ok) throw new Error('Failed to fetch grid labels');
-
-            const data = await response.json();
+            const data = await TilesAPI.getGridLabels();
             labelLayer = L.layerGroup();
 
             L.geoJSON(data, {
@@ -105,16 +102,10 @@ export function useAnalysisGrid() {
             // 1. Show Vector Grid (Tiles)
             if (!densityLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                const tileServerUrl = import.meta.env.VITE_TILE_SERVER_URL || '/api/tiles';
+                const tileUrl = TilesAPI.getDensityTileUrlTemplate();
+                const headers = TilesAPI.getAuthHeaders();
 
-                // Get JWT token for authentication
-                const token = auth.getToken();
-                const headers: Record<string, string> = {};
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
-
-                densityLayer = L.vectorGrid.protobuf(`${tileServerUrl}/data/density/{z}/{x}/{y}.pbf`, {
+                densityLayer = L.vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
                     vectorTileLayerStyles: {
                         density: function (properties: any) {
