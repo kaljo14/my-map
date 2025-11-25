@@ -4,10 +4,8 @@
       v-if="!isMobile"
       :isAuthenticated="isAuthenticated"
       :userProfile="userProfile"
-      :showAnalysisGrid="showAnalysisGrid"
       @login="login"
       @logout="logout"
-      @toggleAnalysisGrid="toggleAnalysisGrid(mapInstance as any)"
     />
     
     <div class="content-wrapper">
@@ -61,8 +59,10 @@
           <l-control-layers />
           <MapControls 
             :showGrid="showGrid"
+            :showAnalysisGrid="showAnalysisGrid"
             :selectedThreshold="selectedThreshold"
             @toggleGrid="toggleGrid(mapInstance as any)"
+            @toggleAnalysisGrid="toggleAnalysisGrid(mapInstance as any)"
             @updateThreshold="updateThreshold"
           />
           <l-tile-layer

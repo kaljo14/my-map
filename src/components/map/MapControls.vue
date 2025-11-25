@@ -20,11 +20,20 @@
       <!-- Popover Menu -->
       <div v-if="menuOpen" class="popover-menu">
         <div class="menu-header">
-          <span class="menu-title">Population Grid</span>
-          <label class="switch">
-            <input type="checkbox" :checked="showGrid" @change="$emit('toggleGrid')">
-            <span class="slider round"></span>
-          </label>
+          <div class="header-row">
+            <span class="menu-title">Population Grid</span>
+            <label class="switch">
+              <input type="checkbox" :checked="showGrid" @change="$emit('toggleGrid')">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          <div class="header-row" style="margin-top: 12px;">
+            <span class="menu-title">Analysis Grid</span>
+            <label class="switch">
+              <input type="checkbox" :checked="showAnalysisGrid" @change="$emit('toggleAnalysisGrid')">
+              <span class="slider round"></span>
+            </label>
+          </div>
         </div>
 
         <div v-if="showGrid" class="menu-content">
@@ -60,11 +69,13 @@ import { ref } from 'vue';
 
 defineProps<{
   showGrid: boolean;
+  showAnalysisGrid: boolean;
   selectedThreshold: number;
 }>();
 
 const emit = defineEmits<{
   (e: 'toggleGrid'): void;
+  (e: 'toggleAnalysisGrid'): void;
   (e: 'updateThreshold', value: number): void;
 }>();
 
@@ -180,8 +191,15 @@ const vClickOutside = {
   background: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header-row {
+  display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .menu-title {

@@ -5,16 +5,7 @@
       <h1 class="app-title">Barbershop Analysis</h1>
     </div>
 
-    <div class="header-center">
-      <button 
-        @click="console.log('AppHeader: Analysis Grid button clicked'); $emit('toggleAnalysisGrid')"
-        class="nav-btn"
-        :class="{ active: showAnalysisGrid }"
-      >
-        <span class="icon">🗺️</span>
-        Analysis Grid
-      </button>
-    </div>
+
     
     <div class="header-right">
       <div class="auth-controls">
@@ -38,14 +29,13 @@ import { defineProps, defineEmits } from 'vue';
 defineProps<{
   isAuthenticated: boolean;
   userProfile: any;
-  showAnalysisGrid?: boolean;
+
 }>();
 
 defineEmits<{
   (e: 'login'): void;
   (e: 'login'): void;
   (e: 'logout'): void;
-  (e: 'toggleAnalysisGrid'): void;
 }>();
 </script>
 
