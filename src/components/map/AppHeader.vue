@@ -7,7 +7,7 @@
 
     <div class="header-center">
       <button 
-        @click="$emit('toggleAnalysisGrid')"
+        @click="console.log('AppHeader: Analysis Grid button clicked'); $emit('toggleAnalysisGrid')"
         class="nav-btn"
         :class="{ active: showAnalysisGrid }"
       >

@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import L from 'leaflet';
-import 'leaflet.vectorgrid';
+
 import TilesAPI from '@/api/tiles';
 
 export function useMapGrid() {
@@ -55,7 +55,10 @@ export function useMapGrid() {
   const toggleGrid = (mapInstance: L.Map | null) => {
     showGrid.value = !showGrid.value;
 
-    if (!mapInstance) return;
+    if (!mapInstance) {
+      console.warn('toggleGrid: mapInstance is null');
+      return;
+    }
 
     mapRef = mapInstance;
 
@@ -65,7 +68,7 @@ export function useMapGrid() {
         const tileUrl = TilesAPI.getTileUrlTemplate();
         const headers = TilesAPI.getAuthHeaders();
 
-        gridLayer = L.vectorGrid.protobuf(tileUrl, {
+        gridLayer = (L as any).vectorGrid.protobuf(tileUrl, {
           pane: 'overlayPane',
           vectorTileLayerStyles: {
             grid: function (properties: any) {

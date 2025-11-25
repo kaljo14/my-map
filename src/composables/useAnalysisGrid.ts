@@ -1,6 +1,6 @@
 import { ref } from 'vue';
 import L from 'leaflet';
-import 'leaflet.vectorgrid';
+
 import TilesAPI from '@/api/tiles';
 
 export function useAnalysisGrid() {
@@ -96,7 +96,10 @@ export function useAnalysisGrid() {
     const toggleAnalysisGrid = async (mapInstance: L.Map | null) => {
         showAnalysisGrid.value = !showAnalysisGrid.value;
 
-        if (!mapInstance) return;
+        if (!mapInstance) {
+            console.warn('toggleAnalysisGrid: mapInstance is null');
+            return;
+        }
 
         if (showAnalysisGrid.value) {
             // 1. Show Vector Grid (Tiles)
@@ -105,7 +108,7 @@ export function useAnalysisGrid() {
                 const tileUrl = TilesAPI.getDensityTileUrlTemplate();
                 const headers = TilesAPI.getAuthHeaders();
 
-                densityLayer = L.vectorGrid.protobuf(tileUrl, {
+                densityLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
                     vectorTileLayerStyles: {
                         density: function (properties: any) {

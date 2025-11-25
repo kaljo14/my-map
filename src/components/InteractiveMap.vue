@@ -369,7 +369,7 @@ import {
   LLayerGroup,
 } from "@vue-leaflet/vue-leaflet";
 import L from "leaflet";
-import "leaflet.vectorgrid";
+
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
 import { baseLayers } from "@/stores/mapConfig";
@@ -439,8 +439,12 @@ const {
 
 const {
   showAnalysisGrid,
-  toggleAnalysisGrid
+  toggleAnalysisGrid: toggleAnalysisGridComposable
 } = useAnalysisGrid();
+
+const toggleAnalysisGrid = (map: L.Map | null) => {
+  toggleAnalysisGridComposable(map);
+};
 
 const selectedThreshold = ref(0);
 const updateThreshold = (value: number) => {
