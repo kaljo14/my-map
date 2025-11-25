@@ -53,6 +53,7 @@
           :zoom="zoom"
           :center="center"
           :use-global-leaflet="true"
+          :options="{ zoomControl: false }"
           @click="onMapClick"
           @ready="onMapReady"
         >
