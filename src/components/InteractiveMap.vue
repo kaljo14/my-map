@@ -378,7 +378,7 @@ import auth from "@/services/auth";
 
 // Composables
 import { useBarbershops } from "@/composables/useBarbershops";
-import { usePopulationGrid } from "@/composables/usePopulationGrid";
+import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useOpportunityZones } from "@/composables/useOpportunityZones";
 import { useShopManagement } from "@/composables/useShopManagement";
@@ -436,7 +436,7 @@ const {
   showPopulationGrid,
   togglePopulationGrid,
   updatePopulationGridFilter
-} = usePopulationGrid();
+} = usePopulationLayers();
 
 const {
   showAnalysisGrid,

@@ -3,16 +3,15 @@ import L from 'leaflet';
 
 import TilesAPI from '@/api/tiles';
 
-export function usePopulationGrid() {
+export function usePopulationLayers() {
     const showPopulationGrid = ref(false);
     const minPopulation = ref(0);
     let populationLayer: any = null;
     let labelLayer: L.LayerGroup | null = null;
-    let mapRef: L.Map | null = null;
     // Store labels by tile key to manage lifecycle
     const tileLabels: Record<string, L.Layer[]> = {};
 
-    // Color stops for population density
+    // Color stops for population density (matching useMapGrid style)
     const populationStops = [
         { value: 0, color: '#3288bd' },      // 0: Blue (Low)
         { value: 1000, color: '#66c2a5' },   // 1k: Greenish Cyan
@@ -56,11 +55,27 @@ export function usePopulationGrid() {
     };
 
     // Helper function to get color based on population
-    const getPopulationColor = (population: number): string => {
-        return interpolateColor(population, populationStops);
+    const getPopulationColor = (score: number): string => {
+        return interpolateColor(score, populationStops);
     };
 
-    const togglePopulationGrid = (mapInstance: any, forceState?: boolean) => {
+    let mapRef: L.Map | null = null;
+
+    const updatePopulationGridFilter = (threshold: number) => {
+        minPopulation.value = threshold;
+
+        // If grid is currently shown, refresh it to apply filter
+        if (showPopulationGrid.value && populationLayer && mapRef) {
+            // We need to remove and re-add the layer to force style update/re-render or at least re-eval of styles if we used a react style function.
+            // But since labels are generated on tileload, we need to basically reload tiles or filter labels dynamically.
+            // A simple remove/add usually works well enough for Leaflet layers to reset.
+            populationLayer.remove();
+            populationLayer = null;
+            togglePopulationGrid(mapRef, true);
+        }
+    };
+
+    const togglePopulationGrid = async (mapInstance: any, forceState?: boolean) => {
         if (forceState !== undefined) {
             showPopulationGrid.value = forceState;
         } else {
@@ -82,18 +97,34 @@ export function usePopulationGrid() {
                 labelLayer.addTo(mapInstance);
             }
 
+            // 1. Show Vector Grid (Tiles)
             if (!populationLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                const tileUrl = TilesAPI.getTileUrlTemplate();
+                // Use Density Tile URL to ensure identical visual quality/resolution (z14) 
+                // and fallback to estimated data if specific population columns are missing.
+                const tileUrl = TilesAPI.getDensityTileUrlTemplate();
                 const headers = TilesAPI.getAuthHeaders();
 
                 populationLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
                     vectorTileLayerStyles: {
-                        grid: function (properties: any) {
-                            const population = properties.T || 0;
+                        grid: function (properties: any) { // Note: The layer name inside density tiles is usually 'density' not 'grid'.
+                            // We need to check both or assume 'density' since we switched URL.
+                            // However, vectorTileLayerStyles needs the exact layer name.
+                            // useAnalysisGrid uses 'density'. 
+                            return {
+                                fillColor: 'transparent', // We override this below if we can match the layer
+                                fillOpacity: 0,
+                                stroke: false
+                            };
+                        },
+                        // We must target the correct layer name found in the PBF
+                        density: function (properties: any) {
+                            const malePop = properties.male_population || 0;
+                            // Fallback: estimate Total from Male if T is missing
+                            const population = properties.T || (malePop * 2) || 0;
 
-                            // Hide cells below minimum population threshold
+                            // Filter logic
                             if (population < minPopulation.value) {
                                 return {
                                     fillOpacity: 0,
@@ -114,7 +145,7 @@ export function usePopulationGrid() {
                     },
                     interactive: true,
                     getFeatureId: function (f: any) { return f.properties.GRD_ID || f.properties.id; },
-                    maxNativeZoom: 14,
+                    maxNativeZoom: 14, // Matches Analysis Grid
                     // Add fetchOptions to include JWT token in tile requests
                     fetchOptions: {
                         headers: headers
@@ -124,17 +155,18 @@ export function usePopulationGrid() {
                 // Handle tile loading to extract labels
                 populationLayer.on('tileload', (e: any) => {
                     const key = populationLayer._tileCoordsToKey(e.coords);
-                    // Access the internal vector tile data
-                    // Note: This relies on internal implementation details of L.vectorGrid
                     const vectorTile = populationLayer._vectorTiles[key];
 
-                    if (vectorTile && vectorTile.layers && vectorTile.layers.grid) {
-                        const layer = vectorTile.layers.grid;
+                    // Check for 'density' layer since we are using density tiles
+                    if (vectorTile && vectorTile.layers && (vectorTile.layers.density || vectorTile.layers.grid)) {
+                        const layer = vectorTile.layers.density || vectorTile.layers.grid;
                         const labels: L.Layer[] = [];
 
                         for (let i = 0; i < layer.length; i++) {
                             const feature = layer.feature(i);
-                            const population = feature.properties.T || 0;
+                            const props = feature.properties;
+                            const malePop = props.male_population || 0;
+                            const population = props.T || (malePop * 2) || 0;
 
                             // Only show labels for filtered features
                             if (population >= minPopulation.value) {
@@ -142,7 +174,7 @@ export function usePopulationGrid() {
                                 const geometry = feature.loadGeometry();
                                 if (!geometry || geometry.length === 0) continue;
 
-                                // Simple centroid calculation (average of points in the first ring)
+                                // Simple centroid calculation
                                 const ring = geometry[0];
                                 let x = 0, y = 0;
                                 for (const point of ring) {
@@ -152,8 +184,7 @@ export function usePopulationGrid() {
                                 x /= ring.length;
                                 y /= ring.length;
 
-                                // Convert tile coordinates to LatLng
-                                // Leaflet tiles are 256px, vector tiles usually 4096 extent
+                                // Convert tile coordinates
                                 const extent = layer.extent || 4096;
                                 const ratio = 256 / extent;
 
@@ -196,10 +227,16 @@ export function usePopulationGrid() {
 
                 populationLayer.on('click', function (e: any) {
                     const props = e.layer.properties;
-                    const total = props.T || 1; // Avoid division by zero
-                    const pctYouth = Math.round(((props.Y_LT15 || 0) / total) * 100);
-                    const pctWorking = Math.round(((props.Y15_64 || 0) / total) * 100);
-                    const pctSeniors = Math.round(((props.Y_GE65 || 0) / total) * 100);
+                    const malePop = props.male_population || 0;
+
+                    // Data Fallbacks
+                    const total = props.T || (malePop * 2) || 1;
+                    const male = props.M || malePop;
+                    const female = props.F || malePop; // Estimate
+
+                    const pctYouth = props.Y_LT15 ? Math.round((props.Y_LT15 / total) * 100) : 0;
+                    const pctWorking = props.Y15_64 ? Math.round((props.Y15_64 / total) * 100) : 0;
+                    const pctSeniors = props.Y_GE65 ? Math.round((props.Y_GE65 / total) * 100) : 0;
 
                     // Get the color for this population
                     const statusColor = getPopulationColor(total);
@@ -215,8 +252,8 @@ export function usePopulationGrid() {
                     ${total.toLocaleString()} <span style="font-size: 12px; font-weight: 400; color: #64748b;">Residents</span>
                   </div>
                   <div style="display: flex; gap: 12px; font-size: 13px; color: #475569;">
-                    <span title="Men">👨 ${(props.M || 0).toLocaleString()}</span>
-                    <span title="Women">👩 ${(props.F || 0).toLocaleString()}</span>
+                    <span title="Men">👨 ${male.toLocaleString()}</span>
+                    <span title="Women">👩 ${female.toLocaleString()}</span>
                   </div>
                 </div>
 
@@ -260,6 +297,7 @@ export function usePopulationGrid() {
                 });
             }
             (populationLayer as any).addTo(mapInstance as any);
+
         } else {
             if (populationLayer) {
                 (populationLayer as any).remove();
@@ -272,17 +310,6 @@ export function usePopulationGrid() {
                     delete tileLabels[key];
                 }
             }
-        }
-    };
-
-    const updatePopulationGridFilter = (threshold: number) => {
-        minPopulation.value = threshold;
-
-        // If grid is currently shown, refresh it
-        if (showPopulationGrid.value && populationLayer && mapRef) {
-            populationLayer.remove();
-            populationLayer = null;
-            togglePopulationGrid(mapRef, true);
         }
     };
 
