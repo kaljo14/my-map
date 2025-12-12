@@ -58,7 +58,7 @@ export function useAnalysisGrid() {
         return interpolateColor(score, densityStops);
     };
 
-    const toggleAnalysisGrid = async (mapInstance: L.Map | null) => {
+    const toggleAnalysisGrid = async (mapInstance: any) => {
         showAnalysisGrid.value = !showAnalysisGrid.value;
 
         if (!mapInstance) {

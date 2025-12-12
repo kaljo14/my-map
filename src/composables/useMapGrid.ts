@@ -4,9 +4,10 @@ import L from 'leaflet';
 import TilesAPI from '@/api/tiles';
 
 export function useMapGrid() {
-  const showGrid = ref(false);
+  const showPopulationGrid = ref(false);
   const minPopulation = ref(0);
-  let gridLayer: any = null;
+  let populationLayer: any = null;
+  let labelLayer: L.LayerGroup | null = null;
   let mapRef: L.Map | null = null;
 
   // Color stops for population density
@@ -52,27 +53,39 @@ export function useMapGrid() {
     return stops[0]!.color; // Fallback
   };
 
-  const toggleGrid = (mapInstance: L.Map | null, forceState?: boolean) => {
+  // Helper function to get color based on population
+  const getPopulationColor = (population: number): string => {
+    return interpolateColor(population, populationStops);
+  };
+
+  const togglePopulationGrid = (mapInstance: L.Map | null, forceState?: boolean) => {
     if (forceState !== undefined) {
-      showGrid.value = forceState;
+      showPopulationGrid.value = forceState;
     } else {
-      showGrid.value = !showGrid.value;
+      showPopulationGrid.value = !showPopulationGrid.value;
     }
 
     if (!mapInstance) {
-      console.warn('toggleGrid: mapInstance is null');
+      console.warn('togglePopulationGrid: mapInstance is null');
       return;
     }
 
     mapRef = mapInstance;
 
-    if (showGrid.value) {
-      if (!gridLayer) {
+    if (showPopulationGrid.value) {
+      // Initialize label layer if needed (though we don't have labels for population yet, keeping structure consistent)
+      if (!labelLayer) {
+        labelLayer = L.layerGroup().addTo(mapInstance);
+      } else {
+        labelLayer.addTo(mapInstance);
+      }
+
+      if (!populationLayer) {
         // @ts-ignore - leaflet.vectorgrid types might be missing
         const tileUrl = TilesAPI.getTileUrlTemplate();
         const headers = TilesAPI.getAuthHeaders();
 
-        gridLayer = (L as any).vectorGrid.protobuf(tileUrl, {
+        populationLayer = (L as any).vectorGrid.protobuf(tileUrl, {
           pane: 'overlayPane',
           vectorTileLayerStyles: {
             grid: function (properties: any) {
@@ -88,13 +101,13 @@ export function useMapGrid() {
               }
 
               return {
-                fillColor: interpolateColor(population, populationStops),
-                fillOpacity: 0.4,
+                fillColor: getPopulationColor(population),
+                fillOpacity: 0.6,
                 stroke: true,
                 fill: true,
                 color: 'white',
-                weight: 0.01 // Thinner border for better visualization
-              }
+                weight: 1
+              };
             }
           },
           interactive: true,
@@ -106,22 +119,25 @@ export function useMapGrid() {
           }
         });
 
-        gridLayer.on('click', function (e: any) {
+        populationLayer.on('click', function (e: any) {
           const props = e.layer.properties;
           const total = props.T || 1; // Avoid division by zero
           const pctYouth = Math.round(((props.Y_LT15 || 0) / total) * 100);
           const pctWorking = Math.round(((props.Y15_64 || 0) / total) * 100);
           const pctSeniors = Math.round(((props.Y_GE65 || 0) / total) * 100);
 
+          // Get the color for this population
+          const statusColor = getPopulationColor(total);
+
           L.popup()
             .setLatLng(e.latlng)
             .setContent(`
-              <div class="grid-popup" style="font-family: system-ui, sans-serif; min-width: 220px;">
+              <div class="population-popup" style="font-family: system-ui, sans-serif; min-width: 240px;">
                 <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 16px;">Grid Statistics</h3>
                 
-                <div style="margin-bottom: 16px; background: #f8fafc; padding: 8px; border-radius: 6px;">
+                <div style="margin-bottom: 16px; background: ${statusColor}15; padding: 10px; border-radius: 6px; border-left: 3px solid ${statusColor};">
                   <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
-                    ${props.T.toLocaleString()} <span style="font-size: 12px; font-weight: 400; color: #64748b;">Residents</span>
+                    ${total.toLocaleString()} <span style="font-size: 12px; font-weight: 400; color: #64748b;">Residents</span>
                   </div>
                   <div style="display: flex; gap: 12px; font-size: 13px; color: #475569;">
                     <span title="Men">👨 ${(props.M || 0).toLocaleString()}</span>
@@ -168,29 +184,33 @@ export function useMapGrid() {
             .openOn(mapInstance! as any);
         });
       }
-      (gridLayer as any).addTo(mapInstance as any);
+      (populationLayer as any).addTo(mapInstance as any);
     } else {
-      if (gridLayer) {
-        (gridLayer as any).remove();
+      if (populationLayer) {
+        (populationLayer as any).remove();
+      }
+      if (labelLayer) {
+        labelLayer.clearLayers();
+        labelLayer.remove();
       }
     }
   };
 
-  const updateGridFilter = (threshold: number) => {
+  const updatePopulationGridFilter = (threshold: number) => {
     minPopulation.value = threshold;
 
     // If grid is currently shown, refresh it
-    if (showGrid.value && gridLayer && mapRef) {
-      gridLayer.remove();
-      gridLayer = null;
-      toggleGrid(mapRef, true);
+    if (showPopulationGrid.value && populationLayer && mapRef) {
+      populationLayer.remove();
+      populationLayer = null;
+      togglePopulationGrid(mapRef, true);
     }
   };
 
   return {
-    showGrid,
+    showPopulationGrid,
     minPopulation,
-    toggleGrid,
-    updateGridFilter
+    togglePopulationGrid,
+    updatePopulationGridFilter
   };
 }

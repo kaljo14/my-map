@@ -5,7 +5,7 @@
       <button 
         @click="toggleMenu" 
         class="main-btn"
-        :class="{ active: menuOpen || showGrid }"
+        :class="{ active: menuOpen || showPopulationGrid }"
         title="Population Grid Settings"
       >
         <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -23,7 +23,7 @@
           <div class="header-row">
             <span class="menu-title">Population Grid</span>
             <label class="switch">
-              <input type="checkbox" :checked="showGrid" @change="$emit('toggleGrid')">
+              <input type="checkbox" :checked="showPopulationGrid" @change="$emit('togglePopulationGrid')">
               <span class="slider round"></span>
             </label>
           </div>
@@ -36,7 +36,7 @@
           </div>
         </div>
 
-        <div v-if="showGrid" class="menu-content">
+        <div v-if="showPopulationGrid" class="menu-content">
           <div class="filter-section">
             <span class="section-label">Density Filter</span>
             <div class="filter-options">
@@ -68,13 +68,13 @@ import { LControl } from "@vue-leaflet/vue-leaflet";
 import { ref } from 'vue';
 
 defineProps<{
-  showGrid: boolean;
+  showPopulationGrid: boolean;
   showAnalysisGrid: boolean;
   selectedThreshold: number;
 }>();
 
 const emit = defineEmits<{
-  (e: 'toggleGrid'): void;
+  (e: 'togglePopulationGrid'): void;
   (e: 'toggleAnalysisGrid'): void;
   (e: 'updateThreshold', value: number): void;
 }>();

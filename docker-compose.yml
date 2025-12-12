@@ -8,4 +8,5 @@ services:
       - PLACES_API_URL=http://host.docker.internal:8080/ # Use host.docker.internal to reach localhost from container
       - TILES_API_URL=http://host.docker.internal:4000/
       - KEYCLOAK_URL=http://localhost:8081
+      - ENABLE_AUTH=false # Set to true to enable Keycloak authentication
     restart: always
