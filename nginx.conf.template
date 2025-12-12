@@ -17,6 +17,7 @@ server {
         # Replace the placeholder in index.html with the actual environment variable
         # The ${KEYCLOAK_URL} will be replaced by envsubst before Nginx starts
         sub_filter '__KEYCLOAK_URL_PLACEHOLDER__' '${KEYCLOAK_URL}';
+        sub_filter '__ENABLE_AUTH_PLACEHOLDER__' '${ENABLE_AUTH}';
         sub_filter_once on;
     }
 

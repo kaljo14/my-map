@@ -59,11 +59,11 @@
         >
           <l-control-layers />
           <MapControls 
-            :showGrid="showGrid"
+            :showPopulationGrid="showPopulationGrid"
             :showAnalysisGrid="showAnalysisGrid"
             :selectedThreshold="selectedThreshold"
-            @toggleGrid="toggleGrid(mapInstance as any)"
-            @toggleAnalysisGrid="toggleAnalysisGrid(mapInstance as any)"
+            @togglePopulationGrid="handleTogglePopulationGrid"
+            @toggleAnalysisGrid="handleToggleAnalysisGrid"
             @updateThreshold="updateThreshold"
           />
           <l-tile-layer
@@ -378,7 +378,7 @@ import auth from "@/services/auth";
 
 // Composables
 import { useBarbershops } from "@/composables/useBarbershops";
-import { useMapGrid } from "@/composables/useMapGrid";
+import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useOpportunityZones } from "@/composables/useOpportunityZones";
 import { useShopManagement } from "@/composables/useShopManagement";
@@ -433,24 +433,34 @@ const {
 } = useBarbershops();
 
 const {
-  showGrid,
-  toggleGrid,
-  updateGridFilter
-} = useMapGrid();
+  showPopulationGrid,
+  togglePopulationGrid,
+  updatePopulationGridFilter
+} = usePopulationLayers();
 
 const {
   showAnalysisGrid,
   toggleAnalysisGrid: toggleAnalysisGridComposable
 } = useAnalysisGrid();
 
-const toggleAnalysisGrid = (map: L.Map | null) => {
-  toggleAnalysisGridComposable(map);
+const handleTogglePopulationGrid = () => {
+  if (showAnalysisGrid.value) {
+    toggleAnalysisGridComposable(mapInstance.value);
+  }
+  togglePopulationGrid(mapInstance.value);
+};
+
+const handleToggleAnalysisGrid = () => {
+  if (showPopulationGrid.value) {
+    togglePopulationGrid(mapInstance.value);
+  }
+  toggleAnalysisGridComposable(mapInstance.value);
 };
 
 const selectedThreshold = ref(0);
 const updateThreshold = (value: number) => {
   selectedThreshold.value = value;
-  updateGridFilter(value);
+  updatePopulationGridFilter(value);
 };
 
 const {

@@ -116,7 +116,7 @@
         @click="$emit('toggleOpportunityZones')" 
         :class="['opportunity-btn', { active: showOpportunityZones }]"
       >
-        {{ showOpportunityZones ? 'Hide' : 'Show' }} Opportunity Zones
+        {{ showOpportunityZones ? 'Hide' : 'Show' }} Opportunity Zones Still under work
       </button>
       <div v-if="showOpportunityZones" class="opportunity-count">
         {{ opportunityZonesCount }} potential locations found
@@ -124,7 +124,7 @@
     </div>
 
     <!-- Add Barbershop Section -->
-    <div class="opportunity-section">
+    <div class="opportunity-section" v-if="false">
       <h3>Add Barbershop</h3>
       <p class="opportunity-description">
         Click the button below to enable adding a new barbershop location by clicking on the map.
