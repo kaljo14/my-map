@@ -121,8 +121,6 @@ const vClickOutside = {
 
 <style scoped>
 .custom-control {
-  margin-right: 10px;
-  margin-top: 10px;
   pointer-events: auto;
 }
 
@@ -134,8 +132,8 @@ const vClickOutside = {
   background-color: #fff;
   border: 2px solid rgba(0,0,0,0.2);
   border-radius: 8px;
-  width: 44px;
-  height: 44px;
+  width: 50px;
+  height: 50px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -161,10 +159,9 @@ const vClickOutside = {
 }
 
 .icon {
-  width: 24px;
-  height: 24px;
+  width: 42px;
+  height: 42px;
   color: #64748b;
-  fill: #64748b;
   transition: all 0.2s;
 }
 
