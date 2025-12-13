@@ -10,12 +10,12 @@
     <div class="header-right">
       <div class="auth-controls">
         <button v-if="!isAuthenticated" @click="$emit('login')" class="auth-btn login">
-          Login
+          {{ $t('common.login') }}
         </button>
         <div v-else class="user-info">
           <span class="username">{{ userProfile?.username || 'User' }}</span>
           <button @click="$emit('logout')" class="auth-btn logout">
-            Logout
+            {{ $t('common.logout') }}
           </button>
         </div>
       </div>
@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
+
 
 defineProps<{
   isAuthenticated: boolean;

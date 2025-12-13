@@ -1,12 +1,12 @@
 <template>
   <div class="map-stats" :class="{ 'notch': !isMobile }">
     <div class="stat-item">
-      <span class="stat-label">{{ isMobile ? 'Shops:' : 'Total Barbershops:' }}</span>
+      <span class="stat-label">{{ isMobile ? $t('stats.shops') : $t('stats.totalBarbershops') }}</span>
       <span class="stat-value">{{ filteredCount }}</span>
     </div>
     <div class="stat-divider"></div>
     <div class="stat-item">
-      <span class="stat-label" v-if="!isMobile">Avg Rating:</span>
+      <span class="stat-label" v-if="!isMobile">{{ $t('stats.avgRating') }}</span>
       <span class="stat-value">
         <span class="star">★</span>
         {{ averageRating.toFixed(1) }}
@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
+
 
 defineProps<{
   filteredCount: number;

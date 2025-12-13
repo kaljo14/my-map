@@ -107,19 +107,19 @@
                       <div class="popup-rating">
                         <span class="stars">{{ getStars(shop.rating || 0) }}</span>
                         <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
+                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
                       </div>
                     </div>
                     <div class="edit-menu-container" v-if="isAuthenticated">
-                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
+                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
                         ⚙️
                       </button>
                       <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
                         <button @click="editBarbershop(shop)" class="dropdown-item">
-                          ✏️ Edit Info
+                          ✏️ {{ $t('map.popup.editInfo') }}
                         </button>
                         <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                          🗑️ Delete
+                          🗑️ {{ $t('common.delete') }}
                         </button>
                       </div>
                     </div>
@@ -127,44 +127,44 @@
 
                   <!-- Status Badge -->
                   <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                    {{ shop.is_open_now ? '🟢 Open Now' : '🔴 Closed' }}
+                    {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
                   </div>
 
                   <!-- Info Grid -->
                   <div class="popup-info">
                     <div class="info-row" v-if="shop.price_level">
-                      <strong>💰 Price:</strong> {{ '€'.repeat(shop.price_level) }}
+                      <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
                     </div>
                     <div class="info-row" v-if="shop.address">
-                      <strong>📍 Address:</strong> {{ shop.address }}
+                      <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
                     </div>
                     <div class="info-row" v-if="shop.formatted_phone_number">
-                      <strong>📞 Phone:</strong> 
+                      <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
                       <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
                     </div>
                     <div class="info-row" v-if="shop.opening_hours_text">
-                      <strong>🕒 Hours:</strong>
+                      <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
                       <div class="hours-list">
                         <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
                           {{ line }}
                         </div>
                         <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                          +{{ shop.opening_hours_text.split('\n').length - 3 }} more days
+                          +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
                         </div>
                       </div>
                     </div>
                     <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                      <strong>🏷️ Services:</strong> {{ shop.services.slice(0, 3).join(', ') }}
+                      <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
                     </div>
                   </div>
 
                   <!-- Action Buttons -->
                   <div class="popup-actions">
                     <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                      🌐 Website
+                      🌐 {{ $t('map.popup.website') }}
                     </a>
                     <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                      🗺️ Directions
+                      🗺️ {{ $t('map.popup.directions') }}
                     </a>
                   </div>
                 </div>
@@ -198,19 +198,19 @@
                       <div class="popup-rating">
                         <span class="stars">{{ getStars(shop.rating || 0) }}</span>
                         <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} reviews)</span>
+                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
                       </div>
                     </div>
                     <div class="edit-menu-container" v-if="isAuthenticated">
-                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" title="Edit">
+                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
                         ⚙️
                       </button>
                       <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
                         <button @click="editBarbershop(shop)" class="dropdown-item">
-                          ✏️ Edit Info
+                          ✏️ {{ $t('map.popup.editInfo') }}
                         </button>
                         <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                          🗑️ Delete
+                          🗑️ {{ $t('common.delete') }}
                         </button>
                       </div>
                     </div>
@@ -218,44 +218,44 @@
 
                   <!-- Status Badge -->
                   <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                    {{ shop.is_open_now ? '🟢 Open Now' : '🔴 Closed' }}
+                    {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
                   </div>
 
                   <!-- Info Grid -->
                   <div class="popup-info">
                     <div class="info-row" v-if="shop.price_level">
-                      <strong>💰 Price:</strong> {{ '€'.repeat(shop.price_level) }}
+                      <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
                     </div>
                     <div class="info-row" v-if="shop.address">
-                      <strong>📍 Address:</strong> {{ shop.address }}
+                      <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
                     </div>
                     <div class="info-row" v-if="shop.formatted_phone_number">
-                      <strong>📞 Phone:</strong> 
+                      <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
                       <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
                     </div>
                     <div class="info-row" v-if="shop.opening_hours_text">
-                      <strong>🕒 Hours:</strong>
+                      <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
                       <div class="hours-list">
                         <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
                           {{ line }}
                         </div>
                         <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                          +{{ shop.opening_hours_text.split('\n').length - 3 }} more days
+                          +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
                         </div>
                       </div>
                     </div>
                     <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                      <strong>🏷️ Services:</strong> {{ shop.services.slice(0, 3).join(', ') }}
+                      <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
                     </div>
                   </div>
 
                   <!-- Action Buttons -->
                   <div class="popup-actions">
                     <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                      🌐 Website
+                      🌐 {{ $t('map.popup.website') }}
                     </a>
                     <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                      🗺️ Directions
+                      🗺️ {{ $t('map.popup.directions') }}
                     </a>
                   </div>
                 </div>
@@ -273,24 +273,24 @@
               <l-icon :icon-anchor="[20, 40]" class-name="opportunity-marker">
                 <div class="opportunity-marker-content">
                   <div class="opportunity-icon">📍</div>
-                  <div class="opportunity-label">Opportunity</div>
+                  <div class="opportunity-label">{{ $t('map.opportunity.label') }}</div>
                 </div>
               </l-icon>
               <l-popup>
                 <div class="popup-content">
-                  <h3 class="popup-title opportunity-title">📍 Opportunity Zone</h3>
+                  <h3 class="popup-title opportunity-title">📍 {{ $t('map.opportunity.title') }}</h3>
                   <div class="popup-info">
                     <div class="info-row">
-                      <strong>No barbershops within:</strong> {{ searchRadius }}km
+                      <strong>{{ $t('map.opportunity.noBarbershopsWithin') }}:</strong> {{ searchRadius }}km
                     </div>
                     <div class="info-row">
-                      <strong>Nearest barbershop:</strong> {{ zone.nearestDistance.toFixed(2) }}km away
+                      <strong>{{ $t('map.opportunity.nearestBarbershop') }}:</strong> {{ zone.nearestDistance.toFixed(2) }}km away
                     </div>
                     <div class="info-row">
-                      <strong>Coordinates:</strong> {{ zone.lat.toFixed(4) }}, {{ zone.lng.toFixed(4) }}
+                      <strong>{{ $t('map.opportunity.coordinates') }}:</strong> {{ zone.lat.toFixed(4) }}, {{ zone.lng.toFixed(4) }}
                     </div>
                     <div class="opportunity-note">
-                      💡 This area has low competition and could be a good location for a new barbershop!
+                      💡 {{ $t('map.opportunity.note') }}
                     </div>
                   </div>
                 </div>
