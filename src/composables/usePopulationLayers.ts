@@ -108,7 +108,7 @@ export function usePopulationLayers() {
                 populationLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
                     vectorTileLayerStyles: {
-                        grid: function (properties: any) { // Note: The layer name inside density tiles is usually 'density' not 'grid'.
+                        grid: function (_properties: any) { // Note: The layer name inside density tiles is usually 'density' not 'grid'.
                             // We need to check both or assume 'density' since we switched URL.
                             // However, vectorTileLayerStyles needs the exact layer name.
                             // useAnalysisGrid uses 'density'. 

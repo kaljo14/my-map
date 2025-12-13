@@ -1,0 +1,88 @@
+{
+    "common": {
+        "loading": "Зареждане...",
+        "cancel": "Отказ",
+        "confirm": "Потвърди",
+        "delete": "Изтрий",
+        "save": "Запази",
+        "close": "Затвори",
+        "language": "Език",
+        "login": "Вход",
+        "logout": "Изход",
+        "map": "Карта",
+        "list": "Списък"
+    },
+    "stats": {
+        "totalBarbershops": "Общо бръснарници:",
+        "shops": "Обекти:",
+        "avgRating": "Ср. Оценка:"
+    },
+    "analysis": {
+        "settings": {
+            "title": "Настройки на картата",
+            "showBarbershops": "Покажи бръснарници",
+            "enableClustering": "Включи групиране"
+        },
+        "filters": {
+            "title": "Филтри",
+            "reviews": "Отзиви (мин):",
+            "rating": "Оценка (мин):",
+            "priceRange": "Ценови диапазон:",
+            "services": "Услуги:",
+            "reset": "Изчисти филтрите"
+        },
+        "opportunity": {
+            "title": "Зони на възможност",
+            "description": "Намерете локации без бръснарници в радиус от {radius}km",
+            "searchRadius": "Радиус на търсене (km):",
+            "show": "Покажи",
+            "hide": "Скрий",
+            "count": "{count} потенциални локации намерени"
+        },
+        "distribution": {
+            "title": "Разпределение на цените"
+        }
+    },
+    "map": {
+        "controls": {
+            "title": "Контроли на картата",
+            "populationGrid": "Мрежа население",
+            "analysisGrid": "Анализ мрежа",
+            "configure": "Конфигуриране",
+            "densityFilter": "Филтър гъстота",
+            "enableGridMessage": "Включете мрежата, за да видите данни за гъстотата на населението и опциите за филтриране."
+        },
+        "filters": {
+            "allAreas": "Всички райони",
+            "residents1k": "1,000+ Жители",
+            "residents5k": "5,000+ Жители",
+            "residents10k": "10,000+ Жители",
+            "residents15k": "15,000+ Жители",
+            "residents20k": "20,000+ Жители",
+            "residents24k": "24,000+ Жители"
+        },
+        "popup": {
+            "openNow": "Отворено",
+            "closed": "Затворено",
+            "price": "Цена",
+            "address": "Адрес",
+            "phone": "Телефон",
+            "hours": "Работно време",
+            "services": "Услуги",
+            "website": "Уебсайт",
+            "directions": "Упътване",
+            "edit": "Редактиране",
+            "editInfo": "Редактирай инфо",
+            "reviews": "отзива",
+            "moreDays": "още дни"
+        },
+        "opportunity": {
+            "title": "Зона на възможност",
+            "label": "Възможност",
+            "noBarbershopsWithin": "Няма бръснарници в радиус от",
+            "nearestBarbershop": "Най-близка бръснарница",
+            "coordinates": "Координати",
+            "note": "Тази зона има ниска конкуренция и може да бъде добра локация за нова бръснарница!"
+        }
+    }
+}

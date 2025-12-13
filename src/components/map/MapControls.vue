@@ -20,15 +20,18 @@
       <!-- Popover Menu -->
       <div v-if="menuOpen" class="popover-menu">
         <div class="menu-header">
-          <div class="header-row">
-            <span class="menu-title">Population Grid</span>
+           <div class="header-row">
+            <span class="menu-title">{{ $t('map.controls.title') }}</span>
+           </div>
+          <div class="header-row" style="margin-top: 12px;">
+            <span class="menu-title">{{ $t('map.controls.populationGrid') }}</span>
             <label class="switch">
               <input type="checkbox" :checked="showPopulationGrid" @change="$emit('togglePopulationGrid')">
               <span class="slider round"></span>
             </label>
           </div>
           <div class="header-row" style="margin-top: 12px;">
-            <span class="menu-title">Analysis Grid</span>
+            <span class="menu-title">{{ $t('map.controls.analysisGrid') }}</span>
             <label class="switch">
               <input type="checkbox" :checked="showAnalysisGrid" @change="$emit('toggleAnalysisGrid')">
               <span class="slider round"></span>
@@ -38,7 +41,7 @@
 
         <div v-if="showPopulationGrid" class="menu-content">
           <div class="filter-section">
-            <span class="section-label">Density Filter</span>
+            <span class="section-label">{{ $t('map.controls.densityFilter') }}</span>
             <div class="filter-options">
               <button
                 v-for="option in filterOptions"
@@ -56,7 +59,7 @@
         </div>
         
         <div v-else class="menu-placeholder">
-          <p>Enable the grid to see population density data and filter options.</p>
+          <p>{{ $t('map.controls.enableGridMessage') }}</p>
         </div>
       </div>
     </div>
@@ -65,7 +68,8 @@
 
 <script setup lang="ts">
 import { LControl } from "@vue-leaflet/vue-leaflet";
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 defineProps<{
   showPopulationGrid: boolean;
@@ -81,15 +85,17 @@ const emit = defineEmits<{
 
 const menuOpen = ref(false);
 
-const filterOptions = [
-  { value: 0, label: 'All Areas', color: '#3288bd' },
-  { value: 1000, label: '1,000+ Residents', color: '#66c2a5' },
-  { value: 5000, label: '5,000+ Residents', color: '#abdda4' },
-  { value: 10000, label: '10,000+ Residents', color: '#e6f598' },
-  { value: 15000, label: '15,000+ Residents', color: '#fee08b' },
-  { value: 20000, label: '20,000+ Residents', color: '#fdae61' },
-  { value: 24000, label: '24,000+ Residents', color: '#f46d43' }
-];
+const { t } = useI18n();
+
+const filterOptions = computed(() => [
+  { value: 0, label: t('map.filters.allAreas'), color: '#3288bd' },
+  { value: 1000, label: t('map.filters.residents1k'), color: '#66c2a5' },
+  { value: 5000, label: t('map.filters.residents5k'), color: '#abdda4' },
+  { value: 10000, label: t('map.filters.residents10k'), color: '#e6f598' },
+  { value: 15000, label: t('map.filters.residents15k'), color: '#fee08b' },
+  { value: 20000, label: t('map.filters.residents20k'), color: '#fdae61' },
+  { value: 24000, label: t('map.filters.residents24k'), color: '#f46d43' }
+]);
 
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value;

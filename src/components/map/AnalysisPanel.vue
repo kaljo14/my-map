@@ -2,7 +2,7 @@
   <div class="analysis-panel">
     <!-- Map Settings -->
     <div class="filters-section">
-      <h3>Map Settings</h3>
+      <h3>{{ $t('analysis.settings.title') }}</h3>
       <div class="checkbox-group">
         <label>
           <input 
@@ -10,7 +10,7 @@
             :checked="showBarbershops"
             @change="$emit('toggleShowBarbershops')"
           />
-          Show Barbershops
+           {{ $t('analysis.settings.showBarbershops') }}
         </label>
         <label>
           <input 
@@ -19,17 +19,17 @@
             @change="$emit('toggleClustering')"
             :disabled="!showBarbershops"
           />
-          Enable Clustering
+          {{ $t('analysis.settings.enableClustering') }}
         </label>
       </div>
     </div>
 
     <!-- Filters -->
     <div class="filters-section">
-      <h3>Filters</h3>
+      <h3>{{ $t('analysis.filters.title') }}</h3>
       
       <div class="filter-group">
-        <label>Reviews (min):</label>
+        <label>{{ $t('analysis.filters.reviews') }}</label>
         <input 
           type="number" 
           min="0" 
@@ -41,7 +41,7 @@
       </div>
 
       <div class="filter-group">
-        <label>Rating (min):</label>
+        <label>{{ $t('analysis.filters.rating') }}</label>
         <input 
           type="range" 
           min="0" 
@@ -55,7 +55,7 @@
       </div>
 
       <div class="filter-group">
-        <label>Price Range:</label>
+        <label>{{ $t('analysis.filters.priceRange') }}</label>
         <div class="price-range">
           <input 
             type="number" 
@@ -76,7 +76,7 @@
       </div>
 
       <div class="filter-group">
-        <label>Services:</label>
+        <label>{{ $t('analysis.filters.services') }}</label>
         <div class="checkbox-group">
           <label v-for="service in availableServices" :key="service">
             <input 
@@ -90,17 +90,17 @@
         </div>
       </div>
 
-      <button @click="$emit('resetFilters')" class="reset-btn">Reset Filters</button>
+      <button @click="$emit('resetFilters')" class="reset-btn">{{ $t('analysis.filters.reset') }}</button>
     </div>
 
     <!-- Opportunity Zones -->
     <div class="opportunity-section">
-      <h3>Opportunity Zones</h3>
+      <h3>{{ $t('analysis.opportunity.title') }}</h3>
       <p class="opportunity-description">
-        Find locations with no barbershops within {{ searchRadius }}km radius
+        {{ $t('analysis.opportunity.description', { radius: searchRadius }) }}
       </p>
       <div class="filter-group">
-        <label>Search Radius (km):</label>
+        <label>{{ $t('analysis.opportunity.searchRadius') }}</label>
         <input 
           type="range" 
           min="1" 
@@ -116,10 +116,10 @@
         @click="$emit('toggleOpportunityZones')" 
         :class="['opportunity-btn', { active: showOpportunityZones }]"
       >
-        {{ showOpportunityZones ? 'Hide' : 'Show' }} Opportunity Zones Still under work
+        {{ showOpportunityZones ? $t('analysis.opportunity.hide') : $t('analysis.opportunity.show') }} {{ $t('analysis.opportunity.title') }}
       </button>
       <div v-if="showOpportunityZones" class="opportunity-count">
-        {{ opportunityZonesCount }} potential locations found
+        {{ $t('analysis.opportunity.count', { count: opportunityZonesCount }) }}
       </div>
     </div>
 
@@ -142,7 +142,7 @@
 
     <!-- Price Distribution -->
     <div class="distribution-section">
-      <h3>Price Distribution</h3>
+      <h3>{{ $t('analysis.distribution.title') }}</h3>
       <div class="price-bars">
         <div 
           v-for="(count, range) in priceDistribution" 
@@ -160,11 +160,20 @@
         </div>
       </div>
     </div>
+
+    <!-- Language Settings -->
+    <div class="distribution-section">
+      <h3>{{ $t('common.language') }}</h3>
+      <div style="padding: 0 12px;">
+        <LanguageSwitcher />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
+import LanguageSwitcher from '../LanguageSwitcher.vue';
 
 const props = defineProps<{
   isMobile: boolean;
