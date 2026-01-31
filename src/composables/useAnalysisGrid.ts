@@ -77,7 +77,7 @@ export function useAnalysisGrid() {
             // 1. Show Vector Grid (Tiles)
             if (!densityLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                const tileUrl = TilesAPI.getDensityTileUrlTemplate();
+                const tileUrl = `${TilesAPI.getBaseUrl()}/data/density/{z}/{x}/{y}.pbf`;
                 const headers = TilesAPI.getAuthHeaders();
 
                 densityLayer = (L as any).vectorGrid.protobuf(tileUrl, {

@@ -100,29 +100,16 @@ export function usePopulationLayers() {
             // 1. Show Vector Grid (Tiles)
             if (!populationLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                // Use Density Tile URL to ensure identical visual quality/resolution (z14) 
-                // and fallback to estimated data if specific population columns are missing.
-                const tileUrl = TilesAPI.getDensityTileUrlTemplate();
+                // Use Population Grid Tile URL from the tileserver's /data/population_grid endpoint
+                const tileUrl = TilesAPI.getPopulationGridTileUrlTemplate();
                 const headers = TilesAPI.getAuthHeaders();
 
                 populationLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
                     vectorTileLayerStyles: {
-                        grid: function (_properties: any) { // Note: The layer name inside density tiles is usually 'density' not 'grid'.
-                            // We need to check both or assume 'density' since we switched URL.
-                            // However, vectorTileLayerStyles needs the exact layer name.
-                            // useAnalysisGrid uses 'density'. 
-                            return {
-                                fillColor: 'transparent', // We override this below if we can match the layer
-                                fillOpacity: 0,
-                                stroke: false
-                            };
-                        },
-                        // We must target the correct layer name found in the PBF
-                        density: function (properties: any) {
-                            const malePop = properties.male_population || 0;
-                            // Fallback: estimate Total from Male if T is missing
-                            const population = properties.T || (malePop * 2) || 0;
+                        population_grid: function (properties: any) {
+                            // New schema: population
+                            const population = properties.population || 0;
 
                             // Filter logic
                             if (population < minPopulation.value) {
@@ -144,7 +131,7 @@ export function usePopulationLayers() {
                         }
                     },
                     interactive: true,
-                    getFeatureId: function (f: any) { return f.properties.GRD_ID || f.properties.id; },
+                    getFeatureId: function (f: any) { return f.properties.grid_id || f.properties.id; },
                     maxNativeZoom: 14, // Matches Analysis Grid
                     // Add fetchOptions to include JWT token in tile requests
                     fetchOptions: {
@@ -157,16 +144,16 @@ export function usePopulationLayers() {
                     const key = populationLayer._tileCoordsToKey(e.coords);
                     const vectorTile = populationLayer._vectorTiles[key];
 
-                    // Check for 'density' layer since we are using density tiles
-                    if (vectorTile && vectorTile.layers && (vectorTile.layers.density || vectorTile.layers.grid)) {
-                        const layer = vectorTile.layers.density || vectorTile.layers.grid;
+                    // Check for 'population_grid' layer
+                    if (vectorTile && vectorTile.layers && vectorTile.layers.population_grid) {
+                        const layer = vectorTile.layers.population_grid;
                         const labels: L.Layer[] = [];
 
                         for (let i = 0; i < layer.length; i++) {
                             const feature = layer.feature(i);
                             const props = feature.properties;
-                            const malePop = props.male_population || 0;
-                            const population = props.T || (malePop * 2) || 0;
+                            // New schema: population
+                            const population = props.population || 0;
 
                             // Only show labels for filtered features
                             if (population >= minPopulation.value) {
@@ -227,16 +214,20 @@ export function usePopulationLayers() {
 
                 populationLayer.on('click', function (e: any) {
                     const props = e.layer.properties;
-                    const malePop = props.male_population || 0;
 
-                    // Data Fallbacks
-                    const total = props.T || (malePop * 2) || 1;
-                    const male = props.M || malePop;
-                    const female = props.F || malePop; // Estimate
+                    // New Data Schema Mapping
+                    const total = props.population || 0;
+                    const male = props.male_population || 0;
+                    const female = props.female_population || 0;
 
-                    const pctYouth = props.Y_LT15 ? Math.round((props.Y_LT15 / total) * 100) : 0;
-                    const pctWorking = props.Y15_64 ? Math.round((props.Y15_64 / total) * 100) : 0;
-                    const pctSeniors = props.Y_GE65 ? Math.round((props.Y_GE65 / total) * 100) : 0;
+                    // Age groups
+                    const youth = props.pop_youth || 0;
+                    const adult = props.pop_adult || 0;
+                    const senior = props.pop_senior || 0;
+
+                    const pctYouth = total > 0 ? Math.round((youth / total) * 100) : 0;
+                    const pctWorking = total > 0 ? Math.round((adult / total) * 100) : 0;
+                    const pctSeniors = total > 0 ? Math.round((senior / total) * 100) : 0;
 
                     // Get the color for this population
                     const statusColor = getPopulationColor(total);
@@ -246,6 +237,7 @@ export function usePopulationLayers() {
                         .setContent(`
               <div class="population-popup" style="font-family: system-ui, sans-serif; min-width: 240px;">
                 <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 16px;">Grid Statistics</h3>
+                <div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">ID: ${props.grid_id || 'N/A'}</div>
                 
                 <div style="margin-bottom: 16px; background: ${statusColor}15; padding: 10px; border-radius: 6px; border-left: 3px solid ${statusColor};">
                   <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
@@ -262,8 +254,8 @@ export function usePopulationLayers() {
                 <!-- Youth -->
                 <div style="margin-bottom: 8px;">
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
-                    <span>Youth (<15)</span>
-                    <span style="font-weight: 600;">${(props.Y_LT15 || 0).toLocaleString()} (${pctYouth}%)</span>
+                    <span>Youth (0-14)</span>
+                    <span style="font-weight: 600;">${youth.toLocaleString()} (${pctYouth}%)</span>
                   </div>
                   <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
                     <div style="width: ${pctYouth}%; background: #4ade80; height: 100%;"></div>
@@ -273,8 +265,8 @@ export function usePopulationLayers() {
                 <!-- Working Age -->
                 <div style="margin-bottom: 8px;">
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
-                    <span>Working (15-64)</span>
-                    <span style="font-weight: 600;">${(props.Y15_64 || 0).toLocaleString()} (${pctWorking}%)</span>
+                    <span>Adult (15-64)</span>
+                    <span style="font-weight: 600;">${adult.toLocaleString()} (${pctWorking}%)</span>
                   </div>
                   <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
                     <div style="width: ${pctWorking}%; background: #60a5fa; height: 100%;"></div>
@@ -284,8 +276,8 @@ export function usePopulationLayers() {
                 <!-- Seniors -->
                 <div>
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
-                    <span>Seniors (65+)</span>
-                    <span style="font-weight: 600;">${(props.Y_GE65 || 0).toLocaleString()} (${pctSeniors}%)</span>
+                    <span>Senior (65+)</span>
+                    <span style="font-weight: 600;">${senior.toLocaleString()} (${pctSeniors}%)</span>
                   </div>
                   <div style="background: #e2e8f0; height: 6px; border-radius: 3px; overflow: hidden;">
                     <div style="width: ${pctSeniors}%; background: #f472b6; height: 100%;"></div>
