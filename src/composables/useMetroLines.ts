@@ -66,13 +66,13 @@ export function useMetroLines() {
                         zIndex: Z_INDEXES[lineId], // Explicit Z-Index
                         fetchOptions: { headers },
                         minZoom: 0,
-                        maxZoom: 14,
+                        maxZoom: 18, // Lines remain visible up to zoom 18
                         // Bounds for Sofia, Bulgaria metro system
                         bounds: L.latLngBounds(
                             L.latLng(42.55, 23.15),  // Southwest
                             L.latLng(42.75, 23.50)   // Northeast
                         ),
-                        maxNativeZoom: 18,
+                        maxNativeZoom: 14, // Stop requesting new tiles after zoom 14, reuse zoom 14 tiles
                         tolerance: 3,
                         getFeatureId: function (feature: any) {
                             return feature.properties.id || feature.properties.stop_id;
