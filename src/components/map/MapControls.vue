@@ -37,6 +37,7 @@
               <span class="slider round"></span>
             </label>
           </div>
+
         </div>
 
         <div v-if="showPopulationGrid" class="menu-content">

@@ -25,6 +25,14 @@ class TilesAPI {
     }
 
     /**
+     * Gets the URL template for specific metro line vector tiles
+     * @param lineId - The ID of the metro line (e.g., 'M1', 'M2')
+     */
+    getMetroLineTileUrlTemplate(lineId: string): string {
+        return `${this.getBaseUrl()}/data/metro_line_${lineId}/{z}/{x}/{y}.pbf`;
+    }
+
+    /**
      * Gets authentication headers for tile requests
      */
     getAuthHeaders(): Record<string, string> {

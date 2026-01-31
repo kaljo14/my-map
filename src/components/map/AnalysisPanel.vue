@@ -21,6 +21,57 @@
           />
           {{ $t('analysis.settings.enableClustering') }}
         </label>
+        <label>
+          <input 
+            type="checkbox" 
+            :checked="showMetroVector"
+            @change="$emit('toggleMetroVector')"
+          />
+           Metro Vector Lines
+        </label>
+        
+        <!-- Individual Metro Lines -->
+        <div v-if="showMetroVector" class="nested-checkboxes">
+          <label 
+            v-for="line in metroLinesList" 
+            :key="line"
+            class="nested-label"
+          >
+            <input 
+              type="checkbox" 
+              :checked="activeMetroLines.includes(line)"
+              @change="$emit('toggleMetroLine', line)"
+            />
+            <span class="color-dot" :style="{ backgroundColor: metroColors[line] }"></span>
+            {{ line }}
+          </label>
+        </div>
+
+        <label>
+          <input 
+            type="checkbox" 
+            :checked="showMetroStops"
+            @change="$emit('toggleMetroStops')"
+          />
+           Metro Stops
+        </label>
+        
+        <!-- Individual Metro Stop Lines -->
+        <div v-if="showMetroStops" class="nested-checkboxes">
+          <label 
+            v-for="line in metroLinesList" 
+            :key="`stop-${line}`"
+            class="nested-label"
+          >
+            <input 
+              type="checkbox" 
+              :checked="activeStopLines.includes(line)"
+              @change="$emit('toggleStopLine', line)"
+            />
+            <span class="color-dot" :style="{ backgroundColor: metroColors[line] }"></span>
+            {{ line }}
+          </label>
+        </div>
       </div>
     </div>
 
@@ -75,53 +126,12 @@
         </div>
       </div>
 
-      <div class="filter-group">
-        <label>{{ $t('analysis.filters.services') }}</label>
-        <div class="checkbox-group">
-          <label v-for="service in availableServices" :key="service">
-            <input 
-              type="checkbox" 
-              :value="service" 
-              :checked="filters.services.includes(service)"
-              @change="toggleService(service)"
-            />
-            {{ service }}
-          </label>
-        </div>
-      </div>
+
 
       <button @click="$emit('resetFilters')" class="reset-btn">{{ $t('analysis.filters.reset') }}</button>
     </div>
 
-    <!-- Opportunity Zones -->
-    <div class="opportunity-section">
-      <h3>{{ $t('analysis.opportunity.title') }}</h3>
-      <p class="opportunity-description">
-        {{ $t('analysis.opportunity.description', { radius: searchRadius }) }}
-      </p>
-      <div class="filter-group">
-        <label>{{ $t('analysis.opportunity.searchRadius') }}</label>
-        <input 
-          type="range" 
-          min="1" 
-          max="5" 
-          step="0.5" 
-          :value="searchRadius"
-          @input="$emit('update:searchRadius', Number(($event.target as HTMLInputElement).value))"
-          class="slider"
-        />
-        <span class="filter-value">{{ searchRadius }}km</span>
-      </div>
-      <button 
-        @click="$emit('toggleOpportunityZones')" 
-        :class="['opportunity-btn', { active: showOpportunityZones }]"
-      >
-        {{ showOpportunityZones ? $t('analysis.opportunity.hide') : $t('analysis.opportunity.show') }} {{ $t('analysis.opportunity.title') }}
-      </button>
-      <div v-if="showOpportunityZones" class="opportunity-count">
-        {{ $t('analysis.opportunity.count', { count: opportunityZonesCount }) }}
-      </div>
-    </div>
+
 
     <!-- Add Barbershop Section -->
     <div class="opportunity-section" v-if="false">
@@ -140,26 +150,7 @@
 
 
 
-    <!-- Price Distribution -->
-    <div class="distribution-section">
-      <h3>{{ $t('analysis.distribution.title') }}</h3>
-      <div class="price-bars">
-        <div 
-          v-for="(count, range) in priceDistribution" 
-          :key="range"
-          class="price-bar"
-        >
-          <div class="bar-label">{{ range }}</div>
-          <div class="bar-container">
-            <div 
-              class="bar-fill" 
-              :style="{ width: `${(count / maxPriceCount) * 100}%` }"
-            ></div>
-            <span class="bar-count">{{ count }}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+
 
     <!-- Language Settings -->
     <div class="distribution-section">
@@ -172,7 +163,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
+
 import LanguageSwitcher from '../LanguageSwitcher.vue';
 
 const props = defineProps<{
@@ -185,24 +176,30 @@ const props = defineProps<{
     services: string[];
   };
   availableServices: string[];
-  searchRadius: number;
-  showOpportunityZones: boolean;
-  opportunityZonesCount: number;
+
   isAddShopMode: boolean;
-  priceDistribution: Record<string, number>;
-  maxPriceCount: number;
+
   showBarbershops: boolean;
   enableClustering: boolean;
+  showMetroVector: boolean;
+  activeMetroLines: string[];
+  showMetroStops: boolean;
+  activeStopLines: string[];
+  metroLinesList: string[];
+  metroColors: Record<string, string>;
 }>();
 
 const emit = defineEmits<{
   (e: 'update:filters', filters: any): void;
   (e: 'resetFilters'): void;
-  (e: 'update:searchRadius', radius: number): void;
-  (e: 'toggleOpportunityZones'): void;
+
   (e: 'toggleAddShopMode'): void;
   (e: 'toggleShowBarbershops'): void;
   (e: 'toggleClustering'): void;
+  (e: 'toggleMetroVector'): void;
+  (e: 'toggleMetroLine', line: string): void;
+  (e: 'toggleMetroStops'): void;
+  (e: 'toggleStopLine', line: string): void;
 }>();
 
 const updateFilter = (key: string, value: string | number) => {
@@ -214,15 +211,7 @@ const updateFilter = (key: string, value: string | number) => {
   emit('update:filters', newFilters);
 };
 
-const toggleService = (service: string) => {
-  const newFilters = { ...props.filters };
-  if (newFilters.services.includes(service)) {
-    newFilters.services = newFilters.services.filter(s => s !== service);
-  } else {
-    newFilters.services = [...newFilters.services, service];
-  }
-  emit('update:filters', newFilters);
-};
+
 </script>
 
 <style scoped>
@@ -262,7 +251,7 @@ const toggleService = (service: string) => {
 .stats-section h3,
 .filters-section h3,
 .distribution-section h3,
-.opportunity-section h3 {
+.distribution-section h3 {
   font-size: 0.875rem;
   margin-bottom: 16px;
   color: #94a3b8;
@@ -277,7 +266,7 @@ const toggleService = (service: string) => {
 .stats-section h3::before,
 .filters-section h3::before,
 .distribution-section h3::before,
-.opportunity-section h3::before {
+.distribution-section h3 {
   content: "";
   width: 3px;
   height: 16px;
@@ -492,59 +481,7 @@ const toggleService = (service: string) => {
   transform: translateY(0);
 }
 
-.opportunity-section {
-  margin: 0;
-  padding: 24px;
-  background: rgba(15, 23, 42, 0.2);
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
-}
 
-.opportunity-description {
-  font-size: 0.875rem;
-  color: #cbd5e0;
-  margin-bottom: 16px;
-  line-height: 1.5;
-}
-
-.opportunity-btn {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #10b981, #059669);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-  margin-bottom: 12px;
-}
-
-.opportunity-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
-}
-
-.opportunity-btn.active {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-}
-
-.opportunity-btn.active:hover {
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
-}
-
-.opportunity-count {
-  text-align: center;
-  padding: 10px;
-  background: rgba(16, 185, 129, 0.1);
-  border-radius: 6px;
-  color: #10b981;
-  font-weight: 600;
-  font-size: 0.9rem;
-  border: 1px solid rgba(16, 185, 129, 0.2);
-}
 
 .distribution-section {
   margin: 0;
@@ -553,50 +490,26 @@ const toggleService = (service: string) => {
   border-top: 1px solid rgba(148, 163, 184, 0.1);
 }
 
-.price-bars {
+
+.nested-checkboxes {
+  margin-left: 24px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(148, 163, 184, 0.2);
 }
 
-.price-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.nested-label {
+  font-size: 0.8rem !important;
+  padding: 4px !important;
 }
 
-.bar-label {
-  min-width: 70px;
-  font-size: 0.8rem;
-  color: #cbd5e0;
-  font-weight: 500;
-}
-
-.bar-container {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-  height: 28px;
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 6px;
-  padding: 2px;
-}
-
-.bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
-  border-radius: 4px;
-  transition: width 0.4s ease;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.bar-count {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #e2e8f0;
-  min-width: 35px;
-  text-align: right;
+.color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 </style>
