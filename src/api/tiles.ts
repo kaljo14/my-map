@@ -13,14 +13,15 @@ class TilesAPI {
      * Gets the URL template for vector tiles
      */
     getTileUrlTemplate(): string {
-        return `${this.getBaseUrl()}/data/grid/{z}/{x}/{y}.pbf`;
+        return `${this.getBaseUrl()}/data/density/{z}/{x}/{y}.pbf`;
     }
 
+
     /**
-     * Gets the URL template for density vector tiles
+     * Gets the URL template for population grid vector tiles
      */
-    getDensityTileUrlTemplate(): string {
-        return `${this.getBaseUrl()}/data/density/{z}/{x}/{y}.pbf`;
+    getPopulationGridTileUrlTemplate(): string {
+        return `${this.getBaseUrl()}/data/population_grid/{z}/{x}/{y}.pbf`;
     }
 
     /**
