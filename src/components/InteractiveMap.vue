@@ -20,12 +20,22 @@
 
           :showBarbershops="showBarbershops"
           :enableClustering="enableClustering"
+          :showMetroVector="showMetroVector"
+          :activeMetroLines="activeMetroLines"
+          :showMetroStops="showMetroStops"
+          :activeStopLines="activeStopLines"
+          :metroLinesList="METRO_LINES"
+          :metroColors="METRO_COLORS"
           @update:filters="filters = $event"
           @resetFilters="resetFilters"
 
           @toggleAddShopMode="toggleAddShopMode"
           @toggleShowBarbershops="showBarbershops = !showBarbershops"
           @toggleClustering="enableClustering = !enableClustering"
+          @toggleMetroVector="handleToggleMetroVector"
+          @toggleMetroLine="handleToggleMetroLine"
+          @toggleMetroStops="handleToggleMetroStops"
+          @toggleStopLine="handleToggleStopLine"
         />
         
         <!-- Sidebar Toggle Handle -->
@@ -73,6 +83,9 @@
           ></l-tile-layer>
 
           <!-- Analysis Grid Layer is now handled by the composable using vector tiles -->
+
+          <!-- Metro Lines Layer -->
+          <!-- Metro Lines Layer (Deprecated: Removed) -->
 
           <!-- Barbershops Layer (Clustered) -->
           <l-marker-cluster-group 
@@ -343,6 +356,8 @@ import auth from "@/services/auth";
 import { useBarbershops } from "@/composables/useBarbershops";
 import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
+import { useMetroLines } from "@/composables/useMetroLines";
+import { useMetroStops } from "@/composables/useMetroStops";
 
 import { useShopManagement } from "@/composables/useShopManagement";
 
@@ -403,6 +418,40 @@ const {
   showAnalysisGrid,
   toggleAnalysisGrid: toggleAnalysisGridComposable
 } = useAnalysisGrid();
+
+const {
+  showMetroVector,
+  toggleMetroVector,
+  activeMetroLines,
+  toggleMetroLine,
+  METRO_LINES,
+  METRO_COLORS
+} = useMetroLines();
+
+const {
+  showMetroStops,
+  activeStopLines,
+  toggleMetroStops,
+  toggleStopLine
+} = useMetroStops();
+
+const handleToggleMetroVector = () => {
+    toggleMetroVector(mapInstance.value);
+};
+
+const handleToggleMetroLine = (line: string) => {
+    toggleMetroLine(line, mapInstance.value);
+};
+
+const handleToggleMetroStops = () => {
+    toggleMetroStops(mapInstance.value);
+};
+
+const handleToggleStopLine = (line: string) => {
+    toggleStopLine(line, mapInstance.value);
+};
+
+
 
 const handleTogglePopulationGrid = () => {
   if (showAnalysisGrid.value) {
@@ -773,4 +822,68 @@ const getStars = (rating: number) => {
   background: #fef2f2;
   color: #dc2626;
 }
+
+/* Metro Stop Marker Styles */
+:deep(.metro-stop-marker) {
+  background: transparent !important;
+  border: none !important;
+}
+
+:deep(.metro-stop-icon) {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  border: 2px solid white;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+:deep(.metro-stop-icon:hover) {
+  transform: scale(1.2);
+}
+
+:deep(.metro-stop-inner) {
+  color: white;
+  font-weight: bold;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Metro Stop Popup Styles */
+:deep(.metro-stop-popup) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:deep(.metro-stop-header) {
+  padding-left: 12px;
+  margin-bottom: 8px;
+}
+
+:deep(.metro-stop-header h3) {
+  margin: 0 0 4px 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+:deep(.metro-stop-header .stop-name) {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: 600;
+}
+
+:deep(.metro-stop-info) {
+  padding: 8px 0 0 0;
+  border-top: 1px solid #e2e8f0;
+}
+
+:deep(.metro-stop-info small) {
+  color: #718096;
+  font-size: 0.75rem;
+}
 </style>
+

@@ -21,6 +21,57 @@
           />
           {{ $t('analysis.settings.enableClustering') }}
         </label>
+        <label>
+          <input 
+            type="checkbox" 
+            :checked="showMetroVector"
+            @change="$emit('toggleMetroVector')"
+          />
+           Metro Vector Lines
+        </label>
+        
+        <!-- Individual Metro Lines -->
+        <div v-if="showMetroVector" class="nested-checkboxes">
+          <label 
+            v-for="line in metroLinesList" 
+            :key="line"
+            class="nested-label"
+          >
+            <input 
+              type="checkbox" 
+              :checked="activeMetroLines.includes(line)"
+              @change="$emit('toggleMetroLine', line)"
+            />
+            <span class="color-dot" :style="{ backgroundColor: metroColors[line] }"></span>
+            {{ line }}
+          </label>
+        </div>
+
+        <label>
+          <input 
+            type="checkbox" 
+            :checked="showMetroStops"
+            @change="$emit('toggleMetroStops')"
+          />
+           Metro Stops
+        </label>
+        
+        <!-- Individual Metro Stop Lines -->
+        <div v-if="showMetroStops" class="nested-checkboxes">
+          <label 
+            v-for="line in metroLinesList" 
+            :key="`stop-${line}`"
+            class="nested-label"
+          >
+            <input 
+              type="checkbox" 
+              :checked="activeStopLines.includes(line)"
+              @change="$emit('toggleStopLine', line)"
+            />
+            <span class="color-dot" :style="{ backgroundColor: metroColors[line] }"></span>
+            {{ line }}
+          </label>
+        </div>
       </div>
     </div>
 
@@ -130,6 +181,12 @@ const props = defineProps<{
 
   showBarbershops: boolean;
   enableClustering: boolean;
+  showMetroVector: boolean;
+  activeMetroLines: string[];
+  showMetroStops: boolean;
+  activeStopLines: string[];
+  metroLinesList: string[];
+  metroColors: Record<string, string>;
 }>();
 
 const emit = defineEmits<{
@@ -139,6 +196,10 @@ const emit = defineEmits<{
   (e: 'toggleAddShopMode'): void;
   (e: 'toggleShowBarbershops'): void;
   (e: 'toggleClustering'): void;
+  (e: 'toggleMetroVector'): void;
+  (e: 'toggleMetroLine', line: string): void;
+  (e: 'toggleMetroStops'): void;
+  (e: 'toggleStopLine', line: string): void;
 }>();
 
 const updateFilter = (key: string, value: string | number) => {
@@ -430,4 +491,25 @@ const updateFilter = (key: string, value: string | number) => {
 }
 
 
+.nested-checkboxes {
+  margin-left: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding-left: 8px;
+  border-left: 2px solid rgba(148, 163, 184, 0.2);
+}
+
+.nested-label {
+  font-size: 0.8rem !important;
+  padding: 4px !important;
+}
+
+.color-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
 </style>
