@@ -15,18 +15,14 @@
           :isMobile="isMobile"
           :filters="filters"
           :availableServices="availableServices"
-          :searchRadius="searchRadius"
-          :showOpportunityZones="showOpportunityZones"
-          :opportunityZonesCount="opportunityZones.length"
+
           :isAddShopMode="isAddShopMode"
-          :priceDistribution="priceDistribution"
-          :maxPriceCount="maxPriceCount"
+
           :showBarbershops="showBarbershops"
           :enableClustering="enableClustering"
           @update:filters="filters = $event"
           @resetFilters="resetFilters"
-          @update:searchRadius="searchRadius = $event"
-          @toggleOpportunityZones="toggleOpportunityZones"
+
           @toggleAddShopMode="toggleAddShopMode"
           @toggleShowBarbershops="showBarbershops = !showBarbershops"
           @toggleClustering="enableClustering = !enableClustering"
@@ -263,40 +259,7 @@
             </l-marker>
           </l-layer-group>
 
-          <!-- Opportunity Zone Markers -->
-          <l-marker-cluster-group v-if="showOpportunityZones" :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }">
-            <l-marker
-              v-for="(zone, index) in opportunityZones"
-              :key="`zone-${index}`"
-              :lat-lng="[zone.lat, zone.lng]"
-            >
-              <l-icon :icon-anchor="[20, 40]" class-name="opportunity-marker">
-                <div class="opportunity-marker-content">
-                  <div class="opportunity-icon">📍</div>
-                  <div class="opportunity-label">{{ $t('map.opportunity.label') }}</div>
-                </div>
-              </l-icon>
-              <l-popup>
-                <div class="popup-content">
-                  <h3 class="popup-title opportunity-title">📍 {{ $t('map.opportunity.title') }}</h3>
-                  <div class="popup-info">
-                    <div class="info-row">
-                      <strong>{{ $t('map.opportunity.noBarbershopsWithin') }}:</strong> {{ searchRadius }}km
-                    </div>
-                    <div class="info-row">
-                      <strong>{{ $t('map.opportunity.nearestBarbershop') }}:</strong> {{ zone.nearestDistance.toFixed(2) }}km away
-                    </div>
-                    <div class="info-row">
-                      <strong>{{ $t('map.opportunity.coordinates') }}:</strong> {{ zone.lat.toFixed(4) }}, {{ zone.lng.toFixed(4) }}
-                    </div>
-                    <div class="opportunity-note">
-                      💡 {{ $t('map.opportunity.note') }}
-                    </div>
-                  </div>
-                </div>
-              </l-popup>
-            </l-marker>
-          </l-marker-cluster-group>
+
 
           <!-- Temporary Pin for New Shop -->
           <l-marker
@@ -380,7 +343,7 @@ import auth from "@/services/auth";
 import { useBarbershops } from "@/composables/useBarbershops";
 import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
-import { useOpportunityZones } from "@/composables/useOpportunityZones";
+
 import { useShopManagement } from "@/composables/useShopManagement";
 
 // Components
@@ -421,14 +384,12 @@ const onMapReady = (map: L.Map) => {
 
 // Use Composables
 const {
-  barbershops,
   filters,
   fetchBarbershops,
   availableServices,
   filteredBarbershops,
   averageRating,
-  priceDistribution,
-  maxPriceCount,
+
   resetFilters
 } = useBarbershops();
 
@@ -463,12 +424,7 @@ const updateThreshold = (value: number) => {
   updatePopulationGridFilter(value);
 };
 
-const {
-  searchRadius,
-  showOpportunityZones,
-  opportunityZones,
-  toggleOpportunityZones
-} = useOpportunityZones(barbershops);
+
 
 const {
   showShopModal,
