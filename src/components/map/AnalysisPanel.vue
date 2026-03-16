@@ -3,42 +3,50 @@
     <!-- Map Settings -->
     <div class="filters-section">
       <h3>{{ $t('analysis.settings.title') }}</h3>
-      <div class="checkbox-group">
-        <label v-for="pt in placeTypes" :key="pt.category">
-          <input
-            type="checkbox"
-            :checked="pt.visible"
-            @change="$emit('togglePlaceType', pt.category)"
-          />
-          {{ $t(`analysis.settings.${pt.labelKey}`) || pt.category }}
-        </label>
-        <label>
-          <input 
-            type="checkbox" 
-            :checked="enableClustering"
-            @change="$emit('toggleClustering')"
-            :disabled="!showBarbershops"
-          />
-          {{ $t('analysis.settings.enableClustering') }}
-        </label>
-        <label>
-          <input 
-            type="checkbox" 
-            :checked="showMetroVector"
-            @change="$emit('toggleMetroVector')"
-          />
-           Metro Vector Lines
-        </label>
-        
+
+      <!-- Place type toggle cards -->
+      <div class="layer-cards">
+        <button
+          v-for="pt in placeTypes"
+          :key="pt.category"
+          :class="['layer-card', { active: pt.visible }]"
+          @click="$emit('togglePlaceType', pt.category)"
+        >
+          <span class="layer-card-emoji">{{ pt.emoji }}</span>
+          <span class="layer-card-label">{{ $t(`analysis.settings.${pt.labelKey}`) || pt.category }}</span>
+          <span class="layer-card-indicator"></span>
+        </button>
+      </div>
+
+      <!-- Utility toggles -->
+      <div class="toggle-row-group">
+        <button
+          :class="['toggle-row', { active: enableClustering }]"
+          @click="$emit('toggleClustering')"
+        >
+          <span class="toggle-row-icon">⬡</span>
+          <span class="toggle-row-label">{{ $t('analysis.settings.enableClustering') }}</span>
+          <span class="toggle-pill" :class="{ on: enableClustering }"></span>
+        </button>
+
+        <button
+          :class="['toggle-row', { active: showMetroVector }]"
+          @click="$emit('toggleMetroVector')"
+        >
+          <span class="toggle-row-icon">🚇</span>
+          <span class="toggle-row-label">Metro Lines</span>
+          <span class="toggle-pill" :class="{ on: showMetroVector }"></span>
+        </button>
+
         <!-- Individual Metro Lines -->
         <div v-if="showMetroVector" class="nested-checkboxes">
-          <label 
-            v-for="line in metroLinesList" 
+          <label
+            v-for="line in metroLinesList"
             :key="line"
             class="nested-label"
           >
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               :checked="activeMetroLines.includes(line)"
               @change="$emit('toggleMetroLine', line)"
             />
@@ -47,24 +55,24 @@
           </label>
         </div>
 
-        <label>
-          <input 
-            type="checkbox" 
-            :checked="showMetroStops"
-            @change="$emit('toggleMetroStops')"
-          />
-           Metro Stops
-        </label>
-        
+        <button
+          :class="['toggle-row', { active: showMetroStops }]"
+          @click="$emit('toggleMetroStops')"
+        >
+          <span class="toggle-row-icon">📍</span>
+          <span class="toggle-row-label">Metro Stops</span>
+          <span class="toggle-pill" :class="{ on: showMetroStops }"></span>
+        </button>
+
         <!-- Individual Metro Stop Lines -->
         <div v-if="showMetroStops" class="nested-checkboxes">
-          <label 
-            v-for="line in metroLinesList" 
+          <label
+            v-for="line in metroLinesList"
             :key="`stop-${line}`"
             class="nested-label"
           >
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               :checked="activeStopLines.includes(line)"
               @change="$emit('toggleStopLine', line)"
             />
@@ -179,7 +187,7 @@ const props = defineProps<{
 
   isAddShopMode: boolean;
 
-  placeTypes: Array<{ category: string; labelKey: string; visible: boolean }>;
+  placeTypes: Array<{ category: string; emoji: string; labelKey: string; visible: boolean }>;
   enableClustering: boolean;
   showMetroVector: boolean;
   activeMetroLines: string[];
@@ -422,40 +430,150 @@ const updateFilter = (key: string, value: string | number) => {
   box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-height: 160px;
-  overflow-y: auto;
-  padding: 12px;
-  background: rgba(30, 41, 59, 0.6);
-  border-radius: 8px;
-  border: 1px solid rgba(148, 163, 184, 0.1);
+/* ── Place type layer cards ─────────────────────────────── */
+.layer-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 12px;
 }
 
-.checkbox-group label {
+.layer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(148, 163, 184, 0.15);
+  background: rgba(30, 41, 59, 0.5);
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.layer-card:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+  background: rgba(13, 148, 136, 0.08);
+  color: #94a3b8;
+}
+
+.layer-card.active {
+  border-color: #0d9488;
+  background: rgba(13, 148, 136, 0.15);
+  color: #e2e8f0;
+  box-shadow: 0 0 12px rgba(13, 148, 136, 0.2), inset 0 0 0 1px rgba(13, 148, 136, 0.1);
+}
+
+.layer-card-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+  transition: transform 0.2s;
+}
+
+.layer-card.active .layer-card-emoji {
+  transform: scale(1.1);
+}
+
+.layer-card-label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.layer-card-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.layer-card.active .layer-card-indicator {
+  background: linear-gradient(90deg, #0d9488, #0891b2);
+}
+
+/* ── Utility toggle rows ────────────────────────────────── */
+.toggle-row-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.toggle-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.875rem;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: #64748b;
   cursor: pointer;
-  margin-bottom: 0;
-  padding: 6px;
-  border-radius: 6px;
-  transition: background 0.2s;
-  color: #e2e8f0;
+  width: 100%;
+  text-align: left;
+  transition: all 0.2s;
+  font-size: 0.85rem;
 }
 
-.checkbox-group label:hover {
-  background: rgba(13, 148, 136, 0.1);
+.toggle-row:hover {
+  background: rgba(148, 163, 184, 0.06);
+  color: #94a3b8;
 }
 
-.checkbox-group input[type="checkbox"] {
-  cursor: pointer;
-  width: 18px;
+.toggle-row.active {
+  color: #cbd5e1;
+}
+
+.toggle-row-icon {
+  font-size: 1rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.toggle-row-label {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* iOS-style pill toggle */
+.toggle-pill {
+  width: 34px;
   height: 18px;
-  accent-color: #0d9488;
+  border-radius: 9px;
+  background: rgba(148, 163, 184, 0.2);
+  position: relative;
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+
+.toggle-pill::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #64748b;
+  transition: transform 0.25s, background 0.25s;
+}
+
+.toggle-pill.on {
+  background: rgba(13, 148, 136, 0.35);
+}
+
+.toggle-pill.on::after {
+  transform: translateX(16px);
+  background: #0d9488;
 }
 
 .reset-btn {

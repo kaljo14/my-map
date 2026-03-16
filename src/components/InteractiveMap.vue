@@ -251,6 +251,7 @@ const {
 const placeTypesForPanel = computed(() =>
   placeInstances.map(inst => ({
     category: inst.config.category,
+    emoji: inst.config.emoji,
     labelKey: inst.config.labelKey,
     visible: inst.visible,
   }))
