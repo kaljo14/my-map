@@ -15,6 +15,14 @@
         <label>
           <input 
             type="checkbox" 
+            :checked="showGyms"
+            @change="$emit('toggleShowGyms')"
+          />
+           {{ $t('analysis.settings.showGyms') || 'Show Gyms' }}
+        </label>
+        <label>
+          <input 
+            type="checkbox" 
             :checked="enableClustering"
             @change="$emit('toggleClustering')"
             :disabled="!showBarbershops"
@@ -180,6 +188,7 @@ const props = defineProps<{
   isAddShopMode: boolean;
 
   showBarbershops: boolean;
+  showGyms: boolean;
   enableClustering: boolean;
   showMetroVector: boolean;
   activeMetroLines: string[];
@@ -195,6 +204,7 @@ const emit = defineEmits<{
 
   (e: 'toggleAddShopMode'): void;
   (e: 'toggleShowBarbershops'): void;
+  (e: 'toggleShowGyms'): void;
   (e: 'toggleClustering'): void;
   (e: 'toggleMetroVector'): void;
   (e: 'toggleMetroLine', line: string): void;

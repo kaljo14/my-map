@@ -75,7 +75,7 @@ export function useMetroStops() {
     /**
      * Update map markers based on visibility settings
      */
-    const updateMapMarkers = (mapInstance: L.Map | null) => {
+    const updateMapMarkers = (mapInstance: any) => {
         if (!mapInstance) return;
 
         // Remove all existing markers
@@ -133,7 +133,7 @@ export function useMetroStops() {
     /**
      * Toggle metro stops visibility
      */
-    const toggleMetroStops = async (mapInstance: L.Map | null) => {
+    const toggleMetroStops = async (mapInstance: any) => {
         showMetroStops.value = !showMetroStops.value;
 
         // Fetch data if not already loaded
@@ -147,7 +147,7 @@ export function useMetroStops() {
     /**
      * Toggle individual line visibility
      */
-    const toggleStopLine = (lineId: string, mapInstance: L.Map | null) => {
+    const toggleStopLine = (lineId: string, mapInstance: any) => {
         if (activeStopLines.value.includes(lineId)) {
             activeStopLines.value = activeStopLines.value.filter(id => id !== lineId);
         } else {

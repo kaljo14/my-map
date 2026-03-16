@@ -47,6 +47,19 @@ class PlacesAPI {
 
         return await response.json();
     }
+
+    /**
+     * Fetches all gyms
+     */
+    async getGyms(): Promise<Barbershop[]> {
+        const response = await httpClient.get(`${API_CONFIG.PLACES_BASE_URL}/api/gyms`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    }
 }
 
 export default new PlacesAPI();

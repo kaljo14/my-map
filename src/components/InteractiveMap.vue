@@ -19,18 +19,20 @@
           :isAddShopMode="isAddShopMode"
 
           :showBarbershops="showBarbershops"
+          :showGyms="showGyms"
           :enableClustering="enableClustering"
           :showMetroVector="showMetroVector"
           :activeMetroLines="activeMetroLines"
           :showMetroStops="showMetroStops"
           :activeStopLines="activeStopLines"
-          :metroLinesList="METRO_LINES"
-          :metroColors="METRO_COLORS"
-          @update:filters="filters = $event"
+          :metroLinesList="metroLinesList"
+          :metroColors="metroColors"
+          @update:filters="handleFilterUpdate"
           @resetFilters="resetFilters"
 
           @toggleAddShopMode="toggleAddShopMode"
           @toggleShowBarbershops="showBarbershops = !showBarbershops"
+          @toggleShowGyms="showGyms = !showGyms"
           @toggleClustering="enableClustering = !enableClustering"
           @toggleMetroVector="handleToggleMetroVector"
           @toggleMetroLine="handleToggleMetroLine"
@@ -103,80 +105,12 @@
                 </div>
               </l-icon>
               <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <div class="popup-content enhanced">
-                  <!-- Photo Header -->
-                  <div v-if="shop.photo_url" class="popup-photo">
-                    <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
-                  </div>
-                  
-                  <!-- Title and Rating with Edit Button -->
-                  <div class="popup-header">
-                    <div class="popup-header-content">
-                      <h3 class="popup-title">{{ shop.name }}</h3>
-                      <div class="popup-rating">
-                        <span class="stars">{{ getStars(shop.rating || 0) }}</span>
-                        <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
-                      </div>
-                    </div>
-                    <div class="edit-menu-container" v-if="isAuthenticated">
-                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
-                        ⚙️
-                      </button>
-                      <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
-                        <button @click="editBarbershop(shop)" class="dropdown-item">
-                          ✏️ {{ $t('map.popup.editInfo') }}
-                        </button>
-                        <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                          🗑️ {{ $t('common.delete') }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Status Badge -->
-                  <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                    {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
-                  </div>
-
-                  <!-- Info Grid -->
-                  <div class="popup-info">
-                    <div class="info-row" v-if="shop.price_level">
-                      <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
-                    </div>
-                    <div class="info-row" v-if="shop.address">
-                      <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
-                    </div>
-                    <div class="info-row" v-if="shop.formatted_phone_number">
-                      <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
-                      <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-                    </div>
-                    <div class="info-row" v-if="shop.opening_hours_text">
-                      <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
-                      <div class="hours-list">
-                        <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
-                          {{ line }}
-                        </div>
-                        <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                          +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                      <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-                    </div>
-                  </div>
-
-                  <!-- Action Buttons -->
-                  <div class="popup-actions">
-                    <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                      🌐 {{ $t('map.popup.website') }}
-                    </a>
-                    <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                      🗺️ {{ $t('map.popup.directions') }}
-                    </a>
-                  </div>
-                </div>
+                <ShopPopup 
+                  :shop="shop" 
+                  :isAuthenticated="isAuthenticated"
+                  @edit="editBarbershop"
+                  @delete="confirmDelete"
+                />
               </l-popup>
             </l-marker>
           </l-marker-cluster-group>
@@ -194,85 +128,67 @@
                 </div>
               </l-icon>
               <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <div class="popup-content enhanced">
-                  <!-- Photo Header -->
-                  <div v-if="shop.photo_url" class="popup-photo">
-                    <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
-                  </div>
-                  
-                  <!-- Title and Rating with Edit Button -->
-                  <div class="popup-header">
-                    <div class="popup-header-content">
-                      <h3 class="popup-title">{{ shop.name }}</h3>
-                      <div class="popup-rating">
-                        <span class="stars">{{ getStars(shop.rating || 0) }}</span>
-                        <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
-                      </div>
-                    </div>
-                    <div class="edit-menu-container" v-if="isAuthenticated">
-                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
-                        ⚙️
-                      </button>
-                      <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
-                        <button @click="editBarbershop(shop)" class="dropdown-item">
-                          ✏️ {{ $t('map.popup.editInfo') }}
-                        </button>
-                        <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                          🗑️ {{ $t('common.delete') }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Status Badge -->
-                  <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                    {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
-                  </div>
-
-                  <!-- Info Grid -->
-                  <div class="popup-info">
-                    <div class="info-row" v-if="shop.price_level">
-                      <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
-                    </div>
-                    <div class="info-row" v-if="shop.address">
-                      <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
-                    </div>
-                    <div class="info-row" v-if="shop.formatted_phone_number">
-                      <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
-                      <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-                    </div>
-                    <div class="info-row" v-if="shop.opening_hours_text">
-                      <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
-                      <div class="hours-list">
-                        <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
-                          {{ line }}
-                        </div>
-                        <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                          +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                      <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-                    </div>
-                  </div>
-
-                  <!-- Action Buttons -->
-                  <div class="popup-actions">
-                    <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                      🌐 {{ $t('map.popup.website') }}
-                    </a>
-                    <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                      🗺️ {{ $t('map.popup.directions') }}
-                    </a>
-                  </div>
-                </div>
+                <ShopPopup 
+                  :shop="shop" 
+                  :isAuthenticated="isAuthenticated"
+                  @edit="editBarbershop"
+                  @delete="confirmDelete"
+                />
               </l-popup>
             </l-marker>
           </l-layer-group>
 
 
+
+
+          <!-- Gyms Layer (Clustered) -->
+          <l-marker-cluster-group 
+            v-if="showGyms && enableClustering" 
+            :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
+          >
+            <l-marker
+              v-for="gym in filteredGyms"
+              :key="gym.id"
+              :lat-lng="[gym.lat, gym.lng]"
+            >
+              <l-icon :icon-anchor="[20, 40]" class-name="gym-marker">
+                <div class="shop-marker-content gym-marker-content saved">
+                  🏋️
+                </div>
+              </l-icon>
+              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                <ShopPopup 
+                  :shop="gym" 
+                  :isAuthenticated="isAuthenticated"
+                  @edit="() => {}"
+                  @delete="() => {}"
+                />
+              </l-popup>
+            </l-marker>
+          </l-marker-cluster-group>
+
+          <!-- Gyms Layer (Non-Clustered) -->
+          <l-layer-group v-if="showGyms && !enableClustering">
+            <l-marker
+              v-for="gym in filteredGyms"
+              :key="gym.id"
+              :lat-lng="[gym.lat, gym.lng]"
+            >
+              <l-icon :icon-anchor="[20, 40]" class-name="gym-marker">
+                <div class="shop-marker-content gym-marker-content saved">
+                  🏋️
+                </div>
+              </l-icon>
+              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                <ShopPopup 
+                  :shop="gym" 
+                  :isAuthenticated="isAuthenticated"
+                  @edit="() => {}"
+                  @delete="() => {}"
+                />
+              </l-popup>
+            </l-marker>
+          </l-layer-group>
 
           <!-- Temporary Pin for New Shop -->
           <l-marker
@@ -335,7 +251,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
+import { useRoute } from "vue-router";
 import {
   LMap,
   LTileLayer,
@@ -350,6 +267,7 @@ import L from "leaflet";
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
 import { baseLayers } from "@/stores/mapConfig";
+import { useMapView } from "@/stores/mapViewStore";
 import auth from "@/services/auth";
 
 // Composables
@@ -359,6 +277,7 @@ import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
 
+import { useGyms } from "@/composables/useGyms";
 import { useShopManagement } from "@/composables/useShopManagement";
 
 // Components
@@ -369,15 +288,33 @@ import MapControls from "./map/MapControls.vue";
 import AppHeader from "./map/AppHeader.vue";
 import MapStats from "./map/MapStats.vue";
 import BottomNav from "./map/BottomNav.vue";
+import ShopPopup from "./map/ShopPopup.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
-const zoom = ref(12);
-const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
+const route = useRoute();
+
+// Map view state from store (with URL sync)
+const { mapCenter, mapZoom, initializeFromURL, updateURL } = useMapView();
+
+// Sync store with URL changes (back/forward or manual edit)
+watch(() => route.query, () => {
+  initializeFromURL();
+}, { deep: true, immediate: true });
+
+// Local refs for the map component (initialized after store sync)
+const zoom = ref(mapZoom.value);
+const center = ref(mapCenter.value);
+
+// Sync local refs with store updates
+watch(mapZoom, (newZoom) => { zoom.value = newZoom; });
+watch(mapCenter, (newCenter) => { center.value = newCenter; });
+
 const mapInstance = ref<L.Map | null>(null);
 const isSidebarOpen = ref(true);
 const isMobile = ref(false);
 const showBarbershops = ref(true);
+const showGyms = ref(false); // Default to false or true based on preference
 const enableClustering = ref(true);
 
 const checkMobile = () => {
@@ -391,10 +328,27 @@ onMounted(() => {
   
   window.addEventListener('resize', checkMobile);
   fetchBarbershops();
+  fetchGyms(); // Fetch gyms on mount
 });
 
 const onMapReady = (map: L.Map) => {
   mapInstance.value = map;
+  
+  // Sync URL when map view changes (debounced to avoid too many updates)
+  let updateTimeout: ReturnType<typeof setTimeout>;
+  map.on('moveend', () => {
+    clearTimeout(updateTimeout);
+    updateTimeout = setTimeout(() => {
+      const c = map.getCenter();
+      const z = map.getZoom();
+      
+      // Update store refs so everything else is in sync
+      mapCenter.value = [c.lat, c.lng];
+      mapZoom.value = z;
+      
+      updateURL(c.lat, c.lng, z);
+    }, 300); // Wait 300ms after user stops moving
+  });
 };
 
 // Use Composables
@@ -407,6 +361,12 @@ const {
 
   resetFilters
 } = useBarbershops();
+
+const {
+ gyms,
+ fetchGyms,
+ filteredGyms
+} = useGyms();
 
 const {
   showPopulationGrid,
@@ -448,8 +408,17 @@ const handleToggleMetroStops = () => {
 };
 
 const handleToggleStopLine = (line: string) => {
-    toggleStopLine(line, mapInstance.value);
+  toggleStopLine(line, mapInstance.value);
 };
+
+// Filter handlers
+const handleFilterUpdate = (newFilters: any) => {
+  filters.value = newFilters;
+};
+
+// Expose constants to template
+const metroLinesList = METRO_LINES;
+const metroColors = METRO_COLORS;
 
 
 
@@ -481,25 +450,19 @@ const {
   newShopName,
   userAddedShops,
   isAddShopMode,
-  activeEditMenu,
+
   showDeleteConfirm,
   shopToDelete,
   toggleAddShopMode,
   onMapClick,
   cancelAddShop,
   saveShop,
-  toggleEditMenu,
   editBarbershop,
   confirmDelete,
   cancelDelete,
   deleteBarbershop
 } = useShopManagement(fetchBarbershops);
 
-const getStars = (rating: number) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  return "★".repeat(fullStars) + (hasHalfStar ? "½" : "") + "☆".repeat(5 - fullStars - (hasHalfStar ? 1 : 0));
-};
 </script>
 
 <style scoped>
@@ -588,140 +551,6 @@ const getStars = (rating: number) => {
   transform: scale(1.2);
 }
 
-/* Popup Styles */
-.popup-content {
-  min-width: 250px;
-  max-width: 350px;
-}
-
-.popup-photo {
-  width: 100%;
-  height: 150px;
-  overflow: hidden;
-  border-radius: 8px 8px 0 0;
-  margin: -14px -20px 12px -20px;
-  position: relative;
-}
-
-.popup-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.popup-title {
-  margin: 0 0 4px 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1a202c;
-}
-
-.popup-rating {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.stars {
-  color: #f59e0b;
-  font-size: 1rem;
-}
-
-.rating-value {
-  font-weight: 700;
-  color: #4a5568;
-}
-
-.rating-count {
-  color: #718096;
-  font-size: 0.8rem;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge.open {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.popup-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.info-row {
-  font-size: 0.9rem;
-  color: #4a5568;
-  line-height: 1.4;
-}
-
-.info-row strong {
-  color: #2d3748;
-  font-weight: 600;
-}
-
-.hours-list {
-  margin-top: 4px;
-  padding-left: 8px;
-  border-left: 2px solid #e2e8f0;
-}
-
-.hours-line {
-  font-size: 0.85rem;
-  color: #718096;
-}
-
-.hours-more {
-  font-size: 0.8rem;
-  color: #a0aec0;
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.popup-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.action-btn {
-  flex: 1;
-  text-align: center;
-  padding: 8px;
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  color: #4a5568;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: #edf2f7;
-  color: #2d3748;
-}
 
 /* Opportunity Zone Styles */
 .opportunity-marker-content {
@@ -760,68 +589,6 @@ const getStars = (rating: number) => {
   border: 1px solid #d1fae5;
 }
 
-/* Edit Menu Styles */
-.edit-menu-container {
-  position: relative;
-}
-
-.edit-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.edit-btn:hover {
-  background: #f1f5f9;
-}
-
-.edit-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e2e8f0;
-  z-index: 1000;
-  min-width: 120px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.dropdown-item {
-  padding: 8px 12px;
-  text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #475569;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropdown-item:hover {
-  background: #f8fafc;
-  color: #1e293b;
-}
-
-.dropdown-item.delete {
-  color: #ef4444;
-  border-top: 1px solid #f1f5f9;
-}
-
-.dropdown-item.delete:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
 
 /* Metro Stop Marker Styles */
 :deep(.metro-stop-marker) {
