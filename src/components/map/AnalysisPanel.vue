@@ -4,21 +4,13 @@
     <div class="filters-section">
       <h3>{{ $t('analysis.settings.title') }}</h3>
       <div class="checkbox-group">
-        <label>
-          <input 
-            type="checkbox" 
-            :checked="showBarbershops"
-            @change="$emit('toggleShowBarbershops')"
+        <label v-for="pt in placeTypes" :key="pt.category">
+          <input
+            type="checkbox"
+            :checked="pt.visible"
+            @change="$emit('togglePlaceType', pt.category)"
           />
-           {{ $t('analysis.settings.showBarbershops') }}
-        </label>
-        <label>
-          <input 
-            type="checkbox" 
-            :checked="showGyms"
-            @change="$emit('toggleShowGyms')"
-          />
-           {{ $t('analysis.settings.showGyms') || 'Show Gyms' }}
+          {{ $t(`analysis.settings.${pt.labelKey}`) || pt.category }}
         </label>
         <label>
           <input 
@@ -187,8 +179,7 @@ const props = defineProps<{
 
   isAddShopMode: boolean;
 
-  showBarbershops: boolean;
-  showGyms: boolean;
+  placeTypes: Array<{ category: string; labelKey: string; visible: boolean }>;
   enableClustering: boolean;
   showMetroVector: boolean;
   activeMetroLines: string[];
@@ -203,8 +194,7 @@ const emit = defineEmits<{
   (e: 'resetFilters'): void;
 
   (e: 'toggleAddShopMode'): void;
-  (e: 'toggleShowBarbershops'): void;
-  (e: 'toggleShowGyms'): void;
+  (e: 'togglePlaceType', category: string): void;
   (e: 'toggleClustering'): void;
   (e: 'toggleMetroVector'): void;
   (e: 'toggleMetroLine', line: string): void;
@@ -280,7 +270,7 @@ const updateFilter = (key: string, value: string | number) => {
   content: "";
   width: 3px;
   height: 16px;
-  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  background: linear-gradient(180deg, #0d9488, #0891b2);
   border-radius: 2px;
 }
 
@@ -303,19 +293,19 @@ const updateFilter = (key: string, value: string | number) => {
   left: 0;
   right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+  background: linear-gradient(90deg, #0d9488, #0891b2, #f59e0b);
 }
 
 .stat-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.15);
+  border-color: rgba(13, 148, 136, 0.3);
+  box-shadow: 0 8px 20px rgba(13, 148, 136, 0.15);
 }
 
 .stat-value {
   font-size: 2.5rem;
   font-weight: 700;
-  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #f472b6 100%);
+  background: linear-gradient(135deg, #34d399 0%, #2dd4bf 50%, #f59e0b 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -367,35 +357,35 @@ const updateFilter = (key: string, value: string | number) => {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #0d9488, #0891b2);
   cursor: pointer;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.4);
   transition: all 0.2s;
 }
 
 .slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.6);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.6);
 }
 
 .slider::-moz-range-thumb {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #0d9488, #0891b2);
   cursor: pointer;
   border: none;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.4);
 }
 
 .filter-value {
   display: inline-block;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(139, 92, 246, 0.2));
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.2), rgba(8, 145, 178, 0.2));
   padding: 6px 14px;
   border-radius: 20px;
   font-weight: 600;
-  color: #a78bfa;
-  border: 1px solid rgba(167, 139, 250, 0.3);
+  color: #2dd4bf;
+  border: 1px solid rgba(45, 212, 191, 0.3);
   font-size: 0.875rem;
 }
 
@@ -427,9 +417,9 @@ const updateFilter = (key: string, value: string | number) => {
 
 .price-input:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #0d9488;
   background: rgba(30, 41, 59, 0.8);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .checkbox-group {
@@ -458,14 +448,14 @@ const updateFilter = (key: string, value: string | number) => {
 }
 
 .checkbox-group label:hover {
-  background: rgba(99, 102, 241, 0.1);
+  background: rgba(13, 148, 136, 0.1);
 }
 
 .checkbox-group input[type="checkbox"] {
   cursor: pointer;
   width: 18px;
   height: 18px;
-  accent-color: #6366f1;
+  accent-color: #0d9488;
 }
 
 .reset-btn {

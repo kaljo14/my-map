@@ -82,7 +82,7 @@ defineEmits<{
 }
 
 .nav-item.active {
-  color: #38bdf8;
+  color: #2dd4bf;
 }
 
 .nav-item:active {

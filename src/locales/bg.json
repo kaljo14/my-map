@@ -21,6 +21,8 @@
         "settings": {
             "title": "Настройки на картата",
             "showBarbershops": "Покажи бръснарници",
+            "showGyms": "Покажи фитнеси",
+            "showCarwashes": "Покажи автомивки",
             "enableClustering": "Включи групиране"
         },
         "filters": {

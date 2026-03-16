@@ -6,6 +6,7 @@ import TilesAPI from '@/api/tiles';
 export function usePopulationLayers() {
     const showPopulationGrid = ref(false);
     const minPopulation = ref(0);
+    const selectedThreshold = ref(0);
     let populationLayer: any = null;
     let labelLayer: L.LayerGroup | null = null;
     // Store labels by tile key to manage lifecycle
@@ -305,10 +306,17 @@ export function usePopulationLayers() {
         }
     };
 
+    const updateThreshold = (value: number) => {
+        selectedThreshold.value = value;
+        updatePopulationGridFilter(value);
+    };
+
     return {
         showPopulationGrid,
         minPopulation,
+        selectedThreshold,
         togglePopulationGrid,
-        updatePopulationGridFilter
+        updatePopulationGridFilter,
+        updateThreshold,
     };
 }

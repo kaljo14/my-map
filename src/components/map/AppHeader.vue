@@ -105,9 +105,9 @@ defineEmits<{
 }
 
 .nav-btn.active {
-  background: rgba(99, 102, 241, 0.2);
-  color: #818cf8;
-  border-color: #6366f1;
+  background: rgba(13, 148, 136, 0.2);
+  color: #2dd4bf;
+  border-color: #0d9488;
 }
 
 .nav-btn .icon {
@@ -130,14 +130,14 @@ defineEmits<{
 }
 
 .auth-btn.login {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #0d9488, #0891b2);
   color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
 }
 
 .auth-btn.login:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
 }
 
 .auth-btn.logout {

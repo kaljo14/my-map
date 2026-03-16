@@ -18,8 +18,7 @@
 
           :isAddShopMode="isAddShopMode"
 
-          :showBarbershops="showBarbershops"
-          :showGyms="showGyms"
+          :placeTypes="placeTypesForPanel"
           :enableClustering="enableClustering"
           :showMetroVector="showMetroVector"
           :activeMetroLines="activeMetroLines"
@@ -31,8 +30,7 @@
           @resetFilters="resetFilters"
 
           @toggleAddShopMode="toggleAddShopMode"
-          @toggleShowBarbershops="showBarbershops = !showBarbershops"
-          @toggleShowGyms="showGyms = !showGyms"
+          @togglePlaceType="toggleVisible"
           @toggleClustering="enableClustering = !enableClustering"
           @toggleMetroVector="handleToggleMetroVector"
           @toggleMetroLine="handleToggleMetroLine"
@@ -52,9 +50,9 @@
 
       <!-- Map -->
       <div class="map-wrapper">
-        <MapStats 
+        <MapStats
           :isMobile="isMobile"
-          :filteredCount="filteredBarbershops.length"
+          :filteredCount="placeInstances[0]?.filteredPlaces.length ?? 0"
           :averageRating="averageRating"
         />
         <l-map
@@ -89,106 +87,51 @@
           <!-- Metro Lines Layer -->
           <!-- Metro Lines Layer (Deprecated: Removed) -->
 
-          <!-- Barbershops Layer (Clustered) -->
-          <l-marker-cluster-group 
-            v-if="showBarbershops && enableClustering" 
-            :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
-          >
-            <l-marker
-              v-for="shop in filteredBarbershops"
-              :key="shop.id"
-              :lat-lng="[shop.lat, shop.lng]"
+          <!-- Place Layers (all types rendered generically) -->
+          <template v-for="inst in placeInstances" :key="inst.config.category">
+            <l-marker-cluster-group
+              v-if="inst.visible && enableClustering"
+              :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
             >
-              <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
-                <div class="shop-marker-content saved">
-                  💈
-                </div>
-              </l-icon>
-              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <ShopPopup 
-                  :shop="shop" 
-                  :isAuthenticated="isAuthenticated"
-                  @edit="editBarbershop"
-                  @delete="confirmDelete"
-                />
-              </l-popup>
-            </l-marker>
-          </l-marker-cluster-group>
+              <l-marker
+                v-for="place in inst.filteredPlaces"
+                :key="place.id"
+                :lat-lng="[place.lat, place.lng]"
+              >
+                <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
+                  <div class="shop-marker-content saved">{{ inst.config.emoji }}</div>
+                </l-icon>
+                <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                  <ShopPopup
+                    :shop="place"
+                    :isAuthenticated="isAuthenticated"
+                    @edit="(s) => inst.config.category === 'barbershop' ? editBarbershop(s) : null"
+                    @delete="(s) => inst.config.category === 'barbershop' ? confirmDelete(s) : null"
+                  />
+                </l-popup>
+              </l-marker>
+            </l-marker-cluster-group>
 
-          <!-- Barbershops Layer (Non-Clustered) -->
-          <l-layer-group v-if="showBarbershops && !enableClustering">
-            <l-marker
-              v-for="shop in filteredBarbershops"
-              :key="shop.id"
-              :lat-lng="[shop.lat, shop.lng]"
-            >
-              <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
-                <div class="shop-marker-content saved">
-                  💈
-                </div>
-              </l-icon>
-              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <ShopPopup 
-                  :shop="shop" 
-                  :isAuthenticated="isAuthenticated"
-                  @edit="editBarbershop"
-                  @delete="confirmDelete"
-                />
-              </l-popup>
-            </l-marker>
-          </l-layer-group>
-
-
-
-
-          <!-- Gyms Layer (Clustered) -->
-          <l-marker-cluster-group 
-            v-if="showGyms && enableClustering" 
-            :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
-          >
-            <l-marker
-              v-for="gym in filteredGyms"
-              :key="gym.id"
-              :lat-lng="[gym.lat, gym.lng]"
-            >
-              <l-icon :icon-anchor="[20, 40]" class-name="gym-marker">
-                <div class="shop-marker-content gym-marker-content saved">
-                  🏋️
-                </div>
-              </l-icon>
-              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <ShopPopup 
-                  :shop="gym" 
-                  :isAuthenticated="isAuthenticated"
-                  @edit="() => {}"
-                  @delete="() => {}"
-                />
-              </l-popup>
-            </l-marker>
-          </l-marker-cluster-group>
-
-          <!-- Gyms Layer (Non-Clustered) -->
-          <l-layer-group v-if="showGyms && !enableClustering">
-            <l-marker
-              v-for="gym in filteredGyms"
-              :key="gym.id"
-              :lat-lng="[gym.lat, gym.lng]"
-            >
-              <l-icon :icon-anchor="[20, 40]" class-name="gym-marker">
-                <div class="shop-marker-content gym-marker-content saved">
-                  🏋️
-                </div>
-              </l-icon>
-              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <ShopPopup 
-                  :shop="gym" 
-                  :isAuthenticated="isAuthenticated"
-                  @edit="() => {}"
-                  @delete="() => {}"
-                />
-              </l-popup>
-            </l-marker>
-          </l-layer-group>
+            <l-layer-group v-if="inst.visible && !enableClustering">
+              <l-marker
+                v-for="place in inst.filteredPlaces"
+                :key="place.id"
+                :lat-lng="[place.lat, place.lng]"
+              >
+                <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
+                  <div class="shop-marker-content saved">{{ inst.config.emoji }}</div>
+                </l-icon>
+                <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                  <ShopPopup
+                    :shop="place"
+                    :isAuthenticated="isAuthenticated"
+                    @edit="(s) => inst.config.category === 'barbershop' ? editBarbershop(s) : null"
+                    @delete="(s) => inst.config.category === 'barbershop' ? confirmDelete(s) : null"
+                  />
+                </l-popup>
+              </l-marker>
+            </l-layer-group>
+          </template>
 
           <!-- Temporary Pin for New Shop -->
           <l-marker
@@ -251,8 +194,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed, onMounted } from "vue";
 import {
   LMap,
   LTileLayer,
@@ -262,22 +204,20 @@ import {
   LControlLayers,
   LLayerGroup,
 } from "@vue-leaflet/vue-leaflet";
-import L from "leaflet";
 
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
 import { baseLayers } from "@/stores/mapConfig";
-import { useMapView } from "@/stores/mapViewStore";
 import auth from "@/services/auth";
 
 // Composables
-import { useBarbershops } from "@/composables/useBarbershops";
+import { useMapInstance } from "@/composables/useMapInstance";
+import { useMobileDetection } from "@/composables/useMobileDetection";
+import { usePlacesManager } from "@/composables/usePlacesManager";
 import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
-
-import { useGyms } from "@/composables/useGyms";
 import { useShopManagement } from "@/composables/useShopManagement";
 
 // Components
@@ -292,86 +232,40 @@ import ShopPopup from "./map/ShopPopup.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
-const route = useRoute();
+const { mapInstance, zoom, center, onMapReady } = useMapInstance();
+const { isMobile } = useMobileDetection();
 
-// Map view state from store (with URL sync)
-const { mapCenter, mapZoom, initializeFromURL, updateURL } = useMapView();
-
-// Sync store with URL changes (back/forward or manual edit)
-watch(() => route.query, () => {
-  initializeFromURL();
-}, { deep: true, immediate: true });
-
-// Local refs for the map component (initialized after store sync)
-const zoom = ref(mapZoom.value);
-const center = ref(mapCenter.value);
-
-// Sync local refs with store updates
-watch(mapZoom, (newZoom) => { zoom.value = newZoom; });
-watch(mapCenter, (newCenter) => { center.value = newCenter; });
-
-const mapInstance = ref<L.Map | null>(null);
 const isSidebarOpen = ref(true);
-const isMobile = ref(false);
-const showBarbershops = ref(true);
-const showGyms = ref(false); // Default to false or true based on preference
 const enableClustering = ref(true);
 
-const checkMobile = () => {
-  isMobile.value = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
-};
+const {
+  instances: placeInstances,
+  fetchAll,
+  toggleVisible,
+  filters,
+  availableServices,
+  averageRating,
+  resetFilters,
+} = usePlacesManager();
+
+const placeTypesForPanel = computed(() =>
+  placeInstances.map(inst => ({
+    category: inst.config.category,
+    labelKey: inst.config.labelKey,
+    visible: inst.visible,
+  }))
+);
 
 onMounted(() => {
-  checkMobile();
-  // Set initial sidebar state: Closed for everyone
   isSidebarOpen.value = false;
-  
-  window.addEventListener('resize', checkMobile);
-  fetchBarbershops();
-  fetchGyms(); // Fetch gyms on mount
+  fetchAll();
 });
-
-const onMapReady = (map: L.Map) => {
-  mapInstance.value = map;
-  
-  // Sync URL when map view changes (debounced to avoid too many updates)
-  let updateTimeout: ReturnType<typeof setTimeout>;
-  map.on('moveend', () => {
-    clearTimeout(updateTimeout);
-    updateTimeout = setTimeout(() => {
-      const c = map.getCenter();
-      const z = map.getZoom();
-      
-      // Update store refs so everything else is in sync
-      mapCenter.value = [c.lat, c.lng];
-      mapZoom.value = z;
-      
-      updateURL(c.lat, c.lng, z);
-    }, 300); // Wait 300ms after user stops moving
-  });
-};
-
-// Use Composables
-const {
-  filters,
-  fetchBarbershops,
-  availableServices,
-  filteredBarbershops,
-  averageRating,
-
-  resetFilters
-} = useBarbershops();
-
-const {
- gyms,
- fetchGyms,
- filteredGyms
-} = useGyms();
 
 const {
   showPopulationGrid,
+  selectedThreshold,
   togglePopulationGrid,
-  updatePopulationGridFilter
+  updateThreshold,
 } = usePopulationLayers();
 
 const {
@@ -420,8 +314,6 @@ const handleFilterUpdate = (newFilters: any) => {
 const metroLinesList = METRO_LINES;
 const metroColors = METRO_COLORS;
 
-
-
 const handleTogglePopulationGrid = () => {
   if (showAnalysisGrid.value) {
     toggleAnalysisGridComposable(mapInstance.value);
@@ -435,14 +327,6 @@ const handleToggleAnalysisGrid = () => {
   }
   toggleAnalysisGridComposable(mapInstance.value);
 };
-
-const selectedThreshold = ref(0);
-const updateThreshold = (value: number) => {
-  selectedThreshold.value = value;
-  updatePopulationGridFilter(value);
-};
-
-
 
 const {
   showShopModal,
@@ -461,7 +345,7 @@ const {
   confirmDelete,
   cancelDelete,
   deleteBarbershop
-} = useShopManagement(fetchBarbershops);
+} = useShopManagement(placeInstances[0].fetchPlaces);
 
 </script>
 

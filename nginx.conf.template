@@ -22,16 +22,18 @@ server {
     }
 
     # Proxy for Places API
-    location /api/places/ {
-        # ${PLACES_API_URL} will be replaced at runtime
-        proxy_pass ${PLACES_API_URL}; 
+    # No trailing slash on location or proxy_pass — nginx will forward the full
+    # URI (/api/places, /api/places?category=gym, /api/places/123) unchanged.
+    location /api/places {
+        proxy_pass ${PLACES_API_URL};
+        proxy_set_header Host $host;
         proxy_ssl_server_name on;
     }
 
     # Proxy for Tile Server
-    location /api/tiles/ {
-        # ${TILES_API_URL} will be replaced at runtime
+    location /api/tiles {
         proxy_pass ${TILES_API_URL};
+        proxy_set_header Host $host;
         proxy_ssl_server_name on;
     }
 

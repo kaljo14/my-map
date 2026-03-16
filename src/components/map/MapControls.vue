@@ -156,13 +156,13 @@ const vClickOutside = {
 }
 
 .main-btn.active {
-  background-color: #eff6ff;
-  border-color: #3b82f6;
+  background-color: #f0fdfa;
+  border-color: #0d9488;
 }
 
 .main-btn.active .icon {
-  color: #3b82f6;
-  fill: #3b82f6;
+  color: #0d9488;
+  fill: #0d9488;
 }
 
 .icon {
@@ -250,7 +250,7 @@ const vClickOutside = {
 }
 
 input:checked + .slider {
-  background-color: #3b82f6;
+  background-color: #0d9488;
 }
 
 input:checked + .slider:before {
@@ -307,7 +307,7 @@ input:checked + .slider:before {
 }
 
 .filter-option.selected {
-  background-color: #eff6ff;
+  background-color: #f0fdfa;
 }
 
 .color-dot {
@@ -329,7 +329,7 @@ input:checked + .slider:before {
 }
 
 .check-icon {
-  color: #3b82f6;
+  color: #0d9488;
   font-weight: bold;
   font-size: 14px;
 }

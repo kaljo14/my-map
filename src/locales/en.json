@@ -21,6 +21,8 @@
         "settings": {
             "title": "Map Settings",
             "showBarbershops": "Show Barbershops",
+            "showGyms": "Show Gyms",
+            "showCarwashes": "Show Car Washes",
             "enableClustering": "Enable Clustering"
         },
         "filters": {

@@ -8,10 +8,6 @@ RUN npm ci
 
 COPY . .
 
-# Force relative paths for production build so Nginx can handle the proxying
-ENV VITE_API_BASE_URL=/api/places
-ENV VITE_TILE_SERVER_URL=/api/tiles
-
 RUN npm run build
 
 # Production Stage

@@ -1,6 +1,5 @@
 import { ref } from 'vue';
-import httpClient from '@/api/httpClient';
-import type { Barbershop } from './useBarbershops';
+import PlacesAPI, { type Place } from '@/api/places';
 
 export interface ShopLocation {
     lat: number;
@@ -9,17 +8,16 @@ export interface ShopLocation {
     timestamp: number;
 }
 
-export function useShopManagement(fetchBarbershops: () => Promise<void>) {
+export function useShopManagement(fetchPlaces: () => Promise<void>) {
     const showShopModal = ref(false);
     const newShopPin = ref<{ lat: number, lng: number } | null>(null);
     const newShopName = ref("");
     const userAddedShops = ref<ShopLocation[]>([]);
     const isAddShopMode = ref(false);
 
-    // Edit menu state
     const activeEditMenu = ref<string | null>(null);
     const showDeleteConfirm = ref(false);
-    const shopToDelete = ref<Barbershop | null>(null);
+    const shopToDelete = ref<Place | null>(null);
 
     const toggleAddShopMode = () => {
         isAddShopMode.value = !isAddShopMode.value;
@@ -31,12 +29,7 @@ export function useShopManagement(fetchBarbershops: () => Promise<void>) {
 
     const onMapClick = (e: any) => {
         if (!isAddShopMode.value) return;
-
-        // e.latlng contains the coordinates
-        newShopPin.value = {
-            lat: e.latlng.lat,
-            lng: e.latlng.lng
-        };
+        newShopPin.value = { lat: e.latlng.lat, lng: e.latlng.lng };
         newShopName.value = "";
         showShopModal.value = true;
     };
@@ -44,74 +37,47 @@ export function useShopManagement(fetchBarbershops: () => Promise<void>) {
     const cancelAddShop = () => {
         showShopModal.value = false;
         newShopPin.value = null;
-        isAddShopMode.value = false; // Exit mode on cancel
+        isAddShopMode.value = false;
     };
 
     const saveShop = async () => {
         if (!newShopPin.value) return;
 
-        const shopData = {
-            name: newShopName.value || "Untitled Barbershop",
-            lat: newShopPin.value.lat,
-            lng: newShopPin.value.lng,
-            address: "", // Empty for now, as it's not collected in the modal
-            business_status: "OPERATIONAL", // Default status for a new shop
-            rating: 0 // Default rating for a new shop
-        };
-
         try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/places';
-            const response = await httpClient.post(`${apiBaseUrl}/api/barbershops`, shopData);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const savedShop = await response.json();
-            console.log("Barbershop saved successfully:", savedShop);
-
-            // Add to local state for immediate display
-            userAddedShops.value.push({
-                ...savedShop,
-                timestamp: Date.now()
+            const saved = await PlacesAPI.createPlace({
+                name: newShopName.value || "Untitled Barbershop",
+                lat: newShopPin.value.lat,
+                lng: newShopPin.value.lng,
+                address: "",
+                business_status: "OPERATIONAL",
+                rating: 0,
+                category: "barbershop",
             });
 
-            // Refresh the main barbershops list to include the newly added shop
-            await fetchBarbershops();
+            userAddedShops.value.push({ ...saved, timestamp: Date.now() } as any);
+            await fetchPlaces();
         } catch (error) {
-            console.error("Failed to save barbershop:", error);
-            alert("Failed to save barbershop. Please try again.");
-            return; // Don't close modal on error
+            console.error("Failed to save place:", error);
+            alert("Failed to save. Please try again.");
+            return;
         }
 
         showShopModal.value = false;
         newShopPin.value = null;
-        isAddShopMode.value = false; // Exit mode after saving
+        isAddShopMode.value = false;
     };
 
-    // Edit menu functions
     const toggleEditMenu = (placeId: string) => {
-        if (activeEditMenu.value === placeId) {
-            activeEditMenu.value = null;
-        } else {
-            activeEditMenu.value = placeId;
-        }
+        activeEditMenu.value = activeEditMenu.value === placeId ? null : placeId;
     };
 
-    const editBarbershop = (shop: Barbershop) => {
-        // Close the edit menu
+    const editBarbershop = (shop: Place) => {
         activeEditMenu.value = null;
-
-        // TODO: Implement edit functionality
-        // For now, just show an alert
         alert(`Edit functionality for ${shop.name} will be implemented soon!`);
     };
 
-    const confirmDelete = (shop: Barbershop) => {
-        // Close the edit menu
+    const confirmDelete = (shop: Place) => {
         activeEditMenu.value = null;
-
-        // Show confirmation dialog
         shopToDelete.value = shop;
         showDeleteConfirm.value = true;
     };
@@ -124,27 +90,14 @@ export function useShopManagement(fetchBarbershops: () => Promise<void>) {
     const deleteBarbershop = async () => {
         if (!shopToDelete.value) return;
 
-        const placeId = shopToDelete.value.place_id;
-
         try {
-            const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || '/api/places';
-            const response = await httpClient.delete(`${apiBaseUrl}/api/barbershops/${placeId}`);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            console.log(`Barbershop ${shopToDelete.value.name} deleted successfully`);
-
-            // Refresh the barbershops list
-            await fetchBarbershops();
-
-            // Close the confirmation dialog
+            await PlacesAPI.deletePlace(shopToDelete.value.place_id);
+            await fetchPlaces();
             showDeleteConfirm.value = false;
             shopToDelete.value = null;
         } catch (error) {
-            console.error('Failed to delete barbershop:', error);
-            alert('Failed to delete barbershop. Please try again.');
+            console.error('Failed to delete place:', error);
+            alert('Failed to delete. Please try again.');
         }
     };
 
@@ -165,6 +118,6 @@ export function useShopManagement(fetchBarbershops: () => Promise<void>) {
         editBarbershop,
         confirmDelete,
         cancelDelete,
-        deleteBarbershop
+        deleteBarbershop,
     };
 }

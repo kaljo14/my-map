@@ -93,8 +93,8 @@ defineEmits<{
 
 .modal-input:focus {
   outline: none;
-  border-color: #6366f1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .modal-actions {
@@ -123,16 +123,16 @@ defineEmits<{
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  background: linear-gradient(135deg, #0d9488, #0891b2);
   color: white;
   cursor: pointer;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
   transition: all 0.2s;
 }
 
 .save-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 6px 16px rgba(13, 148, 136, 0.4);
 }
 </style>
