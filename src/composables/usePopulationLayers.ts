@@ -101,9 +101,8 @@ export function usePopulationLayers() {
             // 1. Show Vector Grid (Tiles)
             if (!populationLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                // Use Population Grid Tile URL from the tileserver's /data/population_grid endpoint
+                // Use Population Grid Tile URL from Martin (no auth needed — CORS origin:*)
                 const tileUrl = TilesAPI.getPopulationGridTileUrlTemplate();
-                const headers = TilesAPI.getAuthHeaders();
 
                 populationLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
@@ -133,11 +132,7 @@ export function usePopulationLayers() {
                     },
                     interactive: true,
                     getFeatureId: function (f: any) { return f.properties.grid_id || f.properties.id; },
-                    maxNativeZoom: 14, // Matches Analysis Grid
-                    // Add fetchOptions to include JWT token in tile requests
-                    fetchOptions: {
-                        headers: headers
-                    }
+                    maxNativeZoom: 14,
                 });
 
                 // Handle tile loading to extract labels

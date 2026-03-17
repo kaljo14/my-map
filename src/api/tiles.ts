@@ -18,18 +18,18 @@ class TilesAPI {
 
 
     /**
-     * Gets the URL template for population grid vector tiles
+     * Gets the URL template for population grid vector tiles served by Martin.
      */
     getPopulationGridTileUrlTemplate(): string {
-        return `${this.getBaseUrl()}/data/population_grid/{z}/{x}/{y}.pbf`;
+        return `${API_CONFIG.MARTIN_BASE_URL}/population_grid/{z}/{x}/{y}`;
     }
 
     /**
-     * Gets the URL template for specific metro line vector tiles
+     * Gets the URL template for specific metro line vector tiles served by Martin.
      * @param lineId - The ID of the metro line (e.g., 'M1', 'M2')
      */
     getMetroLineTileUrlTemplate(lineId: string): string {
-        return `${this.getBaseUrl()}/data/metro_line_${lineId}/{z}/{x}/{y}.pbf`;
+        return `${API_CONFIG.MARTIN_BASE_URL}/metro_line_${lineId}/{z}/{x}/{y}`;
     }
 
     /**

@@ -15,8 +15,6 @@ export function useMetroLines() {
     const updateMapLayers = (mapInstance: any) => {
         if (!mapInstance) return;
 
-        const headers = TilesAPI.getAuthHeaders();
-
         // Define Z-Index for stacking order (Higher is on top)
         // User requested: M1 (Top) -> M2 -> M3 -> M4 (Bottom)
         const Z_INDEXES: Record<string, number> = {
@@ -64,7 +62,7 @@ export function useMetroLines() {
                         vectorTileLayerStyles: layerStyles,
                         interactive: true,
                         zIndex: Z_INDEXES[lineId], // Explicit Z-Index
-                        fetchOptions: { headers },
+
                         minZoom: 0,
                         maxZoom: 18, // Lines remain visible up to zoom 18
                         // Bounds for Sofia, Bulgaria metro system
