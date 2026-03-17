@@ -37,7 +37,35 @@
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="header-row" style="margin-top: 12px;">
+            <span class="menu-title">{{ $t('map.controls.opportunityHeatmap') }}</span>
+            <label class="switch">
+              <input type="checkbox" :checked="showOpportunityHeatmap" @change="$emit('toggleOpportunityHeatmap')">
+              <span class="slider round"></span>
+            </label>
+          </div>
 
+        </div>
+
+        <!-- Heatmap category picker (shown when heatmap is active) -->
+        <div v-if="showOpportunityHeatmap" class="menu-content">
+          <span class="section-label">{{ $t('map.controls.heatmapCategory') }}</span>
+          <div class="category-pills">
+            <button
+              class="category-pill"
+              :class="{ active: activeCategoryHeatmap === 'barbershop' }"
+              @click="$emit('setHeatmapCategory', 'barbershop')"
+            >
+              ✂️ {{ $t('map.controls.heatmapBarbershop') }}
+            </button>
+            <button
+              class="category-pill"
+              :class="{ active: activeCategoryHeatmap === 'gym' }"
+              @click="$emit('setHeatmapCategory', 'gym')"
+            >
+              🏋️ {{ $t('map.controls.heatmapGym') }}
+            </button>
+          </div>
         </div>
 
         <div v-if="showPopulationGrid" class="menu-content">
@@ -76,12 +104,16 @@ defineProps<{
   showPopulationGrid: boolean;
   showAnalysisGrid: boolean;
   selectedThreshold: number;
+  showOpportunityHeatmap: boolean;
+  activeCategoryHeatmap: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'togglePopulationGrid'): void;
   (e: 'toggleAnalysisGrid'): void;
   (e: 'updateThreshold', value: number): void;
+  (e: 'toggleOpportunityHeatmap'): void;
+  (e: 'setHeatmapCategory', category: string): void;
 }>();
 
 const menuOpen = ref(false);
@@ -314,5 +346,37 @@ input:checked + .slider:before { transform: translateX(18px); }
   color: #d97757;
   font-weight: bold;
   font-size: 14px;
+}
+
+.category-pills {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px 14px;
+}
+
+.category-pill {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #d5ccc0;
+  background: #f5f0e8;
+  color: #4a4030;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.category-pill:hover {
+  background: #ede7dc;
+  border-color: #c9bfb4;
+}
+
+.category-pill.active {
+  background: #fff0ea;
+  border-color: #d97757;
+  color: #d97757;
+  font-weight: 600;
 }
 </style>

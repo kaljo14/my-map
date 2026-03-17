@@ -83,9 +83,13 @@
             :showPopulationGrid="showPopulationGrid"
             :showAnalysisGrid="showAnalysisGrid"
             :selectedThreshold="selectedThreshold"
+            :showOpportunityHeatmap="showOpportunityHeatmap"
+            :activeCategoryHeatmap="heatmapCategory"
             @togglePopulationGrid="handleTogglePopulationGrid"
             @toggleAnalysisGrid="handleToggleAnalysisGrid"
             @updateThreshold="updateThreshold"
+            @toggleOpportunityHeatmap="handleToggleOpportunityHeatmap"
+            @setHeatmapCategory="handleSetHeatmapCategory"
           />
           <l-tile-layer
             v-for="layer in baseLayers"
@@ -269,6 +273,7 @@ import { useMobileDetection } from "@/composables/useMobileDetection";
 import { usePlacesManager } from "@/composables/usePlacesManager";
 import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
+import { useOpportunityHeatmap } from "@/composables/useOpportunityHeatmap";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
 import { useShopManagement } from "@/composables/useShopManagement";
@@ -333,6 +338,13 @@ const {
 } = useAnalysisGrid();
 
 const {
+  showOpportunityHeatmap,
+  activeCategory: heatmapCategory,
+  toggleOpportunityHeatmap,
+  setHeatmapCategory,
+} = useOpportunityHeatmap();
+
+const {
   showMetroVector,
   toggleMetroVector,
   activeMetroLines,
@@ -380,6 +392,14 @@ const handleToggleAnalysisGrid = () => {
     togglePopulationGrid(mapInstance.value);
   }
   toggleAnalysisGridComposable(mapInstance.value);
+};
+
+const handleToggleOpportunityHeatmap = () => {
+  toggleOpportunityHeatmap(mapInstance.value);
+};
+
+const handleSetHeatmapCategory = (cat: string) => {
+  setHeatmapCategory(cat as any, mapInstance.value);
 };
 
 const {

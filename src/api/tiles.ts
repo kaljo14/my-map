@@ -47,6 +47,14 @@ class TilesAPI {
     }
 
     /**
+     * Gets the URL template for the opportunity heatmap vector tiles served by Martin.
+     * Tile layer name: opportunity_heatmap; feature properties: category (string), score (0–100).
+     */
+    getOpportunityHeatmapTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/opportunity_heatmap/{z}/{x}/{y}`;
+    }
+
+    /**
      * Fetches grid labels for analysis
      */
     async getGridLabels(): Promise<any> {

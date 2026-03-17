@@ -53,9 +53,13 @@
             "title": "Контроли на картата",
             "populationGrid": "Мрежа население",
             "analysisGrid": "Анализ мрежа",
+            "opportunityHeatmap": "Карта на възможностите",
             "configure": "Конфигуриране",
             "densityFilter": "Филтър гъстота",
-            "enableGridMessage": "Включете мрежата, за да видите данни за гъстотата на населението и опциите за филтриране."
+            "enableGridMessage": "Включете мрежата, за да видите данни за гъстотата на населението и опциите за филтриране.",
+            "heatmapCategory": "Категория",
+            "heatmapBarbershop": "Бръснарница",
+            "heatmapGym": "Фитнес"
         },
         "filters": {
             "allAreas": "Всички райони",
