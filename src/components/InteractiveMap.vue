@@ -60,11 +60,9 @@
           <MapControls
             :showPopulationGrid="showPopulationGrid"
             :showAnalysisGrid="showAnalysisGrid"
-            :showHeatmap="showHeatmap"
             :selectedThreshold="selectedThreshold"
             @togglePopulationGrid="handleTogglePopulationGrid"
             @toggleAnalysisGrid="handleToggleAnalysisGrid"
-            @toggleHeatmap="handleToggleHeatmap"
             @updateThreshold="updateThreshold"
           />
           <l-tile-layer
@@ -226,8 +224,6 @@ import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
 import { useShopManagement } from "@/composables/useShopManagement";
-import { useHeatmap } from "@/composables/useHeatmap";
-
 // Components
 import AnalysisPanel from "./map/AnalysisPanel.vue";
 import ShopModal from "./map/ShopModal.vue";
@@ -329,12 +325,6 @@ const handleToggleAnalysisGrid = () => {
     togglePopulationGrid(mapInstance.value);
   }
   toggleAnalysisGridComposable(mapInstance.value);
-};
-
-const { showHeatmap, toggleHeatmap } = useHeatmap();
-
-const handleToggleHeatmap = () => {
-  toggleHeatmap(mapInstance.value);
 };
 
 const {

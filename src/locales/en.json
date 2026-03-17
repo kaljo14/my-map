@@ -55,8 +55,7 @@
             "analysisGrid": "Analysis Grid",
             "configure": "Configure",
             "densityFilter": "Density Filter",
-            "enableGridMessage": "Enable the grid to see population density data and filter options.",
-            "heatmap": "Opportunity Heatmap"
+            "enableGridMessage": "Enable the grid to see population density data and filter options."
         },
         "filters": {
             "allAreas": "All Areas",
