@@ -23,6 +23,7 @@
             "showBarbershops": "Show Barbershops",
             "showGyms": "Show Gyms",
             "showCarwashes": "Show Car Washes",
+            "showGroceryStores": "Show Grocery Stores",
             "enableClustering": "Enable Clustering"
         },
         "filters": {

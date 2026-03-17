@@ -42,14 +42,14 @@ defineEmits<{
 <style scoped>
 .app-header {
   height: 64px;
-  background: #0f172a;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  background: #161B16;
+  border-bottom: 1px solid rgba(245, 240, 232, 0.08);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  color: white;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  color: #f5f0e8;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   z-index: 2000;
   position: relative;
 }
@@ -67,7 +67,7 @@ defineEmits<{
 .app-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #f8fafc;
+  color: #f5f0e8;
   letter-spacing: -0.5px;
   margin: 0;
 }
@@ -84,9 +84,9 @@ defineEmits<{
 }
 
 .nav-btn {
-  background: rgba(30, 41, 59, 0.5);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  color: #cbd5e0;
+  background: rgba(245, 240, 232, 0.06);
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  color: #a89e94;
   padding: 8px 16px;
   border-radius: 6px;
   font-weight: 600;
@@ -99,15 +99,15 @@ defineEmits<{
 }
 
 .nav-btn:hover {
-  background: rgba(30, 41, 59, 0.8);
-  color: white;
-  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(245, 240, 232, 0.1);
+  color: #f5f0e8;
+  border-color: rgba(245, 240, 232, 0.2);
 }
 
 .nav-btn.active {
-  background: rgba(13, 148, 136, 0.2);
-  color: #2dd4bf;
-  border-color: #0d9488;
+  background: rgba(217, 119, 87, 0.15);
+  color: #d97757;
+  border-color: rgba(217, 119, 87, 0.4);
 }
 
 .nav-btn .icon {
@@ -130,26 +130,27 @@ defineEmits<{
 }
 
 .auth-btn.login {
-  background: linear-gradient(135deg, #0d9488, #0891b2);
-  color: white;
-  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
+  background: #d97757;
+  color: #f5f0e8;
+  box-shadow: 0 2px 8px rgba(217, 119, 87, 0.3);
 }
 
 .auth-btn.login:hover {
+  background: #c86843;
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.4);
 }
 
 .auth-btn.logout {
-  background: rgba(30, 41, 59, 0.5);
-  color: #cbd5e0;
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(245, 240, 232, 0.06);
+  color: #a89e94;
+  border: 1px solid rgba(245, 240, 232, 0.12);
 }
 
 .auth-btn.logout:hover {
-  background: rgba(30, 41, 59, 0.8);
-  color: white;
-  border-color: rgba(148, 163, 184, 0.4);
+  background: rgba(245, 240, 232, 0.1);
+  color: #f5f0e8;
+  border-color: rgba(245, 240, 232, 0.2);
 }
 
 .user-info {
@@ -159,7 +160,7 @@ defineEmits<{
 }
 
 .username {
-  color: #94a3b8;
+  color: #8a7e72;
   font-size: 0.9rem;
   font-weight: 500;
 }

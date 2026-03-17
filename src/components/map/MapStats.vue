@@ -28,19 +28,19 @@ defineProps<{
 <style scoped>
 .map-stats {
   position: absolute;
-  top: 16px; /* Slightly lower on mobile for better spacing */
+  top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 6px 14px; /* Reduced padding */
-  border-radius: 100px; /* Pill shape */
+  background: rgba(22, 27, 22, 0.88);
+  backdrop-filter: blur(10px);
+  padding: 6px 14px;
+  border-radius: 100px;
   display: flex;
   align-items: center;
-  gap: 12px; /* Reduced gap */
-  color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(148, 163, 184, 0.2);
+  gap: 12px;
+  color: #f5f0e8;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(245, 240, 232, 0.1);
   z-index: 1000;
   pointer-events: none;
   transition: all 0.3s ease;
@@ -51,7 +51,7 @@ defineProps<{
   top: 0;
   border-radius: 0 0 16px 16px;
   border-top: none;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(22, 27, 22, 0.96);
   padding: 8px 24px 10px 24px;
   gap: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
@@ -64,15 +64,15 @@ defineProps<{
 }
 
 .stat-label {
-  font-size: 0.8rem; /* Smaller font */
-  color: #cbd5e0;
+  font-size: 0.8rem;
+  color: #8a7e72;
   font-weight: 500;
 }
 
 .stat-value {
   font-size: 0.9rem;
   font-weight: 700;
-  color: white;
+  color: #f5f0e8;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -81,11 +81,11 @@ defineProps<{
 .stat-divider {
   width: 1px;
   height: 12px;
-  background: rgba(148, 163, 184, 0.3);
+  background: rgba(245, 240, 232, 0.15);
 }
 
 .star {
-  color: #f59e0b;
+  color: #d97757;
   font-size: 0.85rem;
 }
 </style>

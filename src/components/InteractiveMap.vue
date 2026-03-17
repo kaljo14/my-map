@@ -383,36 +383,35 @@ const {
 .sidebar-toggle {
   position: absolute;
   top: 50%;
-  right: -32px; /* Increased width */
+  right: -32px;
   width: 32px;
-  height: 64px; /* Taller for better grab area */
+  height: 64px;
   transform: translateY(-50%);
-  background: #1e293b;
-  border: 1px solid rgba(148, 163, 184, 0.3); /* More visible border */
+  background: #161B16;
+  border: 1px solid rgba(245, 240, 232, 0.12);
   border-left: none;
-  border-radius: 0 12px 12px 0; /* More rounded */
+  border-radius: 0 12px 12px 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e2e8f0; /* Brighter icon */
-  box-shadow: 6px 0 12px rgba(0,0,0,0.2);
+  color: #8a7e72;
+  box-shadow: 6px 0 12px rgba(0, 0, 0, 0.25);
   transition: all 0.2s;
-  padding-left: 4px; /* Push icon slightly to the right */
+  padding-left: 4px;
 }
 
 .sidebar-toggle:hover {
-  background: #334155;
-  color: white;
-  width: 36px; /* Expands more on hover */
+  background: #252018;
+  color: #f5f0e8;
+  width: 36px;
   right: -36px;
-  box-shadow: 8px 0 16px rgba(0,0,0,0.3);
+  box-shadow: 8px 0 16px rgba(0, 0, 0, 0.35);
 }
 
 .toggle-icon {
-  font-size: 14px; /* Larger icon */
+  font-size: 14px;
   font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .map-wrapper {

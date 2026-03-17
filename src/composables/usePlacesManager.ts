@@ -10,9 +10,10 @@ export interface PlaceTypeConfig {
 }
 
 export const PLACE_TYPES: PlaceTypeConfig[] = [
-    { category: 'barbershop', emoji: '💈', labelKey: 'showBarbershops', markerClass: 'barbershop-marker', defaultVisible: true },
-    { category: 'gym',        emoji: '🏋️', labelKey: 'showGyms',        markerClass: 'gym-marker' },
-    { category: 'carwash',    emoji: '🚗', labelKey: 'showCarwashes',    markerClass: 'carwash-marker' },
+    { category: 'barbershop',    emoji: '💈', labelKey: 'showBarbershops',   markerClass: 'barbershop-marker', defaultVisible: true },
+    { category: 'gym',           emoji: '🏋️', labelKey: 'showGyms',          markerClass: 'gym-marker' },
+    { category: 'carwash',       emoji: '🚗', labelKey: 'showCarwashes',      markerClass: 'carwash-marker' },
+    { category: 'grocery store', emoji: '🛒', labelKey: 'showGroceryStores',  markerClass: 'grocery-marker' },
 ];
 
 export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {

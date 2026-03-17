@@ -23,6 +23,7 @@
             "showBarbershops": "Покажи бръснарници",
             "showGyms": "Покажи фитнеси",
             "showCarwashes": "Покажи автомивки",
+            "showGroceryStores": "Покажи хранителни магазини",
             "enableClustering": "Включи групиране"
         },
         "filters": {
