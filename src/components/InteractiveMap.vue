@@ -42,18 +42,40 @@
       </div>
 
       <!-- Map -->
-      <div class="map-wrapper">
+      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode }">
         <MapStats
           :isMobile="isMobile"
           :filteredCount="placeInstances[0]?.filteredPlaces.length ?? 0"
           :averageRating="averageRating"
         />
+
+        <!-- Polygon Draw Controls -->
+        <div class="polygon-controls">
+          <template v-if="!isDrawingMode && !activePolygon">
+            <button class="polygon-btn" @click="startDrawing" title="Draw area to filter points">
+              ⬡ Draw Area
+            </button>
+          </template>
+          <template v-else-if="isDrawingMode">
+            <span class="drawing-hint">{{ drawingVertices.length }} point{{ drawingVertices.length !== 1 ? 's' : '' }} — click map to add</span>
+            <button
+              class="polygon-btn finish"
+              :disabled="drawingVertices.length < 3"
+              @click="finishDrawing"
+            >✓ Finish</button>
+            <button class="polygon-btn cancel" @click="clearPolygon">✕ Cancel</button>
+          </template>
+          <template v-else-if="activePolygon">
+            <span class="polygon-count">⬡ {{ totalFilteredCount }} in area</span>
+            <button class="polygon-btn clear" @click="clearPolygon">✕ Clear</button>
+          </template>
+        </div>
         <l-map
           :zoom="zoom"
           :center="center"
           :use-global-leaflet="true"
           :options="{ zoomControl: false }"
-          @click="onMapClick"
+          @click="handleMapClick"
           @ready="onMapReady"
         >
           <l-control-layers />
@@ -138,6 +160,30 @@
             </l-layer-group>
           </template>
 
+          <!-- Polygon Drawing Preview -->
+          <template v-if="isDrawingMode && drawingVertices.length >= 2">
+            <l-polygon
+              :lat-lngs="drawingVertices"
+              :options="{ color: '#f59e0b', weight: 2, fillOpacity: 0.08, dashArray: '6 6' }"
+            />
+          </template>
+          <template v-if="isDrawingMode">
+            <l-circle-marker
+              v-for="(v, i) in drawingVertices"
+              :key="i"
+              :lat-lng="v"
+              :radius="5"
+              :options="{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 }"
+            />
+          </template>
+
+          <!-- Active Filter Polygon -->
+          <l-polygon
+            v-if="activePolygon"
+            :lat-lngs="activePolygon"
+            :options="{ color: '#10b981', weight: 2, fillOpacity: 0.12 }"
+          />
+
           <!-- Temporary Pin for New Shop -->
           <l-marker
             v-if="newShopPin"
@@ -199,7 +245,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   LMap,
   LTileLayer,
@@ -208,6 +254,8 @@ import {
   LPopup,
   LControlLayers,
   LLayerGroup,
+  LPolygon,
+  LCircleMarker,
 } from "@vue-leaflet/vue-leaflet";
 
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
@@ -249,6 +297,13 @@ const {
   averageRating,
   groceryTagFilters,
   toggleGroceryTagFilter,
+  isDrawingMode,
+  drawingVertices,
+  activePolygon,
+  startDrawing,
+  addVertex,
+  finishDrawing,
+  clearPolygon,
 } = usePlacesManager();
 
 const placeTypesForPanel = computed(() =>
@@ -343,6 +398,25 @@ const {
   deleteBarbershop
 } = useShopManagement(placeInstances[0]!.fetchPlaces);
 
+const handleMapClick = (e: any) => {
+  if (isDrawingMode.value) {
+    addVertex(e.latlng.lat, e.latlng.lng);
+  } else {
+    onMapClick(e);
+  }
+};
+
+const totalFilteredCount = computed(() =>
+  placeInstances.reduce((sum, inst) => sum + (inst.visible ? inst.filteredPlaces.length : 0), 0)
+);
+
+// Press Escape to cancel drawing
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isDrawingMode.value) clearPolygon();
+};
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+
 </script>
 
 <style scoped>
@@ -412,6 +486,81 @@ const {
 .map-wrapper {
   flex: 1;
   position: relative;
+}
+
+.map-wrapper.drawing-cursor :deep(.leaflet-container) {
+  cursor: crosshair !important;
+}
+
+.polygon-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 27, 22, 0.92);
+  border: 1px solid rgba(245, 240, 232, 0.14);
+  border-radius: 12px;
+  padding: 8px 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.polygon-btn {
+  background: rgba(245, 240, 232, 0.08);
+  border: 1px solid rgba(245, 240, 232, 0.16);
+  border-radius: 8px;
+  color: #d4cfc8;
+  font-size: 13px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.polygon-btn:hover:not(:disabled) {
+  background: rgba(245, 240, 232, 0.14);
+  color: #f5f0e8;
+}
+
+.polygon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.polygon-btn.finish {
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #10b981;
+}
+
+.polygon-btn.finish:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.polygon-btn.cancel,
+.polygon-btn.clear {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.polygon-btn.cancel:hover,
+.polygon-btn.clear:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.drawing-hint {
+  font-size: 12px;
+  color: #f59e0b;
+  white-space: nowrap;
+}
+
+.polygon-count {
+  font-size: 12px;
+  color: #10b981;
+  white-space: nowrap;
 }
 
 /* Marker Styles */

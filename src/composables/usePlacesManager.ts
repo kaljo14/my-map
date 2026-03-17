@@ -1,5 +1,6 @@
-import { reactive, toRef } from 'vue';
+import { reactive, toRef, computed } from 'vue';
 import { usePlaces } from './usePlaces';
+import { usePolygonFilter } from './usePolygonFilter';
 
 export interface PlaceTypeConfig {
     category: string;
@@ -17,13 +18,23 @@ export const PLACE_TYPES: PlaceTypeConfig[] = [
 ];
 
 export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
+    const polygonFilter = usePolygonFilter();
+    const { activePolygon, isInsideActivePolygon } = polygonFilter;
+
     // Each instance is wrapped with reactive() so refs auto-unwrap in templates
     const instances = types.map(config => {
         const places = usePlaces(config.category);
+
+        const polygonFilteredPlaces = computed(() => {
+            const base = places.filteredPlaces.value;
+            if (!activePolygon.value) return base;
+            return base.filter(p => isInsideActivePolygon(p.lat, p.lng));
+        });
+
         const inst = reactive({
             config,
             visible: config.defaultVisible ?? false,
-            filteredPlaces: places.filteredPlaces,
+            filteredPlaces: polygonFilteredPlaces,
             fetchPlaces: places.fetchPlaces,
             filters: places.filters,
             availableServices: places.availableServices,
@@ -75,6 +86,7 @@ export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
     const resetFilters = () => {
         primary.resetFilters();
         if (groceryInst) groceryInst.selectedTagFilters = ['big-chains'];
+        polygonFilter.clearPolygon();
     };
 
     return {
@@ -87,5 +99,13 @@ export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
         resetFilters,
         groceryTagFilters,
         toggleGroceryTagFilter,
+        // Polygon draw filter
+        isDrawingMode: polygonFilter.isDrawingMode,
+        drawingVertices: polygonFilter.drawingVertices,
+        activePolygon: polygonFilter.activePolygon,
+        startDrawing: polygonFilter.startDrawing,
+        addVertex: polygonFilter.addVertex,
+        finishDrawing: polygonFilter.finishDrawing,
+        clearPolygon: polygonFilter.clearPolygon,
     };
 }
