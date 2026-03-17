@@ -32,6 +32,8 @@
             "rating": "Rating (min):",
             "priceRange": "Price Range:",
             "services": "Services:",
+            "groceryChain": "Grocery Chain:",
+            "groceryBigChains": "Big Chains",
             "reset": "Reset Filters"
         },
         "opportunity": {
@@ -53,7 +55,8 @@
             "analysisGrid": "Analysis Grid",
             "configure": "Configure",
             "densityFilter": "Density Filter",
-            "enableGridMessage": "Enable the grid to see population density data and filter options."
+            "enableGridMessage": "Enable the grid to see population density data and filter options.",
+            "heatmap": "Opportunity Heatmap"
         },
         "filters": {
             "allAreas": "All Areas",

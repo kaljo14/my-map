@@ -1,5 +1,5 @@
 <template>
-  <l-control position="topright" class="custom-control">
+  <div class="custom-control">
     <div class="control-container" v-click-outside="closeMenu">
       <!-- Main Toggle Button -->
       <button 
@@ -37,6 +37,13 @@
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="header-row" style="margin-top: 12px;">
+            <span class="menu-title">{{ $t('map.controls.heatmap') }}</span>
+            <label class="switch">
+              <input type="checkbox" :checked="showHeatmap" @change="$emit('toggleHeatmap')">
+              <span class="slider round"></span>
+            </label>
+          </div>
 
         </div>
 
@@ -64,23 +71,24 @@
         </div>
       </div>
     </div>
-  </l-control>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { LControl } from "@vue-leaflet/vue-leaflet";
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
 defineProps<{
   showPopulationGrid: boolean;
   showAnalysisGrid: boolean;
+  showHeatmap: boolean;
   selectedThreshold: number;
 }>();
 
 const emit = defineEmits<{
   (e: 'togglePopulationGrid'): void;
   (e: 'toggleAnalysisGrid'): void;
+  (e: 'toggleHeatmap'): void;
   (e: 'updateThreshold', value: number): void;
 }>();
 

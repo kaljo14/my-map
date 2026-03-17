@@ -77,16 +77,16 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { Barbershop } from '@/composables/useBarbershops';
+import type { Place } from '@/api/places';
 
 defineProps<{
-  shop: Barbershop;
+  shop: Place;
   isAuthenticated: boolean;
 }>();
 
 const emit = defineEmits<{
-  (e: 'edit', shop: Barbershop): void;
-  (e: 'delete', shop: Barbershop): void;
+  (e: 'edit', shop: Place): void;
+  (e: 'delete', shop: Place): void;
 }>();
 
 const activeEditMenu = ref<string | null>(null);

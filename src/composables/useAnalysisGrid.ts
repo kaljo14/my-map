@@ -215,7 +215,7 @@ export function useAnalysisGrid() {
                         .setContent(`
               <div class="density-popup" style="font-family: system-ui, sans-serif; min-width: 240px;">
                 <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 16px;">Market Analysis</h3>
-                
+
                 <div style="margin-bottom: 16px; background: ${statusColor}15; padding: 10px; border-radius: 6px; border-left: 3px solid ${statusColor};">
                   <div style="font-size: 14px; font-weight: 600; color: ${statusColor}; margin-bottom: 4px;">
                     ${statusEmoji} ${marketStatus}

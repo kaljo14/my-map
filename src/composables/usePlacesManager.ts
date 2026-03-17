@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { reactive, toRef } from 'vue';
 import { usePlaces } from './usePlaces';
 
 export interface PlaceTypeConfig {
@@ -20,7 +20,7 @@ export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
     // Each instance is wrapped with reactive() so refs auto-unwrap in templates
     const instances = types.map(config => {
         const places = usePlaces(config.category);
-        return reactive({
+        const inst = reactive({
             config,
             visible: config.defaultVisible ?? false,
             filteredPlaces: places.filteredPlaces,
@@ -29,7 +29,12 @@ export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
             availableServices: places.availableServices,
             averageRating: places.averageRating,
             resetFilters: places.resetFilters,
+            selectedTagFilters: places.selectedTagFilters,
         });
+        if (config.category === 'grocery store') {
+            inst.selectedTagFilters = ['big-chains'];
+        }
+        return inst;
     });
 
     const fetchAll = () => Promise.all(instances.map(i => i.fetchPlaces()));
@@ -40,7 +45,37 @@ export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
     };
 
     // Shared filter state comes from the primary (first) instance
-    const primary = instances[0];
+    const primary = instances[0]!;
+
+    const groceryInst = instances.find(i => i.config.category === 'grocery store');
+    const groceryTagFilters = groceryInst
+        ? toRef(groceryInst as Record<string, any>, 'selectedTagFilters')
+        : toRef({ selectedTagFilters: ['big-chains'] as string[] }, 'selectedTagFilters');
+
+    const toggleGroceryTagFilter = (tag: string) => {
+        if (!groceryInst) return;
+        const current: string[] = groceryInst.selectedTagFilters;
+        if (tag === 'big-chains') {
+            // big-chains is single-select: always replace
+            groceryInst.selectedTagFilters = ['big-chains'];
+        } else {
+            // specific chain: multi-select, deselect big-chains
+            const withoutBigChains = current.filter((t: string) => t !== 'big-chains');
+            const idx = withoutBigChains.indexOf(tag);
+            if (idx === -1) {
+                withoutBigChains.push(tag);
+            } else {
+                withoutBigChains.splice(idx, 1);
+            }
+            // if nothing selected fall back to big-chains
+            groceryInst.selectedTagFilters = withoutBigChains.length > 0 ? withoutBigChains : ['big-chains'];
+        }
+    };
+
+    const resetFilters = () => {
+        primary.resetFilters();
+        if (groceryInst) groceryInst.selectedTagFilters = ['big-chains'];
+    };
 
     return {
         instances,
@@ -49,6 +84,8 @@ export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {
         filters: primary.filters,
         availableServices: primary.availableServices,
         averageRating: primary.averageRating,
-        resetFilters: primary.resetFilters,
+        resetFilters,
+        groceryTagFilters,
+        toggleGroceryTagFilter,
     };
 }

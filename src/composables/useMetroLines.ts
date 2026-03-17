@@ -153,9 +153,7 @@ export function useMetroLines() {
 // Metro line color mapping - Your specified colors
 const METRO_COLORS: Record<string, string> = {
     'M1': '#EE3124', // Red
-    'M2': '#0054A6', // Blue  
+    'M2': '#0054A6', // Blue
     'M3': '#00A651', // Green
     'M4': '#FFD700', // Yellow
 };
-
-

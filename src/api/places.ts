@@ -33,6 +33,11 @@ export interface Place {
     reservable?: boolean;
     wheelchair_accessible?: boolean;
     utc_offset_minutes?: number;
+    tags?: string[];
+    photo_url?: string | null;
+    is_open_now?: boolean | null;
+    opening_hours_text?: string | null;
+    parsed_reviews?: any[] | null;
     // Legacy fields
     id?: string | number;
     price?: number;

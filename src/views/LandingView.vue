@@ -94,12 +94,14 @@
       <div class="section-label">{{ t.how.label }}</div>
       <h2 class="section-title">{{ t.how.title }}</h2>
       <div class="steps">
-        <div class="step" v-for="(step, i) in t.how.steps" :key="i">
-          <div class="step-num">0{{ i + 1 }}</div>
-          <h3>{{ step.title }}</h3>
-          <p>{{ step.body }}</p>
-        </div>
-        <div class="step-arrow" v-if="i < t.how.steps.length - 1" :key="'arrow-' + i" />
+        <template v-for="(step, i) in t.how.steps" :key="i">
+          <div class="step">
+            <div class="step-num">0{{ i + 1 }}</div>
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.body }}</p>
+          </div>
+          <div v-if="i < t.how.steps.length - 1" class="step-arrow" />
+        </template>
       </div>
     </section>
 

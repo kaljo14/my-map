@@ -1,27 +1,25 @@
 import { ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import L from 'leaflet';
+import type { Map as LeafletMap } from 'leaflet';
 import { useMapView } from '@/stores/mapViewStore';
 
 export function useMapInstance() {
     const route = useRoute();
     const { mapCenter, mapZoom, initializeFromURL, updateURL } = useMapView();
 
-    // Sync store with URL changes (back/forward or manual edit)
     watch(() => route.query, () => {
         initializeFromURL();
     }, { deep: true, immediate: true });
 
-    // Local refs for the l-map component binding (initialized after store sync)
     const zoom = ref(mapZoom.value);
     const center = ref(mapCenter.value);
 
     watch(mapZoom, (newZoom) => { zoom.value = newZoom; });
     watch(mapCenter, (newCenter) => { center.value = newCenter; });
 
-    const mapInstance = ref<L.Map | null>(null);
+    const mapInstance = ref<LeafletMap | null>(null);
 
-    const onMapReady = (map: L.Map) => {
+    const onMapReady = (map: LeafletMap) => {
         mapInstance.value = map;
 
         let updateTimeout: ReturnType<typeof setTimeout>;

@@ -13,11 +13,6 @@
       <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }">
         <AnalysisPanel
           :isMobile="isMobile"
-          :filters="filters"
-          :availableServices="availableServices"
-
-          :isAddShopMode="isAddShopMode"
-
           :placeTypes="placeTypesForPanel"
           :enableClustering="enableClustering"
           :showMetroVector="showMetroVector"
@@ -26,16 +21,14 @@
           :activeStopLines="activeStopLines"
           :metroLinesList="metroLinesList"
           :metroColors="metroColors"
-          @update:filters="handleFilterUpdate"
-          @resetFilters="resetFilters"
-
-          @toggleAddShopMode="toggleAddShopMode"
+          :groceryTagFilters="groceryTagFilters"
           @togglePlaceType="toggleVisible"
           @toggleClustering="enableClustering = !enableClustering"
           @toggleMetroVector="handleToggleMetroVector"
           @toggleMetroLine="handleToggleMetroLine"
           @toggleMetroStops="handleToggleMetroStops"
           @toggleStopLine="handleToggleStopLine"
+          @toggleGroceryTagFilter="toggleGroceryTagFilter"
         />
         
         <!-- Sidebar Toggle Handle -->
@@ -64,12 +57,14 @@
           @ready="onMapReady"
         >
           <l-control-layers />
-          <MapControls 
+          <MapControls
             :showPopulationGrid="showPopulationGrid"
             :showAnalysisGrid="showAnalysisGrid"
+            :showHeatmap="showHeatmap"
             :selectedThreshold="selectedThreshold"
             @togglePopulationGrid="handleTogglePopulationGrid"
             @toggleAnalysisGrid="handleToggleAnalysisGrid"
+            @toggleHeatmap="handleToggleHeatmap"
             @updateThreshold="updateThreshold"
           />
           <l-tile-layer
@@ -99,7 +94,13 @@
                 :lat-lng="[place.lat, place.lng]"
               >
                 <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
-                  <div class="shop-marker-content saved">{{ inst.config.emoji }}</div>
+                  <div class="shop-marker-content saved">
+                    <img v-if="place.tags?.includes('lidl')" src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl" />
+                    <img v-else-if="place.tags?.includes('kaufland')" src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland" />
+                    <img v-else-if="place.tags?.includes('billa')" src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa" />
+                    <img v-else-if="place.tags?.includes('fantastico')" src="/Fantastico.png" class="chain-logo" alt="Fantastico" />
+                    <template v-else>{{ inst.config.emoji }}</template>
+                  </div>
                 </l-icon>
                 <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
                   <ShopPopup
@@ -119,7 +120,13 @@
                 :lat-lng="[place.lat, place.lng]"
               >
                 <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
-                  <div class="shop-marker-content saved">{{ inst.config.emoji }}</div>
+                  <div class="shop-marker-content saved">
+                    <img v-if="place.tags?.includes('lidl')" src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl" />
+                    <img v-else-if="place.tags?.includes('kaufland')" src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland" />
+                    <img v-else-if="place.tags?.includes('billa')" src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa" />
+                    <img v-else-if="place.tags?.includes('fantastico')" src="/Fantastico.png" class="chain-logo" alt="Fantastico" />
+                    <template v-else>{{ inst.config.emoji }}</template>
+                  </div>
                 </l-icon>
                 <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
                   <ShopPopup
@@ -219,6 +226,7 @@ import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
 import { useShopManagement } from "@/composables/useShopManagement";
+import { useHeatmap } from "@/composables/useHeatmap";
 
 // Components
 import AnalysisPanel from "./map/AnalysisPanel.vue";
@@ -242,10 +250,9 @@ const {
   instances: placeInstances,
   fetchAll,
   toggleVisible,
-  filters,
-  availableServices,
   averageRating,
-  resetFilters,
+  groceryTagFilters,
+  toggleGroceryTagFilter,
 } = usePlacesManager();
 
 const placeTypesForPanel = computed(() =>
@@ -306,11 +313,6 @@ const handleToggleStopLine = (line: string) => {
   toggleStopLine(line, mapInstance.value);
 };
 
-// Filter handlers
-const handleFilterUpdate = (newFilters: any) => {
-  filters.value = newFilters;
-};
-
 // Expose constants to template
 const metroLinesList = METRO_LINES;
 const metroColors = METRO_COLORS;
@@ -329,16 +331,19 @@ const handleToggleAnalysisGrid = () => {
   toggleAnalysisGridComposable(mapInstance.value);
 };
 
+const { showHeatmap, toggleHeatmap } = useHeatmap();
+
+const handleToggleHeatmap = () => {
+  toggleHeatmap(mapInstance.value);
+};
+
 const {
   showShopModal,
   newShopPin,
   newShopName,
   userAddedShops,
-  isAddShopMode,
-
   showDeleteConfirm,
   shopToDelete,
-  toggleAddShopMode,
   onMapClick,
   cancelAddShop,
   saveShop,
@@ -346,7 +351,7 @@ const {
   confirmDelete,
   cancelDelete,
   deleteBarbershop
-} = useShopManagement(placeInstances[0].fetchPlaces);
+} = useShopManagement(placeInstances[0]!.fetchPlaces);
 
 </script>
 
@@ -433,6 +438,18 @@ const {
 
 .shop-marker-content:hover {
   transform: scale(1.2);
+}
+
+.chain-logo {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.chain-logo[alt="Billa"],
+.chain-logo[alt="Fantastico"] {
+  width: auto;
+  height: 18px;
 }
 
 

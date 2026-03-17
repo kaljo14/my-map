@@ -18,6 +18,21 @@
         </button>
       </div>
 
+      <!-- Grocery Chain Filter (shown only when grocery stores layer is active) -->
+      <div v-if="isGroceryVisible" class="filter-group grocery-chain-filter">
+        <label>{{ $t('analysis.filters.groceryChain') }}</label>
+        <div class="tag-buttons">
+          <button
+            v-for="tag in groceryTags"
+            :key="tag.value"
+            :class="['tag-btn', { active: groceryTagFilters.includes(tag.value) }]"
+            @click="$emit('toggleGroceryTagFilter', tag.value)"
+          >
+            {{ tag.label }}
+          </button>
+        </div>
+      </div>
+
       <!-- Utility toggles -->
       <div class="toggle-row-group">
         <button
@@ -83,78 +98,9 @@
       </div>
     </div>
 
-    <!-- Filters -->
-    <div class="filters-section">
-      <h3>{{ $t('analysis.filters.title') }}</h3>
-      
-      <div class="filter-group">
-        <label>{{ $t('analysis.filters.reviews') }}</label>
-        <input 
-          type="number" 
-          min="0" 
-          :value="filters.minReviews"
-          @input="updateFilter('minReviews', ($event.target as HTMLInputElement).value)"
-          class="price-input"
-          placeholder="0"
-        />
-      </div>
-
-      <div class="filter-group">
-        <label>{{ $t('analysis.filters.rating') }}</label>
-        <input 
-          type="range" 
-          min="0" 
-          max="5" 
-          step="0.5" 
-          :value="filters.minRating"
-          @input="updateFilter('minRating', ($event.target as HTMLInputElement).value)"
-          class="slider"
-        />
-        <span class="filter-value">{{ filters.minRating }}</span>
-      </div>
-
-      <div class="filter-group">
-        <label>{{ $t('analysis.filters.priceRange') }}</label>
-        <div class="price-range">
-          <input 
-            type="number" 
-            :value="filters.minPrice"
-            @input="updateFilter('minPrice', ($event.target as HTMLInputElement).value)"
-            placeholder="Min"
-            class="price-input"
-          />
-          <span>-</span>
-          <input 
-            type="number" 
-            :value="filters.maxPrice"
-            @input="updateFilter('maxPrice', ($event.target as HTMLInputElement).value)"
-            placeholder="Max"
-            class="price-input"
-          />
-        </div>
-      </div>
 
 
 
-      <button @click="$emit('resetFilters')" class="reset-btn">{{ $t('analysis.filters.reset') }}</button>
-    </div>
-
-
-
-    <!-- Add Barbershop Section -->
-    <div class="opportunity-section" v-if="false">
-      <h3>Add Barbershop</h3>
-      <p class="opportunity-description">
-        Click the button below to enable adding a new barbershop location by clicking on the map.
-      </p>
-      <button 
-        @click="$emit('toggleAddShopMode')" 
-        :class="['opportunity-btn', { active: isAddShopMode }]"
-      >
-        {{ isAddShopMode ? 'Cancel Adding Barbershop' : 'Add Barbershop' }}
-      </button>
-
-    </div>
 
 
 
@@ -172,21 +118,14 @@
 
 <script setup lang="ts">
 
+import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '../LanguageSwitcher.vue';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   isMobile: boolean;
-  filters: {
-    minRating: number;
-    minReviews: number;
-    minPrice: number | null;
-    maxPrice: number | null;
-    services: string[];
-  };
-  availableServices: string[];
-
-  isAddShopMode: boolean;
-
   placeTypes: Array<{ category: string; emoji: string; labelKey: string; visible: boolean }>;
   enableClustering: boolean;
   showMetroVector: boolean;
@@ -195,30 +134,30 @@ const props = defineProps<{
   activeStopLines: string[];
   metroLinesList: string[];
   metroColors: Record<string, string>;
+  groceryTagFilters: string[];
 }>();
 
-const emit = defineEmits<{
-  (e: 'update:filters', filters: any): void;
-  (e: 'resetFilters'): void;
-
-  (e: 'toggleAddShopMode'): void;
+defineEmits<{
   (e: 'togglePlaceType', category: string): void;
   (e: 'toggleClustering'): void;
   (e: 'toggleMetroVector'): void;
   (e: 'toggleMetroLine', line: string): void;
   (e: 'toggleMetroStops'): void;
   (e: 'toggleStopLine', line: string): void;
+  (e: 'toggleGroceryTagFilter', tag: string): void;
 }>();
 
-const updateFilter = (key: string, value: string | number) => {
-  const newFilters = { ...props.filters };
-  if (key === 'minRating') newFilters.minRating = Number(value);
-  if (key === 'minReviews') newFilters.minReviews = Number(value);
-  if (key === 'minPrice') newFilters.minPrice = value === '' ? null : Number(value);
-  if (key === 'maxPrice') newFilters.maxPrice = value === '' ? null : Number(value);
-  emit('update:filters', newFilters);
-};
+const isGroceryVisible = computed(() =>
+  props.placeTypes.some(pt => pt.category === 'grocery store' && pt.visible)
+);
 
+const groceryTags = computed(() => [
+  { value: 'big-chains', label: t('analysis.filters.groceryBigChains') },
+  { value: 'lidl',       label: 'Lidl' },
+  { value: 'kaufland',   label: 'Kaufland' },
+  { value: 'billa',      label: 'Billa' },
+  { value: 'fantastico', label: 'Fantastico' },
+]);
 
 </script>
 
@@ -550,6 +489,41 @@ const updateFilter = (key: string, value: string | number) => {
 
 .toggle-pill.on { background: rgba(217, 119, 87, 0.4); }
 .toggle-pill.on::after { transform: translateX(16px); background: #d97757; }
+
+.grocery-chain-filter {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(245, 240, 232, 0.07);
+}
+
+.tag-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-btn {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  background: rgba(245, 240, 232, 0.05);
+  color: #8a7e72;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.tag-btn:hover {
+  border-color: rgba(217, 119, 87, 0.35);
+  color: #c4b8ae;
+}
+
+.tag-btn.active {
+  background: rgba(217, 119, 87, 0.2);
+  border-color: rgba(217, 119, 87, 0.6);
+  color: #d97757;
+}
 
 .reset-btn {
   width: 100%;
