@@ -1,16 +1,8 @@
 <template>
-  <div v-if="isAuthenticated">
-    <RouterView />
-  </div>
-  <div v-else class="loading">
-    <p>Authenticating...</p>
-  </div>
+  <RouterView />
 </template>
 
 <script setup lang="ts">
-import auth from './services/auth';
-
-const { isAuthenticated } = auth;
 </script>
 
 <style>
