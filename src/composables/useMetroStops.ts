@@ -16,7 +16,7 @@ export function useMetroStops() {
 
     let stopsLayer: L.LayerGroup | null = null;
 
-    const buildStopsLayer = async (map: any): Promise<L.LayerGroup> => {
+    const buildStopsLayer = async (_map: any): Promise<L.LayerGroup> => {
         const data = await MetroAPI.getMetroStops();
         const group = L.layerGroup();
 
