@@ -41,7 +41,7 @@ export function useOpportunityHeatmap() {
     // ── Legend ───────────────────────────────────────────────────────────────
 
     function buildLegend(): L.Control {
-        const control = L.control({ position: 'bottomright' });
+        const control = new L.Control({ position: 'bottomright' });
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'opportunity-legend');
             div.innerHTML = `
