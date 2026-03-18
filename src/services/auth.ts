@@ -62,9 +62,16 @@ const logout = () => {
     keycloak.logout();
 };
 
-const getToken = () => {
-    if (import.meta.env.DEV) {
-        return 'mock-dev-token';
+const getToken = async () => {
+    const enableAuth = (window as any).ENABLE_AUTH !== 'false';
+    if (import.meta.env.DEV || !enableAuth) {
+        return null;
+    }
+    try {
+        await keycloak.updateToken(30);
+    } catch {
+        keycloak.login();
+        return null;
     }
     return keycloak.token;
 };

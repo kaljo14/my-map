@@ -5,7 +5,7 @@ import auth from '@/services/auth';
  */
 class HttpClient {
     private async getAuthHeaders(): Promise<HeadersInit> {
-        const token = auth.getToken();
+        const token = await auth.getToken();
 
         if (token) {
             return {
