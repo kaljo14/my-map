@@ -30,9 +30,28 @@ server {
         proxy_ssl_server_name on;
     }
 
+    location /api/metro {
+        proxy_pass ${PLACES_API_URL};
+        proxy_set_header Host $host;
+        proxy_ssl_server_name on;
+    }
+
+    location /api/heatmap {
+        proxy_pass ${PLACES_API_URL};
+        proxy_set_header Host $host;
+        proxy_ssl_server_name on;
+    }
+
     # Proxy for Tile Server
     location /api/tiles {
         proxy_pass ${TILES_API_URL};
+        proxy_set_header Host $host;
+        proxy_ssl_server_name on;
+    }
+
+    location /api/martin {
+        rewrite ^/api/martin(/.*)$ $1 break;
+        proxy_pass ${MARTIN_API_URL};
         proxy_set_header Host $host;
         proxy_ssl_server_name on;
     }
