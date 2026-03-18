@@ -6,6 +6,7 @@ import TilesAPI from '@/api/tiles';
 export function usePopulationLayers() {
     const showPopulationGrid = ref(false);
     const minPopulation = ref(0);
+    const selectedThreshold = ref(0);
     let populationLayer: any = null;
     let labelLayer: L.LayerGroup | null = null;
     // Store labels by tile key to manage lifecycle
@@ -100,9 +101,8 @@ export function usePopulationLayers() {
             // 1. Show Vector Grid (Tiles)
             if (!populationLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                // Use Population Grid Tile URL from the tileserver's /data/population_grid endpoint
+                // Use Population Grid Tile URL from Martin (no auth needed — CORS origin:*)
                 const tileUrl = TilesAPI.getPopulationGridTileUrlTemplate();
-                const headers = TilesAPI.getAuthHeaders();
 
                 populationLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
@@ -132,11 +132,7 @@ export function usePopulationLayers() {
                     },
                     interactive: true,
                     getFeatureId: function (f: any) { return f.properties.grid_id || f.properties.id; },
-                    maxNativeZoom: 14, // Matches Analysis Grid
-                    // Add fetchOptions to include JWT token in tile requests
-                    fetchOptions: {
-                        headers: headers
-                    }
+                    maxNativeZoom: 14,
                 });
 
                 // Handle tile loading to extract labels
@@ -238,7 +234,7 @@ export function usePopulationLayers() {
               <div class="population-popup" style="font-family: system-ui, sans-serif; min-width: 240px;">
                 <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 16px;">Grid Statistics</h3>
                 <div style="font-size: 10px; color: #94a3b8; margin-bottom: 8px;">ID: ${props.grid_id || 'N/A'}</div>
-                
+
                 <div style="margin-bottom: 16px; background: ${statusColor}15; padding: 10px; border-radius: 6px; border-left: 3px solid ${statusColor};">
                   <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">
                     ${total.toLocaleString()} <span style="font-size: 12px; font-weight: 400; color: #64748b;">Residents</span>
@@ -250,7 +246,7 @@ export function usePopulationLayers() {
                 </div>
 
                 <h4 style="margin: 0 0 8px 0; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 600;">Age Distribution</h4>
-                
+
                 <!-- Youth -->
                 <div style="margin-bottom: 8px;">
                   <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; color: #334155;">
@@ -305,10 +301,17 @@ export function usePopulationLayers() {
         }
     };
 
+    const updateThreshold = (value: number) => {
+        selectedThreshold.value = value;
+        updatePopulationGridFilter(value);
+    };
+
     return {
         showPopulationGrid,
         minPopulation,
+        selectedThreshold,
         togglePopulationGrid,
-        updatePopulationGridFilter
+        updatePopulationGridFilter,
+        updateThreshold,
     };
 }

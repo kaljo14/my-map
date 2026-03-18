@@ -25,7 +25,8 @@ const addLayer = inject('addLayer') as (layer: any) => void;
 const removeLayer = inject('removeLayer') as (layer: any) => void;
 
 // Create the marker cluster group
-const markerClusterGroup = L.markerClusterGroup(props.options);
+// @ts-ignore - leaflet.markercluster extends L but @types/leaflet doesn't include it
+const markerClusterGroup = (L as any).markerClusterGroup(props.options);
 
 // Provide addLayer/removeLayer to children (markers)
 // This allows children (l-marker) to add themselves to this cluster group

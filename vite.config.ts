@@ -38,6 +38,15 @@ export default defineConfig(({ mode }) => {
         '/api/metro': {
           target: env.PLACES_API_URL || 'http://localhost:8080',
           changeOrigin: true,
+        },
+        '/api/heatmap': {
+          target: env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/martin': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+          rewrite: (path) => path.replace(/^\/api\/martin/, ''),
         }
       }
     }

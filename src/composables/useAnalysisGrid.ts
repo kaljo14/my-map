@@ -1,7 +1,7 @@
 import { ref } from 'vue';
 import L from 'leaflet';
 
-import TilesAPI from '@/api/tiles';
+import { API_CONFIG } from '@/api/config';
 
 export function useAnalysisGrid() {
     const showAnalysisGrid = ref(false);
@@ -77,14 +77,13 @@ export function useAnalysisGrid() {
             // 1. Show Vector Grid (Tiles)
             if (!densityLayer) {
                 // @ts-ignore - leaflet.vectorgrid types might be missing
-                const tileUrl = `${TilesAPI.getBaseUrl()}/data/density/{z}/{x}/{y}.pbf`;
-                const headers = TilesAPI.getAuthHeaders();
+                const tileUrl = `${API_CONFIG.MARTIN_BASE_URL}/barbershop_density/{z}/{x}/{y}`;
 
                 densityLayer = (L as any).vectorGrid.protobuf(tileUrl, {
                     pane: 'overlayPane',
                     vectorTileLayerStyles: {
-                        density: function (properties: any) {
-                            const densityScore = properties.density_score || 0;
+                        barbershop_density: function (properties: any) {
+                            const densityScore = properties.men_per_shop || 0;
 
                             return {
                                 fillColor: getDensityColor(densityScore),
@@ -97,12 +96,8 @@ export function useAnalysisGrid() {
                         }
                     },
                     interactive: true,
-                    getFeatureId: function (f: any) { return f.properties.GRD_ID || f.properties.id; },
+                    getFeatureId: function (f: any) { return f.properties.grid_id || f.properties.id; },
                     maxNativeZoom: 14,
-                    // Add fetchOptions to include JWT token in tile requests
-                    fetchOptions: {
-                        headers: headers
-                    }
                 });
 
                 // Handle tile loading to extract labels
@@ -112,8 +107,8 @@ export function useAnalysisGrid() {
                     // Note: This relies on internal implementation details of L.vectorGrid
                     const vectorTile = densityLayer._vectorTiles[key];
 
-                    if (vectorTile && vectorTile.layers && vectorTile.layers.density) {
-                        const layer = vectorTile.layers.density;
+                    if (vectorTile && vectorTile.layers && vectorTile.layers.barbershop_density) {
+                        const layer = vectorTile.layers.barbershop_density;
                         const labels: L.Layer[] = [];
 
                         for (let i = 0; i < layer.length; i++) {
@@ -177,7 +172,7 @@ export function useAnalysisGrid() {
 
                 densityLayer.on('click', function (e: any) {
                     const props = e.layer.properties;
-                    const densityScore = props.density_score || 0;
+                    const densityScore = props.men_per_shop || 0;
                     const malePopulation = props.male_population || 0;
                     const barbershopCount = props.barbershop_count || 0;
 
@@ -215,7 +210,7 @@ export function useAnalysisGrid() {
                         .setContent(`
               <div class="density-popup" style="font-family: system-ui, sans-serif; min-width: 240px;">
                 <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; color: #1e293b; font-size: 16px;">Market Analysis</h3>
-                
+
                 <div style="margin-bottom: 16px; background: ${statusColor}15; padding: 10px; border-radius: 6px; border-left: 3px solid ${statusColor};">
                   <div style="font-size: 14px; font-weight: 600; color: ${statusColor}; margin-bottom: 4px;">
                     ${statusEmoji} ${marketStatus}

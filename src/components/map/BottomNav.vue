@@ -32,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineEmits } from 'vue';
+
 
 defineEmits<{
   (e: 'logout'): void;
@@ -46,14 +46,14 @@ defineEmits<{
   left: 0;
   width: 100%;
   height: 64px;
-  background: rgba(15, 23, 42, 0.95);
+  background: rgba(22, 27, 22, 0.96);
   backdrop-filter: blur(12px);
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  border-top: 1px solid rgba(245, 240, 232, 0.08);
   display: flex;
   justify-content: space-around;
   align-items: center;
-  z-index: 3000; /* Above everything */
-  padding-bottom: env(safe-area-inset-bottom, 0px); /* Handle iPhone home bar */
+  z-index: 3000;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .nav-item {
@@ -63,7 +63,7 @@ defineEmits<{
   justify-content: center;
   background: none;
   border: none;
-  color: #94a3b8;
+  color: #5a5048;
   gap: 4px;
   padding: 8px;
   cursor: pointer;
@@ -81,15 +81,9 @@ defineEmits<{
   font-weight: 500;
 }
 
-.nav-item.active {
-  color: #38bdf8;
-}
+.nav-item.active { color: #d97757; }
 
-.nav-item:active {
-  transform: scale(0.95);
-}
+.nav-item:active { transform: scale(0.95); }
 
-.nav-item.logout {
-  color: #ef4444;
-}
+.nav-item.logout { color: #c05e3a; }
 </style>

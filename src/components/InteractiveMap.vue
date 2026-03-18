@@ -13,29 +13,22 @@
       <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }">
         <AnalysisPanel
           :isMobile="isMobile"
-          :filters="filters"
-          :availableServices="availableServices"
-
-          :isAddShopMode="isAddShopMode"
-
-          :showBarbershops="showBarbershops"
+          :placeTypes="placeTypesForPanel"
           :enableClustering="enableClustering"
           :showMetroVector="showMetroVector"
           :activeMetroLines="activeMetroLines"
           :showMetroStops="showMetroStops"
           :activeStopLines="activeStopLines"
-          :metroLinesList="METRO_LINES"
-          :metroColors="METRO_COLORS"
-          @update:filters="filters = $event"
-          @resetFilters="resetFilters"
-
-          @toggleAddShopMode="toggleAddShopMode"
-          @toggleShowBarbershops="showBarbershops = !showBarbershops"
+          :metroLinesList="metroLinesList"
+          :metroColors="metroColors"
+          :groceryTagFilters="groceryTagFilters"
+          @togglePlaceType="toggleVisible"
           @toggleClustering="enableClustering = !enableClustering"
           @toggleMetroVector="handleToggleMetroVector"
           @toggleMetroLine="handleToggleMetroLine"
           @toggleMetroStops="handleToggleMetroStops"
           @toggleStopLine="handleToggleStopLine"
+          @toggleGroceryTagFilter="toggleGroceryTagFilter"
         />
         
         <!-- Sidebar Toggle Handle -->
@@ -49,28 +42,54 @@
       </div>
 
       <!-- Map -->
-      <div class="map-wrapper">
-        <MapStats 
+      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode }">
+        <MapStats
           :isMobile="isMobile"
-          :filteredCount="filteredBarbershops.length"
+          :filteredCount="placeInstances[0]?.filteredPlaces.length ?? 0"
           :averageRating="averageRating"
         />
+
+        <!-- Polygon Draw Controls -->
+        <div class="polygon-controls">
+          <template v-if="!isDrawingMode && !activePolygon">
+            <button class="polygon-btn" @click="startDrawing" title="Draw area to filter points">
+              ⬡ Draw Area
+            </button>
+          </template>
+          <template v-else-if="isDrawingMode">
+            <span class="drawing-hint">{{ drawingVertices.length }} point{{ drawingVertices.length !== 1 ? 's' : '' }} — click map to add</span>
+            <button
+              class="polygon-btn finish"
+              :disabled="drawingVertices.length < 3"
+              @click="finishDrawing"
+            >✓ Finish</button>
+            <button class="polygon-btn cancel" @click="clearPolygon">✕ Cancel</button>
+          </template>
+          <template v-else-if="activePolygon">
+            <span class="polygon-count">⬡ {{ totalFilteredCount }} in area</span>
+            <button class="polygon-btn clear" @click="clearPolygon">✕ Clear</button>
+          </template>
+        </div>
         <l-map
           :zoom="zoom"
           :center="center"
           :use-global-leaflet="true"
           :options="{ zoomControl: false }"
-          @click="onMapClick"
+          @click="handleMapClick"
           @ready="onMapReady"
         >
           <l-control-layers />
-          <MapControls 
+          <MapControls
             :showPopulationGrid="showPopulationGrid"
             :showAnalysisGrid="showAnalysisGrid"
             :selectedThreshold="selectedThreshold"
+            :showOpportunityHeatmap="showOpportunityHeatmap"
+            :activeCategoryHeatmap="heatmapCategory"
             @togglePopulationGrid="handleTogglePopulationGrid"
             @toggleAnalysisGrid="handleToggleAnalysisGrid"
             @updateThreshold="updateThreshold"
+            @toggleOpportunityHeatmap="handleToggleOpportunityHeatmap"
+            @setHeatmapCategory="handleSetHeatmapCategory"
           />
           <l-tile-layer
             v-for="layer in baseLayers"
@@ -87,192 +106,87 @@
           <!-- Metro Lines Layer -->
           <!-- Metro Lines Layer (Deprecated: Removed) -->
 
-          <!-- Barbershops Layer (Clustered) -->
-          <l-marker-cluster-group 
-            v-if="showBarbershops && enableClustering" 
-            :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
-          >
-            <l-marker
-              v-for="shop in filteredBarbershops"
-              :key="shop.id"
-              :lat-lng="[shop.lat, shop.lng]"
+          <!-- Place Layers (all types rendered generically) -->
+          <template v-for="inst in placeInstances" :key="inst.config.category">
+            <l-marker-cluster-group
+              v-if="inst.visible && enableClustering"
+              :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
             >
-              <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
-                <div class="shop-marker-content saved">
-                  💈
-                </div>
-              </l-icon>
-              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <div class="popup-content enhanced">
-                  <!-- Photo Header -->
-                  <div v-if="shop.photo_url" class="popup-photo">
-                    <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
+              <l-marker
+                v-for="place in inst.filteredPlaces"
+                :key="place.id"
+                :lat-lng="[place.lat, place.lng]"
+              >
+                <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
+                  <div class="shop-marker-content saved">
+                    <img v-if="place.tags?.includes('lidl')" src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl" />
+                    <img v-else-if="place.tags?.includes('kaufland')" src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland" />
+                    <img v-else-if="place.tags?.includes('billa')" src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa" />
+                    <img v-else-if="place.tags?.includes('fantastico')" src="/Fantastico.png" class="chain-logo" alt="Fantastico" />
+                    <template v-else>{{ inst.config.emoji }}</template>
                   </div>
-                  
-                  <!-- Title and Rating with Edit Button -->
-                  <div class="popup-header">
-                    <div class="popup-header-content">
-                      <h3 class="popup-title">{{ shop.name }}</h3>
-                      <div class="popup-rating">
-                        <span class="stars">{{ getStars(shop.rating || 0) }}</span>
-                        <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
-                      </div>
-                    </div>
-                    <div class="edit-menu-container" v-if="isAuthenticated">
-                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
-                        ⚙️
-                      </button>
-                      <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
-                        <button @click="editBarbershop(shop)" class="dropdown-item">
-                          ✏️ {{ $t('map.popup.editInfo') }}
-                        </button>
-                        <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                          🗑️ {{ $t('common.delete') }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
+                </l-icon>
+                <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                  <ShopPopup
+                    :shop="place"
+                    :isAuthenticated="isAuthenticated"
+                    @edit="(s) => inst.config.category === 'barbershop' ? editBarbershop(s) : null"
+                    @delete="(s) => inst.config.category === 'barbershop' ? confirmDelete(s) : null"
+                  />
+                </l-popup>
+              </l-marker>
+            </l-marker-cluster-group>
 
-                  <!-- Status Badge -->
-                  <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                    {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
+            <l-layer-group v-if="inst.visible && !enableClustering">
+              <l-marker
+                v-for="place in inst.filteredPlaces"
+                :key="place.id"
+                :lat-lng="[place.lat, place.lng]"
+              >
+                <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
+                  <div class="shop-marker-content saved">
+                    <img v-if="place.tags?.includes('lidl')" src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl" />
+                    <img v-else-if="place.tags?.includes('kaufland')" src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland" />
+                    <img v-else-if="place.tags?.includes('billa')" src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa" />
+                    <img v-else-if="place.tags?.includes('fantastico')" src="/Fantastico.png" class="chain-logo" alt="Fantastico" />
+                    <template v-else>{{ inst.config.emoji }}</template>
                   </div>
+                </l-icon>
+                <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
+                  <ShopPopup
+                    :shop="place"
+                    :isAuthenticated="isAuthenticated"
+                    @edit="(s) => inst.config.category === 'barbershop' ? editBarbershop(s) : null"
+                    @delete="(s) => inst.config.category === 'barbershop' ? confirmDelete(s) : null"
+                  />
+                </l-popup>
+              </l-marker>
+            </l-layer-group>
+          </template>
 
-                  <!-- Info Grid -->
-                  <div class="popup-info">
-                    <div class="info-row" v-if="shop.price_level">
-                      <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
-                    </div>
-                    <div class="info-row" v-if="shop.address">
-                      <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
-                    </div>
-                    <div class="info-row" v-if="shop.formatted_phone_number">
-                      <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
-                      <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-                    </div>
-                    <div class="info-row" v-if="shop.opening_hours_text">
-                      <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
-                      <div class="hours-list">
-                        <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
-                          {{ line }}
-                        </div>
-                        <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                          +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                      <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-                    </div>
-                  </div>
+          <!-- Polygon Drawing Preview -->
+          <template v-if="isDrawingMode && drawingVertices.length >= 2">
+            <l-polygon
+              :lat-lngs="drawingVertices"
+              :options="{ color: '#f59e0b', weight: 2, fillOpacity: 0.08, dashArray: '6 6' }"
+            />
+          </template>
+          <template v-if="isDrawingMode">
+            <l-circle-marker
+              v-for="(v, i) in drawingVertices"
+              :key="i"
+              :lat-lng="v"
+              :radius="5"
+              :options="{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 }"
+            />
+          </template>
 
-                  <!-- Action Buttons -->
-                  <div class="popup-actions">
-                    <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                      🌐 {{ $t('map.popup.website') }}
-                    </a>
-                    <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                      🗺️ {{ $t('map.popup.directions') }}
-                    </a>
-                  </div>
-                </div>
-              </l-popup>
-            </l-marker>
-          </l-marker-cluster-group>
-
-          <!-- Barbershops Layer (Non-Clustered) -->
-          <l-layer-group v-if="showBarbershops && !enableClustering">
-            <l-marker
-              v-for="shop in filteredBarbershops"
-              :key="shop.id"
-              :lat-lng="[shop.lat, shop.lng]"
-            >
-              <l-icon :icon-anchor="[20, 40]" class-name="barbershop-marker">
-                <div class="shop-marker-content saved">
-                  💈
-                </div>
-              </l-icon>
-              <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                <div class="popup-content enhanced">
-                  <!-- Photo Header -->
-                  <div v-if="shop.photo_url" class="popup-photo">
-                    <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
-                  </div>
-                  
-                  <!-- Title and Rating with Edit Button -->
-                  <div class="popup-header">
-                    <div class="popup-header-content">
-                      <h3 class="popup-title">{{ shop.name }}</h3>
-                      <div class="popup-rating">
-                        <span class="stars">{{ getStars(shop.rating || 0) }}</span>
-                        <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
-                        <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
-                      </div>
-                    </div>
-                    <div class="edit-menu-container" v-if="isAuthenticated">
-                      <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
-                        ⚙️
-                      </button>
-                      <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
-                        <button @click="editBarbershop(shop)" class="dropdown-item">
-                          ✏️ {{ $t('map.popup.editInfo') }}
-                        </button>
-                        <button @click="confirmDelete(shop)" class="dropdown-item delete">
-                          🗑️ {{ $t('common.delete') }}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Status Badge -->
-                  <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-                    {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
-                  </div>
-
-                  <!-- Info Grid -->
-                  <div class="popup-info">
-                    <div class="info-row" v-if="shop.price_level">
-                      <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
-                    </div>
-                    <div class="info-row" v-if="shop.address">
-                      <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
-                    </div>
-                    <div class="info-row" v-if="shop.formatted_phone_number">
-                      <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
-                      <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-                    </div>
-                    <div class="info-row" v-if="shop.opening_hours_text">
-                      <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
-                      <div class="hours-list">
-                        <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
-                          {{ line }}
-                        </div>
-                        <div v-if="shop.opening_hours_text.split('\n').length > 3" class="hours-more">
-                          +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="info-row" v-if="shop.services && shop.services.length > 0">
-                      <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-                    </div>
-                  </div>
-
-                  <!-- Action Buttons -->
-                  <div class="popup-actions">
-                    <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-                      🌐 {{ $t('map.popup.website') }}
-                    </a>
-                    <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-                      🗺️ {{ $t('map.popup.directions') }}
-                    </a>
-                  </div>
-                </div>
-              </l-popup>
-            </l-marker>
-          </l-layer-group>
-
-
+          <!-- Active Filter Polygon -->
+          <l-polygon
+            v-if="activePolygon"
+            :lat-lngs="activePolygon"
+            :options="{ color: '#10b981', weight: 2, fillOpacity: 0.12 }"
+          />
 
           <!-- Temporary Pin for New Shop -->
           <l-marker
@@ -335,7 +249,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import {
   LMap,
   LTileLayer,
@@ -344,8 +258,9 @@ import {
   LPopup,
   LControlLayers,
   LLayerGroup,
+  LPolygon,
+  LCircleMarker,
 } from "@vue-leaflet/vue-leaflet";
-import L from "leaflet";
 
 import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
 
@@ -353,14 +268,15 @@ import { baseLayers } from "@/stores/mapConfig";
 import auth from "@/services/auth";
 
 // Composables
-import { useBarbershops } from "@/composables/useBarbershops";
+import { useMapInstance } from "@/composables/useMapInstance";
+import { useMobileDetection } from "@/composables/useMobileDetection";
+import { usePlacesManager } from "@/composables/usePlacesManager";
 import { usePopulationLayers } from "@/composables/usePopulationLayers";
 import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
+import { useOpportunityHeatmap } from "@/composables/useOpportunityHeatmap";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
-
 import { useShopManagement } from "@/composables/useShopManagement";
-
 // Components
 import AnalysisPanel from "./map/AnalysisPanel.vue";
 import ShopModal from "./map/ShopModal.vue";
@@ -369,55 +285,64 @@ import MapControls from "./map/MapControls.vue";
 import AppHeader from "./map/AppHeader.vue";
 import MapStats from "./map/MapStats.vue";
 import BottomNav from "./map/BottomNav.vue";
+import ShopPopup from "./map/ShopPopup.vue";
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
-const zoom = ref(12);
-const center = ref<[number, number]>([42.6977, 23.3219]); // Sofia center
-const mapInstance = ref<L.Map | null>(null);
+const { mapInstance, zoom, center, onMapReady } = useMapInstance();
+const { isMobile } = useMobileDetection();
+
 const isSidebarOpen = ref(true);
-const isMobile = ref(false);
-const showBarbershops = ref(true);
 const enableClustering = ref(true);
 
-const checkMobile = () => {
-  isMobile.value = window.matchMedia('(pointer: coarse)').matches || window.innerWidth < 768;
-};
+const {
+  instances: placeInstances,
+  fetchAll,
+  toggleVisible,
+  averageRating,
+  groceryTagFilters,
+  toggleGroceryTagFilter,
+  isDrawingMode,
+  drawingVertices,
+  activePolygon,
+  startDrawing,
+  addVertex,
+  finishDrawing,
+  clearPolygon,
+} = usePlacesManager();
+
+const placeTypesForPanel = computed(() =>
+  placeInstances.map(inst => ({
+    category: inst.config.category,
+    emoji: inst.config.emoji,
+    labelKey: inst.config.labelKey,
+    visible: inst.visible,
+  }))
+);
 
 onMounted(() => {
-  checkMobile();
-  // Set initial sidebar state: Closed for everyone
   isSidebarOpen.value = false;
-  
-  window.addEventListener('resize', checkMobile);
-  fetchBarbershops();
+  fetchAll();
 });
-
-const onMapReady = (map: L.Map) => {
-  mapInstance.value = map;
-};
-
-// Use Composables
-const {
-  filters,
-  fetchBarbershops,
-  availableServices,
-  filteredBarbershops,
-  averageRating,
-
-  resetFilters
-} = useBarbershops();
 
 const {
   showPopulationGrid,
+  selectedThreshold,
   togglePopulationGrid,
-  updatePopulationGridFilter
+  updateThreshold,
 } = usePopulationLayers();
 
 const {
   showAnalysisGrid,
   toggleAnalysisGrid: toggleAnalysisGridComposable
 } = useAnalysisGrid();
+
+const {
+  showOpportunityHeatmap,
+  activeCategory: heatmapCategory,
+  toggleOpportunityHeatmap,
+  setHeatmapCategory,
+} = useOpportunityHeatmap();
 
 const {
   showMetroVector,
@@ -448,10 +373,12 @@ const handleToggleMetroStops = () => {
 };
 
 const handleToggleStopLine = (line: string) => {
-    toggleStopLine(line, mapInstance.value);
+  toggleStopLine(line, mapInstance.value);
 };
 
-
+// Expose constants to template
+const metroLinesList = METRO_LINES;
+const metroColors = METRO_COLORS;
 
 const handleTogglePopulationGrid = () => {
   if (showAnalysisGrid.value) {
@@ -467,39 +394,49 @@ const handleToggleAnalysisGrid = () => {
   toggleAnalysisGridComposable(mapInstance.value);
 };
 
-const selectedThreshold = ref(0);
-const updateThreshold = (value: number) => {
-  selectedThreshold.value = value;
-  updatePopulationGridFilter(value);
+const handleToggleOpportunityHeatmap = () => {
+  toggleOpportunityHeatmap(mapInstance.value);
 };
 
-
+const handleSetHeatmapCategory = (cat: string) => {
+  setHeatmapCategory(cat as any, mapInstance.value);
+};
 
 const {
   showShopModal,
   newShopPin,
   newShopName,
   userAddedShops,
-  isAddShopMode,
-  activeEditMenu,
   showDeleteConfirm,
   shopToDelete,
-  toggleAddShopMode,
   onMapClick,
   cancelAddShop,
   saveShop,
-  toggleEditMenu,
   editBarbershop,
   confirmDelete,
   cancelDelete,
   deleteBarbershop
-} = useShopManagement(fetchBarbershops);
+} = useShopManagement(placeInstances[0]!.fetchPlaces);
 
-const getStars = (rating: number) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  return "★".repeat(fullStars) + (hasHalfStar ? "½" : "") + "☆".repeat(5 - fullStars - (hasHalfStar ? 1 : 0));
+const handleMapClick = (e: any) => {
+  if (isDrawingMode.value) {
+    addVertex(e.latlng.lat, e.latlng.lng);
+  } else {
+    onMapClick(e);
+  }
 };
+
+const totalFilteredCount = computed(() =>
+  placeInstances.reduce((sum, inst) => sum + (inst.visible ? inst.filteredPlaces.length : 0), 0)
+);
+
+// Press Escape to cancel drawing
+const handleKeydown = (e: KeyboardEvent) => {
+  if (e.key === 'Escape' && isDrawingMode.value) clearPolygon();
+};
+onMounted(() => window.addEventListener('keydown', handleKeydown));
+onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
+
 </script>
 
 <style scoped>
@@ -535,41 +472,115 @@ const getStars = (rating: number) => {
 .sidebar-toggle {
   position: absolute;
   top: 50%;
-  right: -32px; /* Increased width */
+  right: -32px;
   width: 32px;
-  height: 64px; /* Taller for better grab area */
+  height: 64px;
   transform: translateY(-50%);
-  background: #1e293b;
-  border: 1px solid rgba(148, 163, 184, 0.3); /* More visible border */
+  background: #161B16;
+  border: 1px solid rgba(245, 240, 232, 0.12);
   border-left: none;
-  border-radius: 0 12px 12px 0; /* More rounded */
+  border-radius: 0 12px 12px 0;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #e2e8f0; /* Brighter icon */
-  box-shadow: 6px 0 12px rgba(0,0,0,0.2);
+  color: #8a7e72;
+  box-shadow: 6px 0 12px rgba(0, 0, 0, 0.25);
   transition: all 0.2s;
-  padding-left: 4px; /* Push icon slightly to the right */
+  padding-left: 4px;
 }
 
 .sidebar-toggle:hover {
-  background: #334155;
-  color: white;
-  width: 36px; /* Expands more on hover */
+  background: #252018;
+  color: #f5f0e8;
+  width: 36px;
   right: -36px;
-  box-shadow: 8px 0 16px rgba(0,0,0,0.3);
+  box-shadow: 8px 0 16px rgba(0, 0, 0, 0.35);
 }
 
 .toggle-icon {
-  font-size: 14px; /* Larger icon */
+  font-size: 14px;
   font-weight: bold;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .map-wrapper {
   flex: 1;
   position: relative;
+}
+
+.map-wrapper.drawing-cursor :deep(.leaflet-container) {
+  cursor: crosshair !important;
+}
+
+.polygon-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(22, 27, 22, 0.92);
+  border: 1px solid rgba(245, 240, 232, 0.14);
+  border-radius: 12px;
+  padding: 8px 14px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.polygon-btn {
+  background: rgba(245, 240, 232, 0.08);
+  border: 1px solid rgba(245, 240, 232, 0.16);
+  border-radius: 8px;
+  color: #d4cfc8;
+  font-size: 13px;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.polygon-btn:hover:not(:disabled) {
+  background: rgba(245, 240, 232, 0.14);
+  color: #f5f0e8;
+}
+
+.polygon-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.polygon-btn.finish {
+  border-color: rgba(16, 185, 129, 0.5);
+  color: #10b981;
+}
+
+.polygon-btn.finish:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.15);
+}
+
+.polygon-btn.cancel,
+.polygon-btn.clear {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+.polygon-btn.cancel:hover,
+.polygon-btn.clear:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.drawing-hint {
+  font-size: 12px;
+  color: #f59e0b;
+  white-space: nowrap;
+}
+
+.polygon-count {
+  font-size: 12px;
+  color: #10b981;
+  white-space: nowrap;
 }
 
 /* Marker Styles */
@@ -588,140 +599,18 @@ const getStars = (rating: number) => {
   transform: scale(1.2);
 }
 
-/* Popup Styles */
-.popup-content {
-  min-width: 250px;
-  max-width: 350px;
+.chain-logo {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
-.popup-photo {
-  width: 100%;
-  height: 150px;
-  overflow: hidden;
-  border-radius: 8px 8px 0 0;
-  margin: -14px -20px 12px -20px;
-  position: relative;
+.chain-logo[alt="Billa"],
+.chain-logo[alt="Fantastico"] {
+  width: auto;
+  height: 18px;
 }
 
-.popup-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.popup-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.popup-title {
-  margin: 0 0 4px 0;
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #1a202c;
-}
-
-.popup-rating {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.stars {
-  color: #f59e0b;
-  font-size: 1rem;
-}
-
-.rating-value {
-  font-weight: 700;
-  color: #4a5568;
-}
-
-.rating-count {
-  color: #718096;
-  font-size: 0.8rem;
-}
-
-.status-badge {
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  margin-bottom: 12px;
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.status-badge.open {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.popup-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.info-row {
-  font-size: 0.9rem;
-  color: #4a5568;
-  line-height: 1.4;
-}
-
-.info-row strong {
-  color: #2d3748;
-  font-weight: 600;
-}
-
-.hours-list {
-  margin-top: 4px;
-  padding-left: 8px;
-  border-left: 2px solid #e2e8f0;
-}
-
-.hours-line {
-  font-size: 0.85rem;
-  color: #718096;
-}
-
-.hours-more {
-  font-size: 0.8rem;
-  color: #a0aec0;
-  font-style: italic;
-  margin-top: 2px;
-}
-
-.popup-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.action-btn {
-  flex: 1;
-  text-align: center;
-  padding: 8px;
-  background: #f7fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  color: #4a5568;
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 600;
-  transition: all 0.2s;
-}
-
-.action-btn:hover {
-  background: #edf2f7;
-  color: #2d3748;
-}
 
 /* Opportunity Zone Styles */
 .opportunity-marker-content {
@@ -760,68 +649,6 @@ const getStars = (rating: number) => {
   border: 1px solid #d1fae5;
 }
 
-/* Edit Menu Styles */
-.edit-menu-container {
-  position: relative;
-}
-
-.edit-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  padding: 4px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.edit-btn:hover {
-  background: #f1f5f9;
-}
-
-.edit-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e2e8f0;
-  z-index: 1000;
-  min-width: 120px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.dropdown-item {
-  padding: 8px 12px;
-  text-align: left;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #475569;
-  transition: background 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropdown-item:hover {
-  background: #f8fafc;
-  color: #1e293b;
-}
-
-.dropdown-item.delete {
-  color: #ef4444;
-  border-top: 1px solid #f1f5f9;
-}
-
-.dropdown-item.delete:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
 
 /* Metro Stop Marker Styles */
 :deep(.metro-stop-marker) {

@@ -19,12 +19,12 @@
 
 a {
   font-weight: 500;
-  color: #646cff;
+  color: #0d9488;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #535bf2;
+  color: #0f766e;
 }
 
 body {
@@ -50,7 +50,7 @@ button {
 }
 
 button:hover {
-  border-color: #646cff;
+  border-color: #0d9488;
 }
 
 button:focus,
@@ -73,7 +73,7 @@ button:focus-visible {
   }
 
   a:hover {
-    color: #747bff;
+    color: #14b8a6;
   }
 
   button {
@@ -85,6 +85,40 @@ button:focus-visible {
   background: transparent;
   border: none;
   pointer-events: none;
+}
+
+/* ── Opportunity Heatmap Legend ─────────────────────────────────────────── */
+.opportunity-legend {
+    background: #f5f0e8;
+    border: 1px solid #e0d8cc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: system-ui, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    min-width: 140px;
+}
+
+.opp-legend-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a4030;
+    margin-bottom: 6px;
+}
+
+.opp-legend-gradient {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #313695, #ffffbf, #a50026);
+    margin-bottom: 4px;
+}
+
+.opp-legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #9d9080;
 }
 
 .label-content {

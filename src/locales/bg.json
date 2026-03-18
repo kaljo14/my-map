@@ -21,6 +21,9 @@
         "settings": {
             "title": "Настройки на картата",
             "showBarbershops": "Покажи бръснарници",
+            "showGyms": "Покажи фитнеси",
+            "showCarwashes": "Покажи автомивки",
+            "showGroceryStores": "Покажи хранителни магазини",
             "enableClustering": "Включи групиране"
         },
         "filters": {
@@ -29,6 +32,8 @@
             "rating": "Оценка (мин):",
             "priceRange": "Ценови диапазон:",
             "services": "Услуги:",
+            "groceryChain": "Верига магазини:",
+            "groceryBigChains": "Големи вериги",
             "reset": "Изчисти филтрите"
         },
         "opportunity": {
@@ -48,9 +53,13 @@
             "title": "Контроли на картата",
             "populationGrid": "Мрежа население",
             "analysisGrid": "Анализ мрежа",
+            "opportunityHeatmap": "Карта на възможностите",
             "configure": "Конфигуриране",
             "densityFilter": "Филтър гъстота",
-            "enableGridMessage": "Включете мрежата, за да видите данни за гъстотата на населението и опциите за филтриране."
+            "enableGridMessage": "Включете мрежата, за да видите данни за гъстотата на населението и опциите за филтриране.",
+            "heatmapCategory": "Категория",
+            "heatmapBarbershop": "Бръснарница",
+            "heatmapGym": "Фитнес"
         },
         "filters": {
             "allAreas": "Всички райони",

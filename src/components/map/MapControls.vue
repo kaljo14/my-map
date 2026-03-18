@@ -37,7 +37,35 @@
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="header-row" style="margin-top: 12px;">
+            <span class="menu-title">{{ $t('map.controls.opportunityHeatmap') }}</span>
+            <label class="switch">
+              <input type="checkbox" :checked="showOpportunityHeatmap" @change="$emit('toggleOpportunityHeatmap')">
+              <span class="slider round"></span>
+            </label>
+          </div>
 
+        </div>
+
+        <!-- Heatmap category picker (shown when heatmap is active) -->
+        <div v-if="showOpportunityHeatmap" class="menu-content">
+          <span class="section-label">{{ $t('map.controls.heatmapCategory') }}</span>
+          <div class="category-pills">
+            <button
+              class="category-pill"
+              :class="{ active: activeCategoryHeatmap === 'barbershop' }"
+              @click="$emit('setHeatmapCategory', 'barbershop')"
+            >
+              ✂️ {{ $t('map.controls.heatmapBarbershop') }}
+            </button>
+            <button
+              class="category-pill"
+              :class="{ active: activeCategoryHeatmap === 'gym' }"
+              @click="$emit('setHeatmapCategory', 'gym')"
+            >
+              🏋️ {{ $t('map.controls.heatmapGym') }}
+            </button>
+          </div>
         </div>
 
         <div v-if="showPopulationGrid" class="menu-content">
@@ -76,12 +104,16 @@ defineProps<{
   showPopulationGrid: boolean;
   showAnalysisGrid: boolean;
   selectedThreshold: number;
+  showOpportunityHeatmap: boolean;
+  activeCategoryHeatmap: string;
 }>();
 
 const emit = defineEmits<{
   (e: 'togglePopulationGrid'): void;
   (e: 'toggleAnalysisGrid'): void;
   (e: 'updateThreshold', value: number): void;
+  (e: 'toggleOpportunityHeatmap'): void;
+  (e: 'setHeatmapCategory', category: string): void;
 }>();
 
 const menuOpen = ref(false);
@@ -136,8 +168,8 @@ const vClickOutside = {
 }
 
 .main-btn {
-  background-color: #fff;
-  border: 2px solid rgba(0,0,0,0.2);
+  background-color: #f5f0e8;
+  border: 1px solid #d5ccc0;
   border-radius: 8px;
   width: 50px;
   height: 50px;
@@ -146,54 +178,53 @@ const vClickOutside = {
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 8px rgba(19, 19, 20, 0.12);
 }
 
 .main-btn:hover {
-  background-color: #f8fafc;
+  background-color: #ede7dc;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(19, 19, 20, 0.16);
 }
 
 .main-btn.active {
-  background-color: #eff6ff;
-  border-color: #3b82f6;
+  background-color: #fff0ea;
+  border-color: #d97757;
 }
 
 .main-btn.active .icon {
-  color: #3b82f6;
-  fill: #3b82f6;
+  color: #d97757;
 }
 
 .icon {
   width: 42px;
   height: 42px;
-  color: #64748b;
+  color: #8a7e72;
   transition: all 0.2s;
 }
 
 .popover-menu {
   position: absolute;
   top: 0;
-  right: 54px; /* Position to the left of the button */
+  right: 54px;
   width: 280px;
-  background: white;
+  background: #f5f0e8;
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 12px 30px rgba(19, 19, 20, 0.14);
+  border: 1px solid #e0d8cc;
   overflow: hidden;
   animation: slideIn 0.2s ease-out;
 }
 
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(10px); }
-  to { opacity: 1; transform: translateX(0); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .menu-header {
   padding: 16px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  background: #ede7dc;
+  border-bottom: 1px solid #e0d8cc;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -208,7 +239,7 @@ const vClickOutside = {
 
 .menu-title {
   font-weight: 600;
-  color: #1e293b;
+  color: #131314;
   font-size: 14px;
 }
 
@@ -229,11 +260,8 @@ const vClickOutside = {
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #cbd5e1;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #c9bfb4;
   transition: .4s;
 }
 
@@ -244,26 +272,16 @@ const vClickOutside = {
   width: 18px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
+  background-color: #f5f0e8;
   transition: .4s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
-input:checked + .slider {
-  background-color: #3b82f6;
-}
+input:checked + .slider { background-color: #d97757; }
+input:checked + .slider:before { transform: translateX(18px); }
 
-input:checked + .slider:before {
-  transform: translateX(18px);
-}
-
-.slider.round {
-  border-radius: 34px;
-}
-
-.slider.round:before {
-  border-radius: 50%;
-}
+.slider.round { border-radius: 34px; }
+.slider.round:before { border-radius: 50%; }
 
 .menu-content {
   padding: 8px 0;
@@ -274,7 +292,7 @@ input:checked + .slider:before {
 .menu-placeholder {
   padding: 20px;
   text-align: center;
-  color: #94a3b8;
+  color: #9d9080;
   font-size: 13px;
   line-height: 1.5;
 }
@@ -285,7 +303,7 @@ input:checked + .slider:before {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #9d9080;
   font-weight: 600;
 }
 
@@ -302,13 +320,9 @@ input:checked + .slider:before {
   transition: background 0.15s;
 }
 
-.filter-option:hover {
-  background-color: #f1f5f9;
-}
+.filter-option:hover { background-color: #ede7dc; }
 
-.filter-option.selected {
-  background-color: #eff6ff;
-}
+.filter-option.selected { background-color: #fff0ea; }
 
 .color-dot {
   width: 10px;
@@ -320,17 +334,49 @@ input:checked + .slider:before {
 .option-text {
   flex: 1;
   font-size: 13px;
-  color: #334155;
+  color: #4a4030;
 }
 
 .filter-option.selected .option-text {
-  color: #1e293b;
+  color: #131314;
   font-weight: 500;
 }
 
 .check-icon {
-  color: #3b82f6;
+  color: #d97757;
   font-weight: bold;
   font-size: 14px;
+}
+
+.category-pills {
+  display: flex;
+  gap: 8px;
+  padding: 8px 16px 14px;
+}
+
+.category-pill {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid #d5ccc0;
+  background: #f5f0e8;
+  color: #4a4030;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+}
+
+.category-pill:hover {
+  background: #ede7dc;
+  border-color: #c9bfb4;
+}
+
+.category-pill.active {
+  background: #fff0ea;
+  border-color: #d97757;
+  color: #d97757;
+  font-weight: 600;
 }
 </style>

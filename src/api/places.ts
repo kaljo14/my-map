@@ -1,11 +1,16 @@
 import httpClient from './httpClient';
-import { API_CONFIG } from './config';
 
-export interface Barbershop {
+// API calls use a relative path so they are handled by whatever is serving
+// port 8888 — nginx in production (which proxies /api/* to the backend),
+// or the Vite dev proxy in development.
+const PLACES_ENDPOINT = '/api/places';
+
+export interface Place {
     place_id: string;
     name: string;
     lat: number;
     lng: number;
+    category: string;
     address?: string;
     business_status?: string;
     rating?: number;
@@ -28,24 +33,44 @@ export interface Barbershop {
     reservable?: boolean;
     wheelchair_accessible?: boolean;
     utc_offset_minutes?: number;
-    // Legacy fields for compatibility
+    tags?: string[];
+    photo_url?: string | null;
+    is_open_now?: boolean | null;
+    opening_hours_text?: string | null;
+    parsed_reviews?: any[] | null;
+    // Legacy fields
     id?: string | number;
     price?: number;
     services?: string[];
 }
 
 class PlacesAPI {
-    /**
-     * Fetches all barbershops
-     */
-    async getBarbershops(): Promise<Barbershop[]> {
-        const response = await httpClient.get(`${API_CONFIG.PLACES_BASE_URL}/api/barbershops`);
+    async getPlaces(category?: string): Promise<Place[]> {
+        const url = category
+            ? `${PLACES_ENDPOINT}?category=${encodeURIComponent(category)}`
+            : PLACES_ENDPOINT;
 
+        const response = await httpClient.get(url);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        return data ?? [];
+    }
 
-        return await response.json();
+    async createPlace(data: Partial<Place>): Promise<Place> {
+        const response = await httpClient.post(PLACES_ENDPOINT, data);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    }
+
+    async deletePlace(placeId: string): Promise<void> {
+        const response = await httpClient.delete(`${PLACES_ENDPOINT}/${placeId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
     }
 }
 
