@@ -13,7 +13,8 @@ services:
       # Assuming 'places-scraper' is running and exposing port 3000 on localhost
       - PLACES_API_URL=http://host.docker.internal:8080
       # Tileserver is running in this same compose stack, so we can address it by service name
-      - TILES_API_URL=http://tileserver:8080 
+      - TILES_API_URL=http://tileserver:8080
+      - MARTIN_API_URL=http://host.docker.internal:3000
       - KEYCLOAK_URL=http://localhost:8081
       - CHOKIDAR_USEPOLLING=true 
     command: sh -c "npm install && npm run dev -- --host"

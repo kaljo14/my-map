@@ -22,6 +22,8 @@
           :metroLinesList="metroLinesList"
           :metroColors="metroColors"
           :groceryTagFilters="groceryTagFilters"
+          :showPedestrianNetwork="showPedestrianNetwork"
+          :showOsmPois="showOsmPois"
           @togglePlaceType="toggleVisible"
           @toggleClustering="enableClustering = !enableClustering"
           @toggleMetroVector="handleToggleMetroVector"
@@ -29,6 +31,8 @@
           @toggleMetroStops="handleToggleMetroStops"
           @toggleStopLine="handleToggleStopLine"
           @toggleGroceryTagFilter="toggleGroceryTagFilter"
+          @togglePedestrianNetwork="handleTogglePedestrianNetwork"
+          @toggleOsmPois="handleToggleOsmPois"
         />
         
         <!-- Sidebar Toggle Handle -->
@@ -276,6 +280,8 @@ import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
 import { useOpportunityHeatmap } from "@/composables/useOpportunityHeatmap";
 import { useMetroLines } from "@/composables/useMetroLines";
 import { useMetroStops } from "@/composables/useMetroStops";
+import { usePedestrianNetwork } from "@/composables/usePedestrianNetwork";
+import { useOsmPois } from "@/composables/useOsmPois";
 import { useShopManagement } from "@/composables/useShopManagement";
 // Components
 import AnalysisPanel from "./map/AnalysisPanel.vue";
@@ -360,6 +366,16 @@ const {
   toggleStopLine
 } = useMetroStops();
 
+const {
+  showPedestrianNetwork,
+  togglePedestrianNetwork,
+} = usePedestrianNetwork();
+
+const {
+  showOsmPois,
+  toggleOsmPois,
+} = useOsmPois();
+
 const handleToggleMetroVector = () => {
     toggleMetroVector(mapInstance.value);
 };
@@ -374,6 +390,14 @@ const handleToggleMetroStops = () => {
 
 const handleToggleStopLine = (line: string) => {
   toggleStopLine(line, mapInstance.value);
+};
+
+const handleTogglePedestrianNetwork = () => {
+  togglePedestrianNetwork(mapInstance.value);
+};
+
+const handleToggleOsmPois = () => {
+  toggleOsmPois(mapInstance.value);
 };
 
 // Expose constants to template

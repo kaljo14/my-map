@@ -1,10 +1,5 @@
 <template>
   <div class="popup-content enhanced">
-    <!-- Photo Header -->
-    <div v-if="shop.photo_url" class="popup-photo">
-      <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
-    </div>
-    
     <!-- Title and Rating with Edit Button -->
     <div class="popup-header">
       <div class="popup-header-content">
@@ -107,21 +102,6 @@ const getStars = (rating: number) => {
   min-width: 250px;
   max-width: 350px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.popup-photo {
-  width: 100%;
-  height: 150px;
-  overflow: hidden;
-  border-radius: 8px 8px 0 0;
-  margin: -14px -20px 12px -20px;
-  position: relative;
-}
-
-.popup-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .popup-header {

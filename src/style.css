@@ -87,6 +87,114 @@ button:focus-visible {
   pointer-events: none;
 }
 
+/* ── Walk Score Legend ──────────────────────────────────────────────────── */
+.walk-legend {
+    background: #f5f0e8;
+    border: 1px solid #e0d8cc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: system-ui, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    min-width: 140px;
+}
+
+.walk-legend-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a4030;
+    margin-bottom: 6px;
+}
+
+.walk-legend-gradient {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #d73027, #fee08b, #1a9850);
+    margin-bottom: 4px;
+}
+
+.walk-legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #9d9080;
+}
+
+/* ── OSM POI Legend ─────────────────────────────────────────────────────── */
+.poi-legend {
+    background: #f5f0e8;
+    border: 1px solid #e0d8cc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: system-ui, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    min-width: 130px;
+}
+
+.poi-legend-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a4030;
+    margin-bottom: 7px;
+}
+
+.poi-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 2px 3px;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.poi-legend-row:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.poi-legend-row.dimmed {
+    opacity: 0.3;
+}
+
+.poi-legend-emoji {
+    font-size: 12px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.poi-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+
+.poi-legend-label {
+    font-size: 10px;
+    color: #6b5f53;
+}
+
+.poi-legend-clear {
+    margin-top: 6px;
+    font-size: 10px;
+    color: #8b7355;
+    cursor: pointer;
+    text-align: center;
+    padding: 3px 6px;
+    border-radius: 5px;
+    border: 1px solid #d6cfc3;
+    transition: background 0.15s;
+}
+
+.poi-legend-clear:hover {
+    background: rgba(0, 0, 0, 0.07);
+}
+
 /* ── Opportunity Heatmap Legend ─────────────────────────────────────────── */
 .opportunity-legend {
     background: #f5f0e8;

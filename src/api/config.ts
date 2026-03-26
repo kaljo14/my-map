@@ -14,6 +14,6 @@ export const API_CONFIG = {
     ANALYSIS_BASE_URL: import.meta.env.VITE_ANALYSIS_BASE_URL || 'http://localhost:8001',
 
     // Base URL for Martin tile server (vector tiles for opportunity heatmap).
-    // Martin runs with CORS origin:*, so we call it directly — no proxy needed.
-    MARTIN_BASE_URL: import.meta.env.VITE_MARTIN_BASE_URL || 'http://localhost:3001',
+    // Routed through nginx/Vite proxy at /api/martin.
+    MARTIN_BASE_URL: '/api/martin',
 };

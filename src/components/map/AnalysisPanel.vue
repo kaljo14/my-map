@@ -79,6 +79,24 @@
           <span class="toggle-pill" :class="{ on: showMetroStops }"></span>
         </button>
 
+        <button
+          :class="['toggle-row', { active: showPedestrianNetwork }]"
+          @click="$emit('togglePedestrianNetwork')"
+        >
+          <span class="toggle-row-icon">🚶</span>
+          <span class="toggle-row-label">Walk Score Network</span>
+          <span class="toggle-pill" :class="{ on: showPedestrianNetwork }"></span>
+        </button>
+
+        <button
+          :class="['toggle-row', { active: showOsmPois }]"
+          @click="$emit('toggleOsmPois')"
+        >
+          <span class="toggle-row-icon">📍</span>
+          <span class="toggle-row-label">OSM POIs</span>
+          <span class="toggle-pill" :class="{ on: showOsmPois }"></span>
+        </button>
+
         <!-- Individual Metro Stop Lines -->
         <div v-if="showMetroStops" class="nested-checkboxes">
           <label
@@ -135,6 +153,8 @@ const props = defineProps<{
   metroLinesList: string[];
   metroColors: Record<string, string>;
   groceryTagFilters: string[];
+  showPedestrianNetwork: boolean;
+  showOsmPois: boolean;
 }>();
 
 defineEmits<{
@@ -145,6 +165,8 @@ defineEmits<{
   (e: 'toggleMetroStops'): void;
   (e: 'toggleStopLine', line: string): void;
   (e: 'toggleGroceryTagFilter', tag: string): void;
+  (e: 'togglePedestrianNetwork'): void;
+  (e: 'toggleOsmPois'): void;
 }>();
 
 const isGroceryVisible = computed(() =>

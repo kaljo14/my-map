@@ -55,6 +55,22 @@ class TilesAPI {
     }
 
     /**
+     * Gets the URL template for OSM pedestrian network edge tiles served by Martin.
+     * Tile layer name: osm_edges; feature properties: walk_score (0–100), highway, osm_way_id.
+     */
+    getOsmEdgesTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/osm_edges/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for OSM POI tiles served by Martin.
+     * Tile layer name: osm_pois; feature properties: name, category, amenity, shop, tourism, leisure.
+     */
+    getOsmPoisTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/osm_pois/{z}/{x}/{y}`;
+    }
+
+    /**
      * Fetches grid labels for analysis
      */
     async getGridLabels(): Promise<any> {
