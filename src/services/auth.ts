@@ -62,6 +62,12 @@ const logout = () => {
     keycloak.logout();
 };
 
+const getTokenSync = (): string | undefined => {
+    const enableAuth = (window as any).ENABLE_AUTH !== 'false';
+    if (import.meta.env.DEV || !enableAuth) return undefined;
+    return keycloak.token;
+};
+
 const getToken = async () => {
     const enableAuth = (window as any).ENABLE_AUTH !== 'false';
     if (import.meta.env.DEV || !enableAuth) {
@@ -81,6 +87,7 @@ export default {
     login,
     logout,
     getToken,
+    getTokenSync,
     isAuthenticated,
     userProfile,
 };

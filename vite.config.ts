@@ -16,12 +16,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: [
-        'leaflet',
-        'leaflet.markercluster',
-        'leaflet.vectorgrid',
-        '@vue-leaflet/vue-leaflet',
-      ]
+      include: ['maplibre-gl'],
     },
     server: {
       port: 8888,

@@ -15,5 +15,6 @@ export const API_CONFIG = {
 
     // Base URL for Martin tile server (vector tiles for opportunity heatmap).
     // Routed through nginx/Vite proxy at /api/martin.
-    MARTIN_BASE_URL: '/api/martin',
+    // MapLibre GL requires absolute URLs for tile sources.
+    MARTIN_BASE_URL: `${window.location.origin}/api/martin`,
 };

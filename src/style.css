@@ -89,6 +89,10 @@ button:focus-visible {
 
 /* ── Walk Score Legend ──────────────────────────────────────────────────── */
 .walk-legend {
+    position: absolute;
+    bottom: 36px;
+    left: 10px;
+    z-index: 10;
     background: #f5f0e8;
     border: 1px solid #e0d8cc;
     border-radius: 10px;
@@ -123,6 +127,10 @@ button:focus-visible {
 
 /* ── OSM POI Legend ─────────────────────────────────────────────────────── */
 .poi-legend {
+    position: absolute;
+    bottom: 36px;
+    left: 10px;
+    z-index: 10;
     background: #f5f0e8;
     border: 1px solid #e0d8cc;
     border-radius: 10px;
@@ -197,6 +205,10 @@ button:focus-visible {
 
 /* ── Opportunity Heatmap Legend ─────────────────────────────────────────── */
 .opportunity-legend {
+    position: absolute;
+    bottom: 36px;
+    left: 10px;
+    z-index: 10;
     background: #f5f0e8;
     border: 1px solid #e0d8cc;
     border-radius: 10px;

@@ -1,5 +1,5 @@
 <template>
-  <l-control position="topright" class="custom-control">
+  <div class="custom-control">
     <div class="control-container" v-click-outside="closeMenu">
       <!-- Main Toggle Button -->
       <button 
@@ -92,11 +92,10 @@
         </div>
       </div>
     </div>
-  </l-control>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { LControl } from "@vue-leaflet/vue-leaflet";
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -160,6 +159,10 @@ const vClickOutside = {
 
 <style scoped>
 .custom-control {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  z-index: 1000;
   pointer-events: auto;
 }
 
