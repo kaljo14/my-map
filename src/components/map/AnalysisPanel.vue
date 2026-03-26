@@ -1,10 +1,9 @@
 <template>
   <div class="analysis-panel">
-    <!-- Map Settings -->
-    <div class="filters-section">
-      <h3>{{ $t('analysis.settings.title') }}</h3>
+    <div class="panel-scroll">
 
-      <!-- Place type toggle cards -->
+    <!-- Section 1: Data Layers -->
+    <SidebarSection :title="$t('analysis.settings.title')" :default-open="true">
       <div class="layer-cards">
         <button
           v-for="pt in placeTypes"
@@ -18,7 +17,7 @@
         </button>
       </div>
 
-      <!-- Grocery Chain Filter (shown only when grocery stores layer is active) -->
+      <!-- Grocery Chain Filter -->
       <div v-if="isGroceryVisible" class="filter-group grocery-chain-filter">
         <label>{{ $t('analysis.filters.groceryChain') }}</label>
         <div class="tag-buttons">
@@ -32,105 +31,96 @@
           </button>
         </div>
       </div>
+    </SidebarSection>
 
-      <!-- Utility toggles -->
+    <!-- Section 2: Infrastructure -->
+    <SidebarSection title="Infrastructure" :default-open="false">
       <div class="toggle-row-group">
-        <button
-          :class="['toggle-row', { active: enableClustering }]"
-          @click="$emit('toggleClustering')"
-        >
-          <span class="toggle-row-icon">⬡</span>
-          <span class="toggle-row-label">{{ $t('analysis.settings.enableClustering') }}</span>
-          <span class="toggle-pill" :class="{ on: enableClustering }"></span>
-        </button>
+        <ToggleRow icon="🚇" label="Metro Lines" :model-value="showMetroVector" @toggle="$emit('toggleMetroVector')" />
+        <CheckboxGroup
+          v-if="showMetroVector"
+          :items="metroLineItems"
+          :checked-items="activeMetroLines"
+          @change="$emit('toggleMetroLine', $event)"
+        />
 
-        <button
-          :class="['toggle-row', { active: showMetroVector }]"
-          @click="$emit('toggleMetroVector')"
-        >
-          <span class="toggle-row-icon">🚇</span>
-          <span class="toggle-row-label">Metro Lines</span>
-          <span class="toggle-pill" :class="{ on: showMetroVector }"></span>
-        </button>
+        <ToggleRow icon="📍" label="Metro Stops" :model-value="showMetroStops" @toggle="$emit('toggleMetroStops')" />
+        <CheckboxGroup
+          v-if="showMetroStops"
+          :items="metroLineItems"
+          :checked-items="activeStopLines"
+          @change="$emit('toggleStopLine', $event)"
+        />
 
-        <!-- Individual Metro Lines -->
-        <div v-if="showMetroVector" class="nested-checkboxes">
-          <label
-            v-for="line in metroLinesList"
-            :key="line"
-            class="nested-label"
-          >
-            <input
-              type="checkbox"
-              :checked="activeMetroLines.includes(line)"
-              @change="$emit('toggleMetroLine', line)"
-            />
-            <span class="color-dot" :style="{ backgroundColor: metroColors[line] }"></span>
-            {{ line }}
-          </label>
-        </div>
-
-        <button
-          :class="['toggle-row', { active: showMetroStops }]"
-          @click="$emit('toggleMetroStops')"
-        >
-          <span class="toggle-row-icon">📍</span>
-          <span class="toggle-row-label">Metro Stops</span>
-          <span class="toggle-pill" :class="{ on: showMetroStops }"></span>
-        </button>
-
-        <button
-          :class="['toggle-row', { active: showPedestrianNetwork }]"
-          @click="$emit('togglePedestrianNetwork')"
-        >
-          <span class="toggle-row-icon">🚶</span>
-          <span class="toggle-row-label">Walk Score Network</span>
-          <span class="toggle-pill" :class="{ on: showPedestrianNetwork }"></span>
-        </button>
-
-        <button
-          :class="['toggle-row', { active: showOsmPois }]"
-          @click="$emit('toggleOsmPois')"
-        >
-          <span class="toggle-row-icon">📍</span>
-          <span class="toggle-row-label">OSM POIs</span>
-          <span class="toggle-pill" :class="{ on: showOsmPois }"></span>
-        </button>
-
-        <!-- Individual Metro Stop Lines -->
-        <div v-if="showMetroStops" class="nested-checkboxes">
-          <label
-            v-for="line in metroLinesList"
-            :key="`stop-${line}`"
-            class="nested-label"
-          >
-            <input
-              type="checkbox"
-              :checked="activeStopLines.includes(line)"
-              @change="$emit('toggleStopLine', line)"
-            />
-            <span class="color-dot" :style="{ backgroundColor: metroColors[line] }"></span>
-            {{ line }}
-          </label>
-        </div>
+        <ToggleRow icon="🚶" label="Walk Score Network" :model-value="showPedestrianNetwork" @toggle="$emit('togglePedestrianNetwork')" />
+        <ToggleRow icon="📍" label="OSM POIs" :model-value="showOsmPois" @toggle="$emit('toggleOsmPois')" />
       </div>
+    </SidebarSection>
+
+    <!-- Section 3: Spatial Tools -->
+    <SidebarSection title="Spatial Tools" :default-open="false">
+      <div class="toggle-row-group">
+        <ToggleRow icon="⬡" :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')" />
+
+        <ToggleRow
+          icon="⬡"
+          :model-value="hasActivePolygon"
+          :disabled="isDrawingMode"
+          :class="{ 'area-select-btn': true, drawing: isDrawingMode }"
+          @toggle="hasActivePolygon ? $emit('clearPolygon') : $emit('startDrawing')"
+        >
+          {{ isDrawingMode ? 'Drawing on map...' : hasActivePolygon ? 'Area selected' : 'Select Area for Analysis' }}
+          <template #trailing>
+            <span v-if="hasActivePolygon" class="area-clear-x">✕</span>
+            <TogglePill v-else-if="!isDrawingMode" :model-value="false" />
+          </template>
+        </ToggleRow>
+      </div>
+    </SidebarSection>
+
+    <!-- Section 4: Location Comparison -->
+    <SidebarSection title="Location Comparison" :default-open="true">
+      <!-- Drop Pin button -->
+      <button
+        :class="['drop-pin-btn', { active: isPinMode }]"
+        @click="$emit('togglePinMode')"
+      >
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
+          <circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M8 16c0 0-5-5.5-5-10a5 5 0 0110 0c0 4.5-5 10-5 10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </svg>
+        {{ isPinMode ? 'Click map to place pin…' : '+ Drop Pin' }}
+      </button>
+
+      <!-- Pin list -->
+      <div v-if="pins.length > 0" class="pin-list">
+        <PinItem
+          v-for="(pin, idx) in pins"
+          :key="pin.id"
+          :index="idx + 1"
+          :label="pin.label"
+          :lat="pin.lat"
+          :lng="pin.lng"
+          @remove="$emit('removePin', pin.id)"
+        />
+      </div>
+
+      <!-- Compare button -->
+      <button
+        v-if="pins.length >= 2"
+        :class="['compare-btn', { 'compare-btn--close': isComparisonOpen }]"
+        @click="isComparisonOpen ? $emit('closeComparison') : $emit('compareLocations')"
+      >
+        {{ isComparisonOpen ? '× Close Comparison' : `Compare ${pins.length} Location${pins.length !== 1 ? 's' : ''}` }}
+      </button>
+    </SidebarSection>
+
+    </div><!-- end panel-scroll -->
+
+    <div class="panel-footer">
+      <LanguageSwitcher />
     </div>
 
-
-
-
-
-
-
-
-
-    <!-- Language Settings -->
-    <div class="distribution-section">
-      <h3>{{ $t('common.language') }}</h3>
-      <div style="padding: 0 12px;">
-        <LanguageSwitcher />
-      </div>
-    </div>
   </div>
 </template>
 
@@ -139,6 +129,12 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '../LanguageSwitcher.vue';
+import SidebarSection from './SidebarSection.vue';
+import TogglePill from '../ui/TogglePill.vue';
+import ToggleRow from '../ui/ToggleRow.vue';
+import CheckboxGroup from '../ui/CheckboxGroup.vue';
+import PinItem from '../ui/PinItem.vue';
+import type { ComparisonPin } from '@/composables/useLocationComparison';
 
 const { t } = useI18n();
 
@@ -155,6 +151,12 @@ const props = defineProps<{
   groceryTagFilters: string[];
   showPedestrianNetwork: boolean;
   showOsmPois: boolean;
+  isDrawingMode: boolean;
+  hasActivePolygon: boolean;
+  pins: ComparisonPin[];
+  pinCount: number;
+  isPinMode: boolean;
+  isComparisonOpen: boolean;
 }>();
 
 defineEmits<{
@@ -167,7 +169,21 @@ defineEmits<{
   (e: 'toggleGroceryTagFilter', tag: string): void;
   (e: 'togglePedestrianNetwork'): void;
   (e: 'toggleOsmPois'): void;
+  (e: 'startDrawing'): void;
+  (e: 'clearPolygon'): void;
+  (e: 'togglePinMode'): void;
+  (e: 'removePin', id: string): void;
+  (e: 'compareLocations'): void;
+  (e: 'closeComparison'): void;
 }>();
+
+const metroLineItems = computed(() =>
+  props.metroLinesList.map(line => ({
+    value: line,
+    label: line,
+    color: props.metroColors[line],
+  }))
+);
 
 const isGroceryVisible = computed(() =>
   props.placeTypes.some(pt => pt.category === 'grocery store' && pt.visible)
@@ -197,101 +213,37 @@ const groceryTags = computed(() => [
   background: #161B16;
   color: #f5f0e8;
   padding: 0;
-  overflow-y: auto;
+  overflow: hidden;
   border-right: 1px solid rgba(245, 240, 232, 0.07);
+  display: flex;
+  flex-direction: column;
 }
 
-.analysis-panel::-webkit-scrollbar { width: 5px; }
-.analysis-panel::-webkit-scrollbar-track { background: transparent; }
-.analysis-panel::-webkit-scrollbar-thumb {
+.panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.panel-scroll::-webkit-scrollbar { width: 5px; }
+.panel-scroll::-webkit-scrollbar-track { background: transparent; }
+.panel-scroll::-webkit-scrollbar-thumb {
   background: rgba(245, 240, 232, 0.15);
   border-radius: 3px;
 }
-.analysis-panel::-webkit-scrollbar-thumb:hover {
+.panel-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(245, 240, 232, 0.25);
 }
 
-.stats-section {
-  margin: 0;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.15);
-}
-
-.stats-section h3,
-.filters-section h3,
-.distribution-section h3 {
-  font-size: 0.75rem;
-  margin-bottom: 16px;
-  color: #8a7e72;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.stats-section h3::before,
-.filters-section h3::before,
-.distribution-section h3::before {
-  content: "";
-  width: 3px;
-  height: 14px;
-  background: #d97757;
-  border-radius: 2px;
-}
-
-.stat-card {
-  background: rgba(245, 240, 232, 0.04);
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 12px;
-  text-align: center;
-  border: 1px solid rgba(245, 240, 232, 0.07);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: #d97757;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(217, 119, 87, 0.3);
-  box-shadow: 0 8px 20px rgba(217, 119, 87, 0.1);
-}
-
-.stat-value {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #d97757;
-  margin-bottom: 6px;
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #8a7e72;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  font-weight: 500;
-}
-
-.filters-section {
-  margin: 0;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.08);
+.panel-footer {
+  flex-shrink: 0;
+  padding: 12px 16px;
   border-top: 1px solid rgba(245, 240, 232, 0.07);
+  background: #161B16;
 }
 
 .filter-group {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .filter-group label {
@@ -302,106 +254,26 @@ const groceryTags = computed(() => [
   font-weight: 500;
 }
 
-.slider {
-  width: 100%;
-  margin-bottom: 10px;
-  height: 5px;
-  border-radius: 3px;
-  background: rgba(245, 240, 232, 0.1);
-  outline: none;
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #d97757;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(217, 119, 87, 0.4);
-  transition: all 0.2s;
-}
-
-.slider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
-  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.6);
-}
-
-.slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #d97757;
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 2px 8px rgba(217, 119, 87, 0.4);
-}
-
-.filter-value {
-  display: inline-block;
-  background: rgba(217, 119, 87, 0.15);
-  padding: 5px 14px;
-  border-radius: 20px;
-  font-weight: 600;
-  color: #d97757;
-  border: 1px solid rgba(217, 119, 87, 0.3);
-  font-size: 0.875rem;
-}
-
-.price-range {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.price-range span {
-  color: #8a7e72;
-  font-weight: 500;
-}
-
-.price-input {
-  flex: 1;
-  padding: 10px 12px;
-  border-radius: 8px;
-  border: 1px solid rgba(245, 240, 232, 0.1);
-  background: rgba(245, 240, 232, 0.05);
-  color: #f5f0e8;
-  font-size: 0.9rem;
-  transition: all 0.2s;
-}
-
-.price-input::placeholder { color: #5a5048; }
-
-.price-input:focus {
-  outline: none;
-  border-color: #d97757;
-  background: rgba(245, 240, 232, 0.08);
-  box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.12);
-}
-
 /* ── Place type layer cards ─────────────────────────────── */
 .layer-cards {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .layer-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 12px 8px 10px;
-  border-radius: 12px;
-  border: 1.5px solid rgba(245, 240, 232, 0.08);
+  gap: 5px;
+  padding: 13px 6px 11px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 240, 232, 0.07);
   background: rgba(245, 240, 232, 0.03);
   color: #5a5048;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.18s ease;
   position: relative;
   overflow: hidden;
 }
@@ -419,6 +291,10 @@ const groceryTags = computed(() => [
   box-shadow: 0 0 12px rgba(217, 119, 87, 0.15);
 }
 
+.layer-card:active {
+  transform: scale(1.02);
+}
+
 .layer-card-emoji {
   font-size: 1.4rem;
   line-height: 1;
@@ -433,7 +309,7 @@ const groceryTags = computed(() => [
   text-align: center;
   line-height: 1.2;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
 }
 
 .layer-card-indicator {
@@ -450,67 +326,30 @@ const groceryTags = computed(() => [
 .toggle-row-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
 }
 
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  border-radius: 8px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #5a5048;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
-  transition: all 0.2s;
-  font-size: 0.85rem;
+/* Area select overrides (green active state, disabled drawing state) */
+.area-select-btn.active {
+  border-color: rgba(16, 185, 129, 0.4) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+  color: #10b981 !important;
 }
 
-.toggle-row:hover {
-  background: rgba(245, 240, 232, 0.05);
-  color: #a89e94;
+.area-select-btn.drawing {
+  opacity: 0.6;
+  cursor: default;
 }
 
-.toggle-row.active { color: #c4b8ae; }
-
-.toggle-row-icon {
-  font-size: 1rem;
-  width: 20px;
-  text-align: center;
+.area-clear-x {
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 600;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
   flex-shrink: 0;
 }
-
-.toggle-row-label {
-  flex: 1;
-  font-weight: 500;
-}
-
-/* iOS-style pill toggle */
-.toggle-pill {
-  width: 34px;
-  height: 18px;
-  border-radius: 9px;
-  background: rgba(245, 240, 232, 0.12);
-  position: relative;
-  flex-shrink: 0;
-  transition: background 0.25s;
-}
-
-.toggle-pill::after {
-  content: '';
-  position: absolute;
-  top: 2px; left: 2px;
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  background: #5a5048;
-  transition: transform 0.25s, background 0.25s;
-}
-
-.toggle-pill.on { background: rgba(217, 119, 87, 0.4); }
-.toggle-pill.on::after { transform: translateX(16px); background: #d97757; }
 
 .grocery-chain-filter {
   margin-top: 12px;
@@ -547,55 +386,81 @@ const groceryTags = computed(() => [
   color: #d97757;
 }
 
-.reset-btn {
+/* ── Pins section ─────────────────────────────────────── */
+.drop-pin-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   width: 100%;
-  padding: 12px;
-  background: rgba(245, 240, 232, 0.06);
-  color: #c4b8ae;
-  border: 1px solid rgba(245, 240, 232, 0.12);
-  border-radius: 8px;
-  font-weight: 600;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px dashed rgba(245, 240, 232, 0.18);
+  background: transparent;
+  color: #8a7e72;
+  font-size: 0.8rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.9rem;
+  transition: all 0.15s;
+  margin-bottom: 8px;
 }
 
-.reset-btn:hover {
-  background: rgba(217, 119, 87, 0.15);
-  border-color: rgba(217, 119, 87, 0.4);
+.drop-pin-btn:hover {
+  background: rgba(245, 240, 232, 0.05);
+  color: #c4b8ae;
+  border-color: rgba(245, 240, 232, 0.3);
+}
+
+.drop-pin-btn.active {
+  border-color: rgba(217, 119, 87, 0.5);
+  background: rgba(217, 119, 87, 0.08);
   color: #d97757;
+  border-style: solid;
+}
+
+.pin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.compare-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #d97757, #c05e3a);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s, transform 0.1s;
+  margin-top: 4px;
+}
+
+.compare-btn:hover {
+  opacity: 0.9;
   transform: translateY(-1px);
 }
 
-.reset-btn:active { transform: translateY(0); }
-
-.distribution-section {
-  margin: 0;
-  padding: 24px;
-  background: rgba(0, 0, 0, 0.15);
-  border-top: 1px solid rgba(245, 240, 232, 0.07);
+.compare-btn:active {
+  transform: scale(0.98);
 }
 
-.nested-checkboxes {
-  margin-left: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
-  padding-left: 8px;
-  border-left: 2px solid rgba(245, 240, 232, 0.1);
+.compare-btn--close {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #f87171;
 }
 
-.nested-label {
-  font-size: 0.8rem !important;
-  padding: 4px !important;
-  color: #8a7e72;
-}
-
-.color-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1px solid rgba(245, 240, 232, 0.15);
+.compare-btn--close:hover {
+  opacity: 1;
+  background: rgba(239, 68, 68, 0.25);
+  transform: translateY(-1px);
 }
 </style>

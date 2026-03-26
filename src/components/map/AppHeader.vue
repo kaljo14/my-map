@@ -5,14 +5,15 @@
       <h1 class="app-title">Barbershop Analysis</h1>
     </div>
 
-
-    
     <div class="header-right">
       <div class="auth-controls">
         <button v-if="!isAuthenticated" @click="$emit('login')" class="auth-btn login">
           {{ $t('common.login') }}
         </button>
         <div v-else class="user-info">
+          <div class="user-avatar" :title="userProfile?.username || 'User'" aria-hidden="true">
+            {{ (userProfile?.username || 'U')[0].toUpperCase() }}
+          </div>
           <span class="username">{{ userProfile?.username || 'User' }}</span>
           <button @click="$emit('logout')" class="auth-btn logout">
             {{ $t('common.logout') }}
@@ -25,15 +26,12 @@
 
 <script setup lang="ts">
 
-
 defineProps<{
   isAuthenticated: boolean;
   userProfile: any;
-
 }>();
 
 defineEmits<{
-  (e: 'login'): void;
   (e: 'login'): void;
   (e: 'logout'): void;
 }>();
@@ -75,43 +73,6 @@ defineEmits<{
 .header-right {
   display: flex;
   align-items: center;
-}
-
-.header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.nav-btn {
-  background: rgba(245, 240, 232, 0.06);
-  border: 1px solid rgba(245, 240, 232, 0.12);
-  color: #a89e94;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.nav-btn:hover {
-  background: rgba(245, 240, 232, 0.1);
-  color: #f5f0e8;
-  border-color: rgba(245, 240, 232, 0.2);
-}
-
-.nav-btn.active {
-  background: rgba(217, 119, 87, 0.15);
-  color: #d97757;
-  border-color: rgba(217, 119, 87, 0.4);
-}
-
-.nav-btn .icon {
-  font-size: 1.1em;
 }
 
 .auth-controls {
@@ -156,11 +117,26 @@ defineEmits<{
 .user-info {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(217, 119, 87, 0.2);
+  border: 1px solid rgba(217, 119, 87, 0.4);
+  color: #d97757;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .username {
-  color: #8a7e72;
+  color: #c4b8ae;
   font-size: 0.9rem;
   font-weight: 500;
 }

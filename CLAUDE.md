@@ -48,3 +48,14 @@ A Vue 3 + TypeScript SPA for visualizing and managing barbershop/gym locations i
 - `/api/places` → `PLACES_API_URL:8080`
 - `/api/metro` → `PLACES_API_URL:8080`
 - `/api/tiles` → `TILES_API_URL:4000` (path prefix stripped)
+
+## Vue conventions
+
+- **Prefer components over plain HTML.** Repeated markup patterns (headers, rows, stat blocks, buttons) must be extracted into a component. Use plain HTML elements only when no meaningful abstraction exists or when a wrapper would add complexity without benefit.
+- **Shared UI components live in `src/components/ui/`.** Domain-specific components (map panels, modals) live in `src/components/map/`.
+- **Use `defineProps` with TypeScript generics** (`defineProps<{ ... }>()`), never the options-style object syntax.
+- **Use `withDefaults`** for props that need default values.
+- **Emit events with typed `defineEmits`** (`defineEmits<{ close: [] }>()`).
+- **Scoped styles always.** All `<style>` blocks must be `<style scoped>`. Use `:slotted()` to style slot content from inside a child component, and CSS custom properties (`--var`) to expose theming hooks to parent contexts.
+- **No `v-if` + `v-for` on the same element.** Use a wrapping `<template>` tag for the `v-for`.
+- **`script setup` syntax only.** Never use the Options API or `export default { setup() {} }` form.

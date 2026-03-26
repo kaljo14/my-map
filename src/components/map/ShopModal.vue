@@ -1,29 +1,37 @@
 <template>
-  <div v-if="show" class="shop-modal-overlay">
-    <div class="shop-modal">
-      <h3>Add Barbershop Location</h3>
-      <div class="form-group">
-        <label>Barbershop Name:</label>
-        <input 
-          :value="modelValue"
-          @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-          type="text" 
-          placeholder="e.g. Cool Cuts"
-          class="modal-input"
-          ref="shopInput"
-          @keyup.enter="$emit('save')"
-        />
-      </div>
-      <div class="modal-actions">
-        <button @click="$emit('cancel')" class="cancel-btn">Cancel</button>
-        <button @click="$emit('save')" class="save-btn">Save Barbershop</button>
-      </div>
+  <BaseModal
+    :show="show"
+    title="Add Barbershop Location"
+    stripe-gradient="linear-gradient(to right, #d97757, #c86843)"
+    @cancel="$emit('cancel')"
+  >
+    <template #icon>
+      <svg class="modal-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 18L8.5 15.5M8.5 15.5L12 12M8.5 15.5L5 12M12 12L15.5 8.5M12 12L18 6M15.5 8.5L19 5M15.5 8.5L12 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </template>
+
+    <div class="form-group">
+      <label>Barbershop Name:</label>
+      <input
+        :value="modelValue"
+        type="text"
+        placeholder="e.g. Cool Cuts"
+        class="modal-input"
+        @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
+        @keyup.enter="$emit('save')"
+      />
+      <span class="form-hint">First pin a location on the map, then name it here.</span>
     </div>
-  </div>
+
+    <template #confirm>
+      <button class="save-btn" @click="$emit('save')">Save Barbershop</button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
-
+import BaseModal from '../ui/BaseModal.vue';
 
 defineProps<{
   show: boolean;
@@ -38,36 +46,15 @@ defineEmits<{
 </script>
 
 <style scoped>
-.shop-modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(19, 19, 20, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(6px);
-}
-
-.shop-modal {
-  background: #f5f0e8;
-  padding: 28px;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 24px 48px rgba(19, 19, 20, 0.2);
-  border: 1px solid #e0d8cc;
-}
-
-.shop-modal h3 {
-  margin: 0 0 20px;
-  color: #131314;
-  font-size: 1.25rem;
-  font-weight: 700;
+.modal-icon {
+  width: 20px;
+  height: 20px;
+  color: #d97757;
+  flex-shrink: 0;
 }
 
 .form-group {
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
 
 .form-group label {
@@ -95,41 +82,27 @@ defineEmits<{
   box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.12);
 }
 
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.cancel-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid #d5ccc0;
-  background: transparent;
-  color: #6b6057;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.cancel-btn:hover {
-  background: #ede7dc;
-  color: #131314;
+.form-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  color: #9d9080;
 }
 
 .save-btn {
   padding: 10px 20px;
   border-radius: 8px;
   border: none;
-  background: #131314;
-  color: #f5f0e8;
+  background: #d97757;
+  color: #fff;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s;
 }
 
 .save-btn:hover {
-  background: #2a2a2b;
+  background: #c86843;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(217, 119, 87, 0.3);
 }
 </style>

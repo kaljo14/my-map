@@ -8,21 +8,23 @@ export function useAnalysisGrid() {
 
     const tileUrl = `${API_CONFIG.MARTIN_BASE_URL}/barbershop_density/{z}/{x}/{y}`;
 
-    // Color stops for density score — maps to MapLibre interpolate expression values
+    // Color stops for density score — maps to MapLibre interpolate expression values.
+    // Range matches popup thresholds (0 = saturated → 4000+ = very high opportunity).
     const colorStops: [number, string][] = [
         [0,    '#3288bd'],
-        [250,  '#66c2a5'],
         [500,  '#abdda4'],
-        [750,  '#e6f598'],
         [1000, '#fee08b'],
         [1500, '#fdae61'],
         [2000, '#f46d43'],
+        [3000, '#d53e4f'],
+        [4000, '#9e0142'],
     ];
 
     function buildColorExpression(): maplibregl.ExpressionSpecification {
         const stops: any[] = [];
         colorStops.forEach(([val, color]) => stops.push(val, color));
-        return ['interpolate', ['linear'], ['get', 'men_per_shop'], ...stops];
+        // coalesce guards against null men_per_shop (e.g. cells with 0 barbershops)
+        return ['interpolate', ['linear'], ['coalesce', ['get', 'men_per_shop'], 0], ...stops];
     }
 
     function ensureLayers(map: MapLibreMap) {

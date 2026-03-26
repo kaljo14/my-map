@@ -10,7 +10,7 @@
 
     <div class="content-wrapper">
       <!-- Sidebar Wrapper -->
-      <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }">
+      <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }" style="z-index:2000">
         <AnalysisPanel
           :isMobile="isMobile"
           :placeTypes="placeTypesForPanel"
@@ -24,6 +24,12 @@
           :groceryTagFilters="groceryTagFilters"
           :showPedestrianNetwork="showPedestrianNetwork"
           :showOsmPois="showOsmPois"
+          :isDrawingMode="isDrawingMode"
+          :hasActivePolygon="!!activePolygon"
+          :pins="comparisonPins"
+          :pinCount="comparisonPinCount"
+          :isPinMode="isPinMode"
+          :isComparisonOpen="isComparisonOpen"
           @togglePlaceType="toggleVisible"
           @toggleClustering="enableClustering = !enableClustering"
           @toggleMetroVector="handleToggleMetroVector"
@@ -33,33 +39,44 @@
           @toggleGroceryTagFilter="toggleGroceryTagFilter"
           @togglePedestrianNetwork="handleTogglePedestrianNetwork"
           @toggleOsmPois="handleToggleOsmPois"
+          @startDrawing="startDrawing"
+          @clearPolygon="clearPolygon"
+          @togglePinMode="togglePinMode"
+          @removePin="removeComparisonPin"
+          @compareLocations="openComparison"
+          @closeComparison="closeComparison"
         />
 
         <button
           class="sidebar-toggle"
           @click="isSidebarOpen = !isSidebarOpen"
+          :aria-label="isSidebarOpen ? 'Close sidebar' : 'Open sidebar'"
           title="Toggle Sidebar"
         >
-          <span class="toggle-icon">{{ isSidebarOpen ? '◀' : '▶' }}</span>
+          <svg
+            class="toggle-icon"
+            :class="{ rotated: isSidebarOpen }"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </div>
 
       <!-- Map -->
-      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode }">
+      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode, 'pin-cursor': isPinMode }">
         <MapStats
           :isMobile="isMobile"
           :filteredCount="placeInstances[0]?.filteredPlaces.length ?? 0"
           :averageRating="averageRating"
         />
 
-        <!-- Polygon Draw Controls -->
-        <div class="polygon-controls">
-          <template v-if="!isDrawingMode && !activePolygon">
-            <button class="polygon-btn" @click="startDrawing" title="Draw area to filter points">
-              ⬡ Draw Area
-            </button>
-          </template>
-          <template v-else-if="isDrawingMode">
+        <!-- Polygon Draw Controls (in-progress + active state only) -->
+        <div v-if="isDrawingMode || activePolygon" class="polygon-controls">
+          <template v-if="isDrawingMode">
             <span class="drawing-hint">{{ drawingVertices.length }} point{{ drawingVertices.length !== 1 ? 's' : '' }} — click map to add</span>
             <button
               class="polygon-btn finish"
@@ -77,6 +94,8 @@
         <!-- MapLibre container -->
         <div ref="mapContainer" class="map-div"></div>
 
+        <!-- Pin mode cursor -->
+
         <!-- Map overlay controls (grid / heatmap) — rendered inside map-wrapper as absolute overlay -->
         <MapControls
           :showPopulationGrid="showPopulationGrid"
@@ -89,6 +108,22 @@
           @updateThreshold="updateThreshold"
           @toggleOpportunityHeatmap="handleToggleOpportunityHeatmap"
           @setHeatmapCategory="handleSetHeatmapCategory"
+        />
+
+        <!-- Area Analysis Panel — floats over map when polygon is active -->
+        <AreaAnalysisPanel
+          v-if="activePolygon && !isDrawingMode"
+          :stats="areaStats"
+          :class="{ 'shifted-left': isComparisonOpen }"
+          @clear="clearPolygon"
+        />
+
+        <!-- Location Comparison Panel — floats over map -->
+        <LocationComparisonPanel
+          v-if="isComparisonOpen"
+          :pins="comparisonPins"
+          @close="closeComparison"
+          @export="() => {}"
         />
       </div>
     </div>
@@ -135,6 +170,9 @@ import { usePedestrianNetwork } from '@/composables/usePedestrianNetwork';
 import { useOsmPois } from '@/composables/useOsmPois';
 import { useShopManagement } from '@/composables/useShopManagement';
 
+// Composables
+import { useLocationComparison } from '@/composables/useLocationComparison';
+
 // Components
 import AnalysisPanel from './map/AnalysisPanel.vue';
 import ShopModal from './map/ShopModal.vue';
@@ -144,6 +182,8 @@ import AppHeader from './map/AppHeader.vue';
 import MapStats from './map/MapStats.vue';
 import BottomNav from './map/BottomNav.vue';
 import ShopPopup from './map/ShopPopup.vue';
+import LocationComparisonPanel from './map/LocationComparisonPanel.vue';
+import AreaAnalysisPanel from './map/AreaAnalysisPanel.vue';
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
@@ -222,6 +262,7 @@ const {
 const {
   showOsmPois,
   toggleOsmPois,
+  setAreaPolygon: setOsmPoiPolygon,
 } = useOsmPois();
 
 const {
@@ -243,8 +284,40 @@ const {
 const metroLinesList = METRO_LINES;
 const metroColors = METRO_COLORS;
 
+const {
+  pins: comparisonPins,
+  isPinMode,
+  isComparisonOpen,
+  pinCount: comparisonPinCount,
+  addPin: addComparisonPin,
+  removePin: removeComparisonPin,
+  togglePinMode,
+  openComparison,
+  closeComparison,
+} = useLocationComparison();
+
 const totalFilteredCount = computed(() =>
   placeInstances.reduce((sum, inst) => sum + (inst.visible ? inst.filteredPlaces.length : 0), 0)
+);
+
+const areaStats = computed(() =>
+  placeInstances
+    .filter(inst => inst.visible)
+    .map(inst => {
+      const places = inst.filteredPlaces;
+      const rated = places.filter((p: any) => p.rating);
+      const avgRating = rated.length
+        ? rated.reduce((s: number, p: any) => s + p.rating, 0) / rated.length
+        : 0;
+      return {
+        category: inst.config.category,
+        emoji: inst.config.emoji,
+        label: inst.config.category.charAt(0).toUpperCase() + inst.config.category.slice(1) + 's',
+        count: places.length,
+        avgRating,
+        topPlaces: [...places].sort((a: any, b: any) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 4),
+      };
+    })
 );
 
 // ── Handler wrappers ────────────────────────────────────────────────────────
@@ -273,6 +346,8 @@ const handleSetHeatmapCategory = (cat: string) => setHeatmapCategory(cat as any,
 
 // Per-category HTML marker caches: category → Map<placeId, maplibregl.Marker>
 const markerCaches = new Map<string, Map<string, maplibregl.Marker>>();
+// Comparison pin markers
+const comparisonMarkers = new Map<string, maplibregl.Marker>();
 // Popup app instances — track to unmount on close
 let activeShopPopup: maplibregl.Popup | null = null;
 let newShopPinMarker: maplibregl.Marker | null = null;
@@ -627,6 +702,26 @@ onMounted(async () => {
   map.on('click', (e) => {
     if (isDrawingMode.value) {
       addVertex(e.lngLat.lat, e.lngLat.lng);
+    } else if (isPinMode.value) {
+      if (comparisonPins.value.length < 5) {
+        const pin = addComparisonPin(e.lngLat.lat, e.lngLat.lng);
+        // Add marker for the pin
+        const el = document.createElement('div');
+        el.className = 'comparison-pin-marker';
+        el.dataset.pinId = pin.id;
+        el.style.cssText = 'cursor:pointer;transform:translate(-50%,-100%)';
+        el.innerHTML = `<div class="comparison-pin-dot dot-${comparisonPins.value.length}"><span style="transform:rotate(45deg);display:block">${pin.index}</span></div>`;
+        el.title = 'Click to remove';
+        el.addEventListener('click', (evt) => {
+          evt.stopPropagation();
+          removeComparisonPin(pin.id);
+        });
+        const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+          .setLngLat([e.lngLat.lng, e.lngLat.lat])
+          .addTo(map);
+        comparisonMarkers.set(pin.id, marker);
+      }
+      if (comparisonPins.value.length >= 5) togglePinMode();
     } else {
       onMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
     }
@@ -730,6 +825,18 @@ watch(activePolygon, (polygon) => {
     (map.getSource('drawing-line') as GeoJSONSource).setData({ type: 'FeatureCollection', features: [] });
     (map.getSource('drawing-points') as GeoJSONSource).setData({ type: 'FeatureCollection', features: [] });
   }
+  // Filter OSM POIs to show only those within the selected area
+  setOsmPoiPolygon(polygon, map);
+});
+
+// Watch for removed comparison pins → remove their map markers
+watch(comparisonPins, (newPins) => {
+  for (const [id, marker] of comparisonMarkers) {
+    if (!newPins.find(p => p.id === id)) {
+      marker.remove();
+      comparisonMarkers.delete(id);
+    }
+  }
 });
 
 // Keyboard: Escape to cancel drawing
@@ -800,8 +907,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 }
 
 .toggle-icon {
-  font-size: 14px;
-  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
 }
 
 .map-wrapper {
@@ -813,9 +925,43 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   cursor: crosshair !important;
 }
 
+.map-wrapper.pin-cursor :deep(.maplibregl-canvas) {
+  cursor: cell !important;
+}
+
+/* Shift area panel left when comparison panel is also open */
+:deep(.shifted-left) {
+  right: 348px !important;
+}
+
 .map-div {
   position: absolute;
   inset: 0;
+}
+
+.poi-active-badge {
+  position: absolute;
+  bottom: 24px;
+  right: 10px;
+  z-index: 1000;
+  background: rgba(22, 27, 22, 0.92);
+  border: 1px solid rgba(217, 119, 87, 0.5);
+  border-radius: 10px;
+  color: #d97757;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 13px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.poi-active-badge:hover {
+  background: rgba(217, 119, 87, 0.15);
+  border-color: rgba(217, 119, 87, 0.8);
+  color: #f5f0e8;
 }
 
 .polygon-controls {
@@ -910,5 +1056,45 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 :deep(.chain-logo[alt="Fantastico"]) {
   width: auto;
   height: 18px;
+}
+
+/* Comparison pin markers */
+:deep(.comparison-pin-dot) {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+:deep(.comparison-pin-dot.dot-1) {
+  background: #d97757;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-2) {
+  background: #10b981;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-3) {
+  background: #f59e0b;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-4) {
+  background: #c05e3a;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-5) {
+  background: #c4b8ae;
+  color: #161B16;
+}
+
+:deep(.comparison-pin-dot > span) {
+  transform: rotate(45deg);
 }
 </style>

@@ -15,16 +15,32 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ── Design token palette ─────────────────────────────── */
+  --color-bg:           #161B16;
+  --color-bg-elevated:  #252018;
+  --color-surface:      #f5f0e8;
+  --color-surface-alt:  #ede7dc;
+  --color-accent:       #d97757;
+  --color-accent-dark:  #c86843;
+  --color-text:         #f5f0e8;
+  --color-text-inv:     #131314;
+  --color-muted:        #8a7e72;
+  --color-muted-light:  #c4b8ae;
+  --color-faint:        #5a5048;
+  --color-border:       rgba(245, 240, 232, 0.08);
+  --color-border-light: #e0d8cc;
+  --color-danger:       #c05e3a;
 }
 
 a {
   font-weight: 500;
-  color: #0d9488;
+  color: #d97757;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #0f766e;
+  color: #c86843;
 }
 
 body {
@@ -50,12 +66,12 @@ button {
 }
 
 button:hover {
-  border-color: #0d9488;
+  border-color: #d97757;
 }
 
-button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #d97757;
+  outline-offset: 2px;
 }
 
 .card {
@@ -66,20 +82,6 @@ button:focus-visible {
   height: 100vh;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: #14b8a6;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-}
 
 .grid-label {
   background: transparent;
@@ -129,7 +131,7 @@ button:focus-visible {
 .poi-legend {
     position: absolute;
     bottom: 36px;
-    left: 10px;
+    right: 10px;
     z-index: 10;
     background: #f5f0e8;
     border: 1px solid #e0d8cc;

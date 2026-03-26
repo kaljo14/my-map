@@ -62,9 +62,36 @@ function poiLabel(p: Record<string, any>): string {
 export function useOsmPois() {
     const showOsmPois = ref(false);
     const activeCategoryFilter = ref<string | null>(null);
+    const areaPolygon = ref<[number, number][] | null>(null); // [lat, lng] pairs
 
     let activePopup: maplibregl.Popup | null = null;
     let legendContainer: HTMLElement | null = null;
+    let mapRef: MapLibreMap | null = null;
+
+    function applyFilter(map: MapLibreMap) {
+        if (!map.getLayer('osm-pois-layer')) return;
+        const filters: maplibregl.ExpressionSpecification[] = [];
+        if (activeCategoryFilter.value) {
+            filters.push(['==', ['get', 'category'], activeCategoryFilter.value]);
+        }
+        if (areaPolygon.value && areaPolygon.value.length >= 3) {
+            const coords = [...areaPolygon.value, areaPolygon.value[0]!].map(([lat, lng]) => [lng, lat]);
+            filters.push(['within', { type: 'Polygon', coordinates: [coords] }] as maplibregl.ExpressionSpecification);
+        }
+        if (filters.length === 0) {
+            map.setFilter('osm-pois-layer', null);
+        } else if (filters.length === 1) {
+            map.setFilter('osm-pois-layer', filters[0]!);
+        } else {
+            map.setFilter('osm-pois-layer', ['all', ...filters]);
+        }
+    }
+
+    function setAreaPolygon(polygon: [number, number][] | null, map: MapLibreMap | null) {
+        areaPolygon.value = polygon;
+        const m = map ?? mapRef;
+        if (m) applyFilter(m);
+    }
 
     // ── Legend (Vue overlay) ─────────────────────────────────────────────────
     // Legend is mounted as a DOM element injected into the map container.
@@ -132,6 +159,7 @@ export function useOsmPois() {
     }
 
     function ensureLayer(map: MapLibreMap) {
+        mapRef = map;
         if (map.getSource('osm-pois')) return;
 
         const tileUrl = TilesAPI.getOsmPoisTileUrlTemplate();
@@ -203,11 +231,8 @@ export function useOsmPois() {
         map.on('mouseenter', 'osm-pois-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
         map.on('mouseleave', 'osm-pois-layer', () => { map.getCanvas().style.cursor = ''; });
 
-        // Sync legend category filter → MapLibre layer filter
-        watch(activeCategoryFilter, (category) => {
-            if (!map.getLayer('osm-pois-layer')) return;
-            map.setFilter('osm-pois-layer', category ? ['==', ['get', 'category'], category] : null);
-        });
+        // Sync legend category filter + area polygon → MapLibre layer filter
+        watch(activeCategoryFilter, () => applyFilter(map));
     }
 
     function attachLegend(map: MapLibreMap) {
@@ -243,5 +268,6 @@ export function useOsmPois() {
     return {
         showOsmPois,
         toggleOsmPois,
+        setAreaPolygon,
     };
 }

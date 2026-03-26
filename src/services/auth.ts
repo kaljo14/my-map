@@ -19,10 +19,6 @@ const initKeycloak = async () => {
     const enableAuth = (window as any).ENABLE_AUTH !== 'false';
 
     if (import.meta.env.DEV || !enableAuth) {
-        console.log('Bypassing Keycloak', {
-            devMode: import.meta.env.DEV,
-            enableAuth
-        });
         isAuthenticated.value = true;
         userProfile.value = {
             username: 'dev-user',

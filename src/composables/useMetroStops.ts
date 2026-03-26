@@ -39,9 +39,10 @@ export function useMetroStops() {
         }
 
         if (!map.getSource('metro-stops')) {
+            const data = filteredGeoJSON();
             map.addSource('metro-stops', {
                 type: 'geojson',
-                data: filteredGeoJSON(),
+                data,
             });
 
             map.addLayer({
@@ -89,8 +90,18 @@ export function useMetroStops() {
     const toggleMetroStops = async (map: MapLibreMap | null) => {
         if (!map) return;
         showMetroStops.value = !showMetroStops.value;
-        await ensureLayer(map);
-        map.setLayoutProperty('metro-stops-layer', 'visibility', showMetroStops.value ? 'visible' : 'none');
+        try {
+            await ensureLayer(map);
+        } catch (e) {
+            // Revert toggle so UI state stays consistent with actual layer state
+            showMetroStops.value = !showMetroStops.value;
+            console.error('[MetroStops] Failed to load stops:', e);
+            return;
+        }
+        const layer = map.getLayer('metro-stops-layer');
+        if (layer) {
+            map.setLayoutProperty('metro-stops-layer', 'visibility', showMetroStops.value ? 'visible' : 'none');
+        }
     };
 
     const toggleStopLine = async (lineId: string, map: MapLibreMap | null) => {
@@ -101,7 +112,11 @@ export function useMetroStops() {
             activeStopLines.value.push(lineId);
         }
         if (showMetroStops.value) {
-            await ensureLayer(map);
+            try {
+                await ensureLayer(map);
+            } catch (e) {
+                console.error('[MetroStops] Failed to update stop line filter:', e);
+            }
         }
     };
 

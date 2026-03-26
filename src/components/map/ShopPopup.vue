@@ -32,18 +32,16 @@
 
     <!-- Info Grid -->
     <div class="popup-info">
-      <div class="info-row" v-if="shop.price_level">
-        <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
-      </div>
-      <div class="info-row" v-if="shop.address">
-        <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
-      </div>
-      <div class="info-row" v-if="shop.formatted_phone_number">
-        <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
+      <InfoRow v-if="shop.price_level" :label="`💰 ${$t('map.popup.price')}:`">
+        {{ '€'.repeat(shop.price_level) }}
+      </InfoRow>
+      <InfoRow v-if="shop.address" :label="`📍 ${$t('map.popup.address')}:`">
+        {{ shop.address }}
+      </InfoRow>
+      <InfoRow v-if="shop.formatted_phone_number" :label="`📞 ${$t('map.popup.phone')}:`">
         <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-      </div>
-      <div class="info-row" v-if="shop.opening_hours_text">
-        <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
+      </InfoRow>
+      <InfoRow v-if="shop.opening_hours_text" :label="`🕒 ${$t('map.popup.hours')}:`">
         <div class="hours-list">
           <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
             {{ line }}
@@ -52,10 +50,10 @@
             +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
           </div>
         </div>
-      </div>
-      <div class="info-row" v-if="shop.services && shop.services.length > 0">
-        <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-      </div>
+      </InfoRow>
+      <InfoRow v-if="shop.services?.length" :label="`🏷️ ${$t('map.popup.services')}:`">
+        {{ shop.services.slice(0, 3).join(', ') }}
+      </InfoRow>
     </div>
 
     <!-- Action Buttons -->
@@ -73,6 +71,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Place } from '@/api/places';
+import InfoRow from '@/components/ui/InfoRow.vue';
 
 defineProps<{
   shop: Place;
@@ -162,27 +161,6 @@ const getStars = (rating: number) => {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
-}
-
-.info-row {
-  font-size: 0.9rem;
-  color: #4a4030;
-  line-height: 1.4;
-}
-
-.info-row strong {
-  color: #131314;
-  font-weight: 600;
-}
-
-.info-row a {
-  color: #d97757;
-  text-decoration: none;
-}
-
-.info-row a:hover {
-  color: #c05e3a;
-  text-decoration: underline;
 }
 
 .hours-list {
