@@ -14,6 +14,7 @@
     },
     "stats": {
         "totalBarbershops": "Общо бръснарници:",
+        "total": "Общо:",
         "shops": "Обекти:",
         "avgRating": "Ср. Оценка:"
     },

@@ -76,7 +76,7 @@ const overallAvgRating = computed(() => {
   bottom: 16px;
   width: 300px;
   z-index: 1500;
-  background: rgba(22, 27, 22, 0.96);
+  background: #08090c;
   border: 1px solid rgba(245, 240, 232, 0.1);
   border-radius: 14px;
   backdrop-filter: blur(12px);

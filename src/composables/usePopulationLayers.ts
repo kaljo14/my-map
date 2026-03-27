@@ -42,7 +42,7 @@ export function usePopulationLayers() {
             layout: { visibility: 'none' },
             paint: {
                 'fill-color': buildColorExpression(),
-                'fill-opacity': 0.6,
+                'fill-opacity': 0.35,
             },
         });
 
@@ -66,6 +66,7 @@ export function usePopulationLayers() {
                 'text-size': 11,
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                 'text-allow-overlap': false,
+                'text-padding': 80,
             },
         });
 

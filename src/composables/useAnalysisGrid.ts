@@ -1,6 +1,7 @@
 import { ref } from 'vue';
 import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
 import { API_CONFIG } from '@/api/config';
+import TilesAPI from '@/api/tiles';
 
 export function useAnalysisGrid() {
     const showAnalysisGrid = ref(false);
@@ -43,7 +44,7 @@ export function useAnalysisGrid() {
             layout: { visibility: 'none' },
             paint: {
                 'fill-color': buildColorExpression(),
-                'fill-opacity': 0.6,
+                'fill-opacity': 0.35,
             },
         });
 
@@ -56,21 +57,40 @@ export function useAnalysisGrid() {
             paint: { 'line-color': '#fff', 'line-width': 0.5, 'line-opacity': 0.4 },
         });
 
+        // Labels use a GeoJSON centroid source so each cell shows exactly one label.
+        map.addSource('analysis-grid-centroids', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] },
+        });
+
         map.addLayer({
             id: 'analysis-grid-labels',
             type: 'symbol',
-            source: 'analysis-grid',
-            'source-layer': 'barbershop_density',
+            source: 'analysis-grid-centroids',
             layout: {
                 visibility: 'none',
                 'text-field': ['to-string', ['get', 'barbershop_count']],
                 'text-size': 11,
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                 'text-allow-overlap': false,
-                'symbol-avoid-edges': true,
             },
             filter: ['>', ['get', 'barbershop_count'], 0],
         });
+
+        TilesAPI.getGridLabels().then((geojson: any) => {
+            const centroids = (geojson.features ?? [])
+                .filter((f: any) => f.geometry?.type === 'Polygon' || f.geometry?.type === 'MultiPolygon')
+                .map((f: any) => {
+                    const coords = f.geometry.type === 'Polygon'
+                        ? f.geometry.coordinates[0]
+                        : f.geometry.coordinates[0][0];
+                    const lng = coords.reduce((s: number, c: number[]) => s + c[0], 0) / coords.length;
+                    const lat = coords.reduce((s: number, c: number[]) => s + c[1], 0) / coords.length;
+                    return { type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: f.properties };
+                });
+            (map.getSource('analysis-grid-centroids') as maplibregl.GeoJSONSource)
+                .setData({ type: 'FeatureCollection', features: centroids });
+        }).catch(() => { /* labels optional — silently skip if API unavailable */ });
 
         map.on('click', 'analysis-grid-fill', (e) => {
             const props = e.features?.[0]?.properties ?? {};

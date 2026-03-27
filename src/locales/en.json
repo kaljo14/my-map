@@ -1,97 +1,98 @@
 {
-    "common": {
-        "loading": "Loading...",
-        "cancel": "Cancel",
-        "confirm": "Confirm",
-        "delete": "Delete",
-        "save": "Save",
-        "close": "Close",
-        "language": "Language",
-        "login": "Login",
-        "logout": "Logout",
-        "map": "Map",
-        "list": "List"
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "save": "Save",
+    "close": "Close",
+    "language": "Language",
+    "login": "Login",
+    "logout": "Logout",
+    "map": "Map",
+    "list": "List"
+  },
+  "stats": {
+    "totalBarbershops": "Total Barbershops:",
+    "total": "Total:",
+    "shops": "Shops:",
+    "avgRating": "Avg Rating:"
+  },
+  "analysis": {
+    "settings": {
+      "title": "Business Type",
+      "showBarbershops": "Barbershops",
+      "showGyms": "Gyms",
+      "showCarwashes": "Car Washes",
+      "showGroceryStores": "Grocery Stores",
+      "enableClustering": "Enable Clustering"
     },
-    "stats": {
-        "totalBarbershops": "Total Barbershops:",
-        "shops": "Shops:",
-        "avgRating": "Avg Rating:"
+    "filters": {
+      "title": "Filters",
+      "reviews": "Reviews (min):",
+      "rating": "Rating (min):",
+      "priceRange": "Price Range:",
+      "services": "Services:",
+      "groceryChain": "Grocery Chain:",
+      "groceryBigChains": "Big Chains",
+      "reset": "Reset Filters"
     },
-    "analysis": {
-        "settings": {
-            "title": "Map Settings",
-            "showBarbershops": "Barbershops",
-            "showGyms": "Gyms",
-            "showCarwashes": "Car Washes",
-            "showGroceryStores": "Grocery Stores",
-            "enableClustering": "Enable Clustering"
-        },
-        "filters": {
-            "title": "Filters",
-            "reviews": "Reviews (min):",
-            "rating": "Rating (min):",
-            "priceRange": "Price Range:",
-            "services": "Services:",
-            "groceryChain": "Grocery Chain:",
-            "groceryBigChains": "Big Chains",
-            "reset": "Reset Filters"
-        },
-        "opportunity": {
-            "title": "Opportunity Zones",
-            "description": "Find locations with no barbershops within {radius}km radius",
-            "searchRadius": "Search Radius (km):",
-            "show": "Show",
-            "hide": "Hide",
-            "count": "{count} potential locations found"
-        },
-        "distribution": {
-            "title": "Price Distribution"
-        }
+    "opportunity": {
+      "title": "Opportunity Zones",
+      "description": "Find locations with no barbershops within {radius}km radius",
+      "searchRadius": "Search Radius (km):",
+      "show": "Show",
+      "hide": "Hide",
+      "count": "{count} potential locations found"
     },
-    "map": {
-        "controls": {
-            "title": "Map Controls",
-            "populationGrid": "Population Grid",
-            "analysisGrid": "Analysis Grid",
-            "opportunityHeatmap": "Opportunity Heatmap",
-            "configure": "Configure",
-            "densityFilter": "Density Filter",
-            "enableGridMessage": "Enable the grid to see population density data and filter options.",
-            "heatmapCategory": "Category",
-            "heatmapBarbershop": "Barbershop",
-            "heatmapGym": "Gym"
-        },
-        "filters": {
-            "allAreas": "All Areas",
-            "residents1k": "1,000+ Residents",
-            "residents5k": "5,000+ Residents",
-            "residents10k": "10,000+ Residents",
-            "residents15k": "15,000+ Residents",
-            "residents20k": "20,000+ Residents",
-            "residents24k": "24,000+ Residents"
-        },
-        "popup": {
-            "openNow": "Open Now",
-            "closed": "Closed",
-            "price": "Price",
-            "address": "Address",
-            "phone": "Phone",
-            "hours": "Hours",
-            "services": "Services",
-            "website": "Website",
-            "directions": "Directions",
-            "edit": "Edit",
-            "editInfo": "Edit Info",
-            "reviews": "reviews",
-            "moreDays": "more days"
-        },
-        "opportunity": {
-            "title": "Opportunity Zone",
-            "label": "Opportunity",
-            "noBarbershopsWithin": "No barbershops within",
-            "nearestBarbershop": "Nearest barbershop",
-            "coordinates": "Coordinates",
-            "note": "This area has low competition and could be a good location for a new barbershop!"
-        }
+    "distribution": {
+      "title": "Price Distribution"
     }
+  },
+  "map": {
+    "controls": {
+      "title": "Map Controls",
+      "populationGrid": "Population Grid",
+      "analysisGrid": "Analysis Grid",
+      "opportunityHeatmap": "Opportunity Heatmap",
+      "configure": "Configure",
+      "densityFilter": "Density Filter",
+      "enableGridMessage": "Enable the grid to see population density data and filter options.",
+      "heatmapCategory": "Category",
+      "heatmapBarbershop": "Barbershop",
+      "heatmapGym": "Gym"
+    },
+    "filters": {
+      "allAreas": "All Areas",
+      "residents1k": "1,000+ Residents",
+      "residents5k": "5,000+ Residents",
+      "residents10k": "10,000+ Residents",
+      "residents15k": "15,000+ Residents",
+      "residents20k": "20,000+ Residents",
+      "residents24k": "24,000+ Residents"
+    },
+    "popup": {
+      "openNow": "Open Now",
+      "closed": "Closed",
+      "price": "Price",
+      "address": "Address",
+      "phone": "Phone",
+      "hours": "Hours",
+      "services": "Services",
+      "website": "Website",
+      "directions": "Directions",
+      "edit": "Edit",
+      "editInfo": "Edit Info",
+      "reviews": "reviews",
+      "moreDays": "more days"
+    },
+    "opportunity": {
+      "title": "Opportunity Zone",
+      "label": "Opportunity",
+      "noBarbershopsWithin": "No barbershops within",
+      "nearestBarbershop": "Nearest barbershop",
+      "coordinates": "Coordinates",
+      "note": "This area has low competition and could be a good location for a new barbershop!"
+    }
+  }
 }

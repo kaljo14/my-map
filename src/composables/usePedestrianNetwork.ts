@@ -48,7 +48,7 @@ export function usePedestrianNetwork() {
             paint: {
                 'line-color': walkScoreColorExpression,
                 'line-width': 2,
-                'line-opacity': 0.85,
+                'line-opacity': 0.6,
             },
         });
 

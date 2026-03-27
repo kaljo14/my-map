@@ -80,16 +80,12 @@ const pillSize = props.variant === 'control' ? 'md' : 'sm';
 }
 
 .toggle-row--sidebar .toggle-row-icon {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: 8px;
-  background: rgba(245, 240, 232, 0.06);
-  border: 1px solid rgba(245, 240, 232, 0.07);
-  transition: background 0.15s;
   color: inherit;
 }
 
@@ -104,10 +100,6 @@ const pillSize = props.variant === 'control' ? 'md' : 'sm';
   line-height: 1;
 }
 
-.toggle-row--sidebar.active .toggle-row-icon {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.2);
-}
 
 /* ── Control variant (light popover) ─────────────────────── */
 .toggle-row--control {

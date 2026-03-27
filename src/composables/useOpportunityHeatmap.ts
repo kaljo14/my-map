@@ -50,7 +50,7 @@ export function useOpportunityHeatmap() {
             filter: ['==', ['get', 'category'], activeCategory.value],
             paint: {
                 'fill-color': scoreColorExpression,
-                'fill-opacity': 0.7,
+                'fill-opacity': 0.4,
             },
         });
 

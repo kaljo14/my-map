@@ -15,27 +15,26 @@ const toggleLocale = () => {
     class="lang-btn"
     :title="$t('common.language', 'Language')"
   >
+    <span class="material-symbols-outlined" aria-hidden="true">language</span>
     <span class="lang-code">{{ locale }}</span>
-    <span class="sr-only">Switch Language</span>
-    <span class="material-symbols-outlined" aria-hidden="true" style="font-size:16px;line-height:1">language</span>
   </button>
 </template>
 
 <style scoped>
 .lang-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  width: 100%;
-  padding: 8px 12px;
-  border-radius: 8px;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 7px;
   border: 1px solid rgba(245, 240, 232, 0.12);
   background: transparent;
   color: #8a7e72;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   cursor: pointer;
   transition: color 0.2s, background 0.2s, border-color 0.2s;
+  white-space: nowrap;
 }
 
 .lang-btn:hover {
@@ -48,15 +47,8 @@ const toggleLocale = () => {
   text-transform: uppercase;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
+.lang-btn .material-symbols-outlined {
+  font-size: 14px;
+  line-height: 1;
 }
 </style>

@@ -141,68 +141,70 @@
     <!-- Section 4: Spatial Tools -->
     <SidebarSection title="Spatial Tools" :default-open="false" icon="draw">
       <div class="toggle-row-group">
-        <ToggleRow :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')">
+        <ToggleRow variant="sidebar" :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')">
           <template #icon>
             <span class="material-symbols-outlined">bubble_chart</span>
           </template>
         </ToggleRow>
 
         <ToggleRow
-          :model-value="hasActivePolygon"
-          :disabled="isDrawingMode"
+          variant="sidebar"
+          :model-value="hasActivePolygon || isDrawingMode"
           :class="{ 'area-select-btn': true, drawing: isDrawingMode }"
-          @toggle="hasActivePolygon ? $emit('clearPolygon') : $emit('startDrawing')"
+          @toggle="isDrawingMode || hasActivePolygon ? $emit('clearPolygon') : $emit('startDrawing')"
         >
           <template #icon>
             <span class="material-symbols-outlined">format_shapes</span>
           </template>
           {{ isDrawingMode ? 'Drawing on map...' : hasActivePolygon ? 'Area selected' : 'Select Area for Analysis' }}
           <template #trailing>
-            <span v-if="hasActivePolygon" class="material-symbols-outlined area-clear-x">close</span>
-            <TogglePill v-else-if="!isDrawingMode" :model-value="false" />
+            <TogglePill :model-value="hasActivePolygon || isDrawingMode" />
           </template>
         </ToggleRow>
+
+        <ToggleRow
+          variant="sidebar"
+          :model-value="isPinMode || pins.length > 0 || isComparisonOpen"
+          @toggle="isPinMode || pins.length > 0 || isComparisonOpen ? $emit('clearComparison') : $emit('togglePinMode')"
+        >
+          <template #icon>
+            <span class="material-symbols-outlined">compare_arrows</span>
+          </template>
+          {{ isPinMode ? 'Drop pins on map…' : 'Location Comparison' }}
+          <template #trailing>
+            <TogglePill :model-value="isPinMode || pins.length > 0 || isComparisonOpen" />
+          </template>
+        </ToggleRow>
+
+        <!-- Pin list + compare (shown inline when comparison is active) -->
+        <template v-if="pins.length > 0 || isPinMode">
+          <div v-if="pins.length > 0" class="pin-list">
+            <PinItem
+              v-for="(pin, idx) in pins"
+              :key="pin.id"
+              :index="idx + 1"
+              :label="pin.label"
+              :lat="pin.lat"
+              :lng="pin.lng"
+              @remove="$emit('removePin', pin.id)"
+            />
+          </div>
+          <button
+            v-if="pins.length >= 2"
+            :class="['compare-btn', { 'compare-btn--close': isComparisonOpen }]"
+            @click="isComparisonOpen ? $emit('closeComparison') : $emit('compareLocations')"
+          >
+            <template v-if="isComparisonOpen"><span class="material-symbols-outlined" style="font-size:16px;line-height:1">close</span> Close Comparison</template>
+            <template v-else>Compare {{ pins.length }} Location{{ pins.length !== 1 ? 's' : '' }}</template>
+          </button>
+        </template>
       </div>
-    </SidebarSection>
-
-    <!-- Section 5: Location Comparison -->
-    <SidebarSection title="Location Comparison" :default-open="true" icon="compare_arrows">
-      <!-- Drop Pin button -->
-      <button
-        :class="['drop-pin-btn', { active: isPinMode }]"
-        @click="$emit('togglePinMode')"
-      >
-        <span class="material-symbols-outlined" style="font-size:16px;line-height:1;flex-shrink:0">location_on</span>
-        {{ isPinMode ? 'Click map to place pin…' : '+ Drop Pin' }}
-      </button>
-
-      <!-- Pin list -->
-      <div v-if="pins.length > 0" class="pin-list">
-        <PinItem
-          v-for="(pin, idx) in pins"
-          :key="pin.id"
-          :index="idx + 1"
-          :label="pin.label"
-          :lat="pin.lat"
-          :lng="pin.lng"
-          @remove="$emit('removePin', pin.id)"
-        />
-      </div>
-
-      <!-- Compare button -->
-      <button
-        v-if="pins.length >= 2"
-        :class="['compare-btn', { 'compare-btn--close': isComparisonOpen }]"
-        @click="isComparisonOpen ? $emit('closeComparison') : $emit('compareLocations')"
-      >
-        <template v-if="isComparisonOpen"><span class="material-symbols-outlined" style="font-size:16px;line-height:1">close</span> Close Comparison</template>
-        <template v-else>Compare {{ pins.length }} Location{{ pins.length !== 1 ? 's' : '' }}</template>
-      </button>
     </SidebarSection>
 
     </div><!-- end panel-scroll -->
 
     <div class="panel-footer">
+      <MapStyleSwitcher @switch="$emit('switchBaseLayer', $event)" />
       <LanguageSwitcher />
     </div>
 
@@ -214,6 +216,7 @@
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import LanguageSwitcher from '../LanguageSwitcher.vue';
+import MapStyleSwitcher from './MapStyleSwitcher.vue';
 import SidebarSection from './SidebarSection.vue';
 import TogglePill from '../ui/TogglePill.vue';
 import ToggleRow from '../ui/ToggleRow.vue';
@@ -267,9 +270,11 @@ defineEmits<{
   (e: 'startDrawing'): void;
   (e: 'clearPolygon'): void;
   (e: 'togglePinMode'): void;
+  (e: 'clearComparison'): void;
   (e: 'removePin', id: string): void;
   (e: 'compareLocations'): void;
   (e: 'closeComparison'): void;
+  (e: 'switchBaseLayer', name: string): void;
 }>();
 
 const densityOptions = computed(() => [
@@ -342,9 +347,12 @@ const groceryTags = computed(() => [
 
 .panel-footer {
   flex-shrink: 0;
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-top: 1px solid rgba(245, 240, 232, 0.07);
   background: #08090C;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
 }
 
 .filter-group {
@@ -441,13 +449,6 @@ const groceryTags = computed(() => [
   cursor: default;
 }
 
-.area-clear-x {
-  font-size: 16px;
-  color: #ef4444;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
 .grocery-chain-filter {
   margin-top: 12px;
   padding-top: 12px;
@@ -484,36 +485,6 @@ const groceryTags = computed(() => [
 }
 
 /* ── Pins section ─────────────────────────────────────── */
-.drop-pin-btn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  width: 100%;
-  padding: 9px 12px;
-  border-radius: 9px;
-  border: 1px dashed rgba(245, 240, 232, 0.18);
-  background: transparent;
-  color: #8a7e72;
-  font-size: 0.8rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  margin-bottom: 8px;
-}
-
-.drop-pin-btn:hover {
-  background: rgba(245, 240, 232, 0.05);
-  color: #c4b8ae;
-  border-color: rgba(245, 240, 232, 0.3);
-}
-
-.drop-pin-btn.active {
-  border-color: rgba(217, 119, 87, 0.5);
-  background: rgba(217, 119, 87, 0.08);
-  color: #d97757;
-  border-style: solid;
-}
-
 .pin-list {
   display: flex;
   flex-direction: column;

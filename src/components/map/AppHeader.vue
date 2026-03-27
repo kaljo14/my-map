@@ -3,7 +3,7 @@
     <div class="header-left">
       <div class="logo">
         <img src="/log.png" alt="Lonctus" class="logo-img" />
-        <span class="logo-text">Lucentic</span>
+        <span class="logo-text">Lonctus</span>
       </div>
     </div>
 
@@ -26,13 +26,13 @@ const { isSignedIn } = useAuth()
 
 <style scoped>
 .app-header {
-  height: 80px;
-  background: #08090C;
+  height: 60px;
+  background: #08090c;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 16px;
   color: #f5f0e8;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   z-index: 2000;
@@ -51,16 +51,18 @@ const { isSignedIn } = useAuth()
 }
 
 .logo-img {
-  height: 64px;
+  height: 42px;
   width: auto;
   display: block;
-  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4)); /* makes the logo appear slightly thicker */
+  filter: drop-shadow(
+    0 0 1px rgba(255, 255, 255, 0.4)
+  ); /* makes the logo appear slightly thicker */
 }
 
 .logo-text {
   font-family: 'Syne', sans-serif;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 1.5rem;
   letter-spacing: -0.01em;
   color: #f5f0e8;
   margin-left: 12px;

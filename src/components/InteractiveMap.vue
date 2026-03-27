@@ -46,9 +46,11 @@
           @startDrawing="startDrawing"
           @clearPolygon="clearPolygon"
           @togglePinMode="togglePinMode"
+          @clearComparison="clearComparison"
           @removePin="removeComparisonPin"
           @compareLocations="openComparison"
           @closeComparison="closeComparison"
+          @switchBaseLayer="onSwitchBaseLayer"
         />
 
         <button
@@ -74,8 +76,9 @@
       <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode, 'pin-cursor': isPinMode }">
         <MapStats
           :isMobile="isMobile"
-          :filteredCount="placeInstances[0]?.filteredPlaces.length ?? 0"
+          :filteredCount="totalFilteredCount"
           :averageRating="averageRating"
+          :label="statsLabel"
         />
 
         <!-- Polygon Draw Controls (in-progress + active state only) -->
@@ -95,10 +98,11 @@
           </template>
         </div>
 
+        <!-- Drawing mode overlay -->
+        <div v-if="isDrawingMode" class="drawing-overlay"></div>
+
         <!-- MapLibre container -->
         <div ref="mapContainer" class="map-div" :class="{ 'map-dark': isDarkMap }"></div>
-
-        <MapStyleSwitcher @switch="onSwitchBaseLayer" />
 
         <!-- Pin mode cursor -->
 
@@ -175,7 +179,6 @@ import BottomNav from './map/BottomNav.vue';
 import ShopPopup from './map/ShopPopup.vue';
 import LocationComparisonPanel from './map/LocationComparisonPanel.vue';
 import AreaAnalysisPanel from './map/AreaAnalysisPanel.vue';
-import MapStyleSwitcher from './map/MapStyleSwitcher.vue';
 import { isDarkMap } from '@/stores/mapConfig';
 
 const { isAuthenticated, logout } = auth;
@@ -288,6 +291,7 @@ const {
   pinCount: comparisonPinCount,
   addPin: addComparisonPin,
   removePin: removeComparisonPin,
+  clearPins: clearComparison,
   togglePinMode,
   openComparison,
   closeComparison,
@@ -296,6 +300,23 @@ const {
 const totalFilteredCount = computed(() =>
   placeInstances.reduce((sum, inst) => sum + (inst.visible ? inst.filteredPlaces.length : 0), 0)
 );
+
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  barbershop: 'Barbershops',
+  gym: 'Gyms',
+  carwash: 'Car Washes',
+  'grocery store': 'Grocery Stores',
+};
+
+const statsLabel = computed(() => {
+  if (isMobile.value) return i18n.global.t('stats.shops');
+  const visible = placeInstances.filter(i => i.visible);
+  if (visible.length === 1) {
+    const name = CATEGORY_DISPLAY_NAMES[visible[0].config.category] ?? visible[0].config.category;
+    return `Total ${name}:`;
+  }
+  return i18n.global.t('stats.total');
+});
 
 const areaStats = computed(() =>
   placeInstances
@@ -936,6 +957,14 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
 .map-wrapper.drawing-cursor :deep(.maplibregl-canvas) {
   cursor: crosshair !important;
+}
+
+.drawing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  background: rgba(245, 158, 11, 0.3);
+  pointer-events: none;
 }
 
 .map-wrapper.pin-cursor :deep(.maplibregl-canvas) {

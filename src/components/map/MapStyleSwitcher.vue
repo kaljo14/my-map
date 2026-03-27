@@ -4,7 +4,8 @@
     :title="isDarkMap ? 'Switch to light map' : 'Switch to dark map'"
     @click="toggle"
   >
-    <span class="material-symbols-outlined">{{ isDarkMap ? 'light_mode' : 'dark_mode' }}</span>
+    <span class="material-symbols-outlined" aria-hidden="true">{{ isDarkMap ? 'light_mode' : 'dark_mode' }}</span>
+    <span class="label-text">{{ isDarkMap ? 'Light' : 'Dark' }}</span>
   </button>
 </template>
 
@@ -22,32 +23,29 @@ function toggle() {
 
 <style scoped>
 .dark-toggle {
-  width: 50px;
-  height: 50px;
-  background: #f5f0e8;
-  border: 1px solid #d5ccc0;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(19, 19, 20, 0.12);
-  transition: all 0.2s;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(245, 240, 232, 0.12);
+  background: transparent;
   color: #8a7e72;
-  position: absolute;
-  top: 120px;
-  right: 10px;
-  z-index: 1000;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s, background 0.2s, border-color 0.2s;
+  white-space: nowrap;
 }
 
 .dark-toggle:hover {
-  background: #ede7dc;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(19, 19, 20, 0.16);
+  background: rgba(245, 240, 232, 0.08);
+  color: #c4b8ae;
+  border-color: rgba(245, 240, 232, 0.2);
 }
 
 .dark-toggle .material-symbols-outlined {
-  font-size: 24px;
+  font-size: 14px;
   line-height: 1;
 }
 </style>
