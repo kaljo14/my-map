@@ -4,7 +4,9 @@
     :disabled="disabled"
     @click="$emit('toggle')"
   >
-    <span v-if="icon" class="toggle-row-icon">{{ icon }}</span>
+    <span v-if="icon || $slots.icon" class="toggle-row-icon">
+      <slot name="icon">{{ icon }}</slot>
+    </span>
     <span class="toggle-row-label">
       <slot>{{ label }}</slot>
     </span>
@@ -78,9 +80,8 @@ const pillSize = props.variant === 'control' ? 'md' : 'sm';
 }
 
 .toggle-row--sidebar .toggle-row-icon {
-  font-size: 0.95rem;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -89,6 +90,18 @@ const pillSize = props.variant === 'control' ? 'md' : 'sm';
   background: rgba(245, 240, 232, 0.06);
   border: 1px solid rgba(245, 240, 232, 0.07);
   transition: background 0.15s;
+  color: inherit;
+}
+
+.toggle-row--sidebar .toggle-row-icon svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.toggle-row--sidebar .toggle-row-icon .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .toggle-row--sidebar.active .toggle-row-icon {

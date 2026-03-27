@@ -5,7 +5,7 @@
     </StatItem>
     <div class="stat-divider"></div>
     <StatItem inline :label="!isMobile ? $t('stats.avgRating') : undefined">
-      <span class="star">★</span>{{ averageRating.toFixed(1) }}
+      <span class="material-symbols-outlined star">star</span>{{ averageRating.toFixed(1) }}
     </StatItem>
   </div>
 </template>
@@ -60,7 +60,9 @@ defineProps<{
 
 .star {
   color: #d97757;
-  font-size: 0.85rem;
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: middle;
 }
 </style>
 

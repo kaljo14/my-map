@@ -20,10 +20,10 @@
     "analysis": {
         "settings": {
             "title": "Map Settings",
-            "showBarbershops": "Show Barbershops",
-            "showGyms": "Show Gyms",
-            "showCarwashes": "Show Car Washes",
-            "showGroceryStores": "Show Grocery Stores",
+            "showBarbershops": "Barbershops",
+            "showGyms": "Gyms",
+            "showCarwashes": "Car Washes",
+            "showGroceryStores": "Grocery Stores",
             "enableClustering": "Enable Clustering"
         },
         "filters": {

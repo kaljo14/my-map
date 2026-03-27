@@ -1,10 +1,10 @@
 <template>
   <div class="panel-header">
     <div class="header-left">
-      <span v-if="icon" class="header-icon">{{ icon }}</span>
+      <span v-if="icon" class="material-symbols-outlined header-icon">{{ icon }}</span>
       <span class="panel-title">{{ title }}</span>
     </div>
-    <button class="close-btn" :title="closeTitle" @click="emit('close')">×</button>
+    <button class="close-btn" :title="closeTitle" @click="emit('close')"><span class="material-symbols-outlined">close</span></button>
   </div>
 </template>
 
@@ -37,8 +37,9 @@ const emit = defineEmits<{ close: [] }>()
 }
 
 .header-icon {
-  font-size: 0.95rem;
+  font-size: 18px;
   color: #10b981;
+  line-height: 1;
 }
 
 .panel-title {
@@ -59,10 +60,13 @@ const emit = defineEmits<{ close: [] }>()
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  line-height: 1;
   padding: 0;
   transition: all 0.15s;
+}
+
+.close-btn .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .close-btn:hover {

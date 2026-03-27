@@ -11,8 +11,8 @@ export function useAnalysisGrid() {
     // Color stops for density score — maps to MapLibre interpolate expression values.
     // Range matches popup thresholds (0 = saturated → 4000+ = very high opportunity).
     const colorStops: [number, string][] = [
-        [0,    '#3288bd'],
-        [500,  '#abdda4'],
+        [0, '#3288bd'],
+        [500, '#abdda4'],
         [1000, '#fee08b'],
         [1500, '#fdae61'],
         [2000, '#f46d43'],
@@ -23,8 +23,7 @@ export function useAnalysisGrid() {
     function buildColorExpression(): maplibregl.ExpressionSpecification {
         const stops: any[] = [];
         colorStops.forEach(([val, color]) => stops.push(val, color));
-        // coalesce guards against null men_per_shop (e.g. cells with 0 barbershops)
-        return ['interpolate', ['linear'], ['coalesce', ['get', 'men_per_shop'], 0], ...stops];
+        return ['interpolate', ['linear'], ['to-number', ['get', 'men_per_shop'], 0], ...stops];
     }
 
     function ensureLayers(map: MapLibreMap) {
@@ -64,10 +63,11 @@ export function useAnalysisGrid() {
             'source-layer': 'barbershop_density',
             layout: {
                 visibility: 'none',
-                'text-field': ['concat', ['to-string', ['get', 'barbershop_count']], ' ✂'],
+                'text-field': ['to-string', ['get', 'barbershop_count']],
                 'text-size': 11,
                 'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
                 'text-allow-overlap': false,
+                'symbol-avoid-edges': true,
             },
             filter: ['>', ['get', 'barbershop_count'], 0],
         });
@@ -78,22 +78,23 @@ export function useAnalysisGrid() {
             const malePopulation = props.male_population || 0;
             const barbershopCount = props.barbershop_count || 0;
 
-            let marketStatus = 'Saturated', statusEmoji = '❄️';
-            if (densityScore >= 4000)      { marketStatus = 'Very High Opportunity'; statusEmoji = '🔥'; }
-            else if (densityScore >= 3000) { marketStatus = 'High Opportunity';      statusEmoji = '🔴'; }
-            else if (densityScore >= 2000) { marketStatus = 'Good Opportunity';      statusEmoji = '🟠'; }
-            else if (densityScore >= 1500) { marketStatus = 'Moderate';              statusEmoji = '🟡'; }
-            else if (densityScore >= 1000) { marketStatus = 'Balanced';              statusEmoji = '🟢'; }
-            else if (densityScore >= 500)  { marketStatus = 'Competitive';           statusEmoji = '🔵'; }
+            let marketStatus = 'Saturated', statusColor = '#94a3b8';
+            if (densityScore >= 4000) { marketStatus = 'Very High Opportunity'; statusColor = '#ef4444'; }
+            else if (densityScore >= 3000) { marketStatus = 'High Opportunity'; statusColor = '#f97316'; }
+            else if (densityScore >= 2000) { marketStatus = 'Good Opportunity'; statusColor = '#f59e0b'; }
+            else if (densityScore >= 1500) { marketStatus = 'Moderate'; statusColor = '#eab308'; }
+            else if (densityScore >= 1000) { marketStatus = 'Balanced'; statusColor = '#22c55e'; }
+            else if (densityScore >= 500) { marketStatus = 'Competitive'; statusColor = '#3b82f6'; }
+            const statusDot = `<span class="material-symbols-outlined" style="font-size:14px;color:${statusColor};vertical-align:middle">circle</span>`;
 
             activePopup?.remove();
             activePopup = new maplibregl.Popup({ maxWidth: '280px' })
                 .setLngLat(e.lngLat)
                 .setHTML(`
-                    <div style="font-family:system-ui,sans-serif;min-width:220px">
+                    <div style="font-family:system-ui,sans-serif;min-width:220px;color:#0f172a">
                         <h3 style="margin:0 0 12px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;color:#1e293b;font-size:16px">Market Analysis</h3>
-                        <div style="margin-bottom:16px;padding:10px;border-radius:6px;border-left:3px solid #888">
-                            <div style="font-size:14px;font-weight:600;margin-bottom:4px">${statusEmoji} ${marketStatus}</div>
+                        <div style="margin-bottom:16px;padding:10px;border-radius:6px;border-left:3px solid #888;color:#0f172a">
+                            <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:#0f172a">${statusDot} ${marketStatus}</div>
                             <div style="font-size:20px;font-weight:700;color:#0f172a">
                                 ${Number(densityScore).toFixed(0)} <span style="font-size:12px;font-weight:400;color:#64748b">men/shop</span>
                             </div>
@@ -101,11 +102,11 @@ export function useAnalysisGrid() {
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                             <div style="background:#f8fafc;padding:8px;border-radius:6px">
                                 <div style="font-size:11px;color:#64748b;margin-bottom:4px">Male Population</div>
-                                <div style="font-size:16px;font-weight:600">👨 ${Number(malePopulation).toLocaleString()}</div>
+                                <div style="font-size:16px;font-weight:600;color:#0f172a"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">man</span> ${Number(malePopulation).toLocaleString()}</div>
                             </div>
                             <div style="background:#f8fafc;padding:8px;border-radius:6px">
                                 <div style="font-size:11px;color:#64748b;margin-bottom:4px">Barbershops</div>
-                                <div style="font-size:16px;font-weight:600">✂️ ${barbershopCount}</div>
+                                <div style="font-size:16px;font-weight:600;color:#0f172a"><span class="material-symbols-outlined" style="font-size:16px;vertical-align:middle">content_cut</span> ${barbershopCount}</div>
                             </div>
                         </div>
                     </div>

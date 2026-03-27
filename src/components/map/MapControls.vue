@@ -8,13 +8,7 @@
         :class="{ active: menuOpen || showPopulationGrid }"
         title="Population Grid Settings"
       >
-        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 3h18v18H3V3z" fill="none" stroke="currentColor" stroke-width="2"/>
-          <path d="M5 5h6v6H5V5z" fill="currentColor" fill-opacity="0.2"/>
-          <path d="M13 5h6v6h-6V5z" fill="currentColor" fill-opacity="0.6"/>
-          <path d="M5 13h6v6H5v-6z" fill="currentColor" fill-opacity="0.8"/>
-          <path d="M13 13h6v6h-6v-6z" fill="currentColor" fill-opacity="0.4"/>
-        </svg>
+        <span class="material-symbols-outlined icon" aria-hidden="true">grid_view</span>
       </button>
 
       <!-- Popover Menu -->
@@ -35,14 +29,14 @@
               :class="{ active: activeCategoryHeatmap === 'barbershop' }"
               @click="$emit('setHeatmapCategory', 'barbershop')"
             >
-              ✂️ {{ $t('map.controls.heatmapBarbershop') }}
+              <span class="material-symbols-outlined" style="font-size:14px;line-height:1">content_cut</span> {{ $t('map.controls.heatmapBarbershop') }}
             </button>
             <button
               class="category-pill"
               :class="{ active: activeCategoryHeatmap === 'gym' }"
               @click="$emit('setHeatmapCategory', 'gym')"
             >
-              🏋️ {{ $t('map.controls.heatmapGym') }}
+              <span class="material-symbols-outlined" style="font-size:14px;line-height:1">fitness_center</span> {{ $t('map.controls.heatmapGym') }}
             </button>
           </div>
         </div>
@@ -60,7 +54,7 @@
               >
                 <span class="color-dot" :style="{ backgroundColor: option.color }"></span>
                 <span class="option-text">{{ option.label }}</span>
-                <span v-if="selectedThreshold === option.value" class="check-icon">✓</span>
+                <span v-if="selectedThreshold === option.value" class="material-symbols-outlined check-icon">check</span>
               </button>
             </div>
           </div>
@@ -180,8 +174,8 @@ const vClickOutside = {
 }
 
 .icon {
-  width: 42px;
-  height: 42px;
+  font-size: 28px;
+  line-height: 1;
   color: #8a7e72;
   transition: all 0.2s;
 }
@@ -282,8 +276,8 @@ const vClickOutside = {
 
 .check-icon {
   color: #d97757;
-  font-weight: bold;
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .category-pills {
@@ -304,6 +298,10 @@ const vClickOutside = {
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .category-pill:hover {

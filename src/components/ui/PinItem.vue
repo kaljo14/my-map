@@ -5,7 +5,7 @@
       <span class="pin-item-label">{{ label }}</span>
       <span class="pin-item-coords">{{ lat.toFixed(4) }}, {{ lng.toFixed(4) }}</span>
     </div>
-    <button class="pin-remove-btn" title="Remove pin" @click="$emit('remove')">×</button>
+    <button class="pin-remove-btn" title="Remove pin" @click="$emit('remove')"><span class="material-symbols-outlined">close</span></button>
   </div>
 </template>
 
@@ -86,9 +86,12 @@ defineEmits<{
   justify-content: center;
   transition: all 0.12s;
   flex-shrink: 0;
+  padding: 0;
+}
+
+.pin-remove-btn .material-symbols-outlined {
   font-size: 14px;
   line-height: 1;
-  padding: 0;
 }
 
 .pin-remove-btn:hover {

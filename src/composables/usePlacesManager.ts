@@ -7,14 +7,15 @@ export interface PlaceTypeConfig {
     emoji: string;
     labelKey: string;
     markerClass: string;
+    clusterColor: string;
     defaultVisible?: boolean;
 }
 
 export const PLACE_TYPES: PlaceTypeConfig[] = [
-    { category: 'barbershop',    emoji: '💈', labelKey: 'showBarbershops',   markerClass: 'barbershop-marker', defaultVisible: true },
-    { category: 'gym',           emoji: '🏋️', labelKey: 'showGyms',          markerClass: 'gym-marker' },
-    { category: 'carwash',       emoji: '🚗', labelKey: 'showCarwashes',      markerClass: 'carwash-marker' },
-    { category: 'grocery store', emoji: '🛒', labelKey: 'showGroceryStores',  markerClass: 'grocery-marker' },
+    { category: 'barbershop',    emoji: 'content_cut',     labelKey: 'showBarbershops',   markerClass: 'barbershop-marker', clusterColor: '#d97757', defaultVisible: true },
+    { category: 'gym',           emoji: 'fitness_center',  labelKey: 'showGyms',          markerClass: 'gym-marker',        clusterColor: '#5b8dd9' },
+    { category: 'carwash',       emoji: 'directions_car',  labelKey: 'showCarwashes',      markerClass: 'carwash-marker',    clusterColor: '#4db89e' },
+    { category: 'grocery store', emoji: 'shopping_cart',   labelKey: 'showGroceryStores',  markerClass: 'grocery-marker',    clusterColor: '#7bc96f' },
 ];
 
 export function usePlacesManager(types: PlaceTypeConfig[] = PLACE_TYPES) {

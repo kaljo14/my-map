@@ -64,7 +64,7 @@ export function useOpportunityHeatmap() {
                 .setHTML(`
                     <div style="font-family:system-ui,sans-serif;min-width:180px">
                         <div style="font-weight:700;margin-bottom:8px;font-size:15px">
-                            ${cat === 'barbershop' ? '✂️ Barbershop' : '🏋️ Gym'} Zone
+                            <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle">${cat === 'barbershop' ? 'content_cut' : 'fitness_center'}</span> ${cat === 'barbershop' ? 'Barbershop' : 'Gym'} Zone
                         </div>
                         <div style="display:flex;flex-direction:column;gap:4px;font-size:13px">
                             <div><span style="color:#64748b">Category:</span> <strong>${cat}</strong></div>

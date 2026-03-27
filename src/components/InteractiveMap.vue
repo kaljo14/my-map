@@ -24,6 +24,11 @@
           :groceryTagFilters="groceryTagFilters"
           :showPedestrianNetwork="showPedestrianNetwork"
           :showOsmPois="showOsmPois"
+          :showPopulationGrid="showPopulationGrid"
+          :selectedThreshold="selectedThreshold"
+          :showAnalysisGrid="showAnalysisGrid"
+          :showOpportunityHeatmap="showOpportunityHeatmap"
+          :activeCategoryHeatmap="heatmapCategory"
           :isDrawingMode="isDrawingMode"
           :hasActivePolygon="!!activePolygon"
           :pins="comparisonPins"
@@ -39,6 +44,11 @@
           @toggleGroceryTagFilter="toggleGroceryTagFilter"
           @togglePedestrianNetwork="handleTogglePedestrianNetwork"
           @toggleOsmPois="handleToggleOsmPois"
+          @togglePopulationGrid="handleTogglePopulationGrid"
+          @toggleAnalysisGrid="handleToggleAnalysisGrid"
+          @updateThreshold="updateThreshold"
+          @toggleOpportunityHeatmap="handleToggleOpportunityHeatmap"
+          @setHeatmapCategory="handleSetHeatmapCategory"
           @startDrawing="startDrawing"
           @clearPolygon="clearPolygon"
           @togglePinMode="togglePinMode"
@@ -82,33 +92,21 @@
               class="polygon-btn finish"
               :disabled="drawingVertices.length < 3"
               @click="finishDrawing"
-            >✓ Finish</button>
-            <button class="polygon-btn cancel" @click="clearPolygon">✕ Cancel</button>
+            ><span class="material-symbols-outlined" style="font-size:15px;line-height:1">check</span> Finish</button>
+            <button class="polygon-btn cancel" @click="clearPolygon"><span class="material-symbols-outlined" style="font-size:15px;line-height:1">close</span> Cancel</button>
           </template>
           <template v-else-if="activePolygon">
-            <span class="polygon-count">⬡ {{ totalFilteredCount }} in area</span>
-            <button class="polygon-btn clear" @click="clearPolygon">✕ Clear</button>
+            <span class="polygon-count"><span class="material-symbols-outlined" style="font-size:14px;line-height:1;vertical-align:middle">hexagon</span> {{ totalFilteredCount }} in area</span>
+            <button class="polygon-btn clear" @click="clearPolygon"><span class="material-symbols-outlined" style="font-size:15px;line-height:1">close</span> Clear</button>
           </template>
         </div>
 
         <!-- MapLibre container -->
-        <div ref="mapContainer" class="map-div"></div>
+        <div ref="mapContainer" class="map-div" :class="{ 'map-dark': isDarkMap }"></div>
+
+        <MapStyleSwitcher @switch="onSwitchBaseLayer" />
 
         <!-- Pin mode cursor -->
-
-        <!-- Map overlay controls (grid / heatmap) — rendered inside map-wrapper as absolute overlay -->
-        <MapControls
-          :showPopulationGrid="showPopulationGrid"
-          :showAnalysisGrid="showAnalysisGrid"
-          :selectedThreshold="selectedThreshold"
-          :showOpportunityHeatmap="showOpportunityHeatmap"
-          :activeCategoryHeatmap="heatmapCategory"
-          @togglePopulationGrid="handleTogglePopulationGrid"
-          @toggleAnalysisGrid="handleToggleAnalysisGrid"
-          @updateThreshold="updateThreshold"
-          @toggleOpportunityHeatmap="handleToggleOpportunityHeatmap"
-          @setHeatmapCategory="handleSetHeatmapCategory"
-        />
 
         <!-- Area Analysis Panel — floats over map when polygon is active -->
         <AreaAnalysisPanel
@@ -177,18 +175,23 @@ import { useLocationComparison } from '@/composables/useLocationComparison';
 import AnalysisPanel from './map/AnalysisPanel.vue';
 import ShopModal from './map/ShopModal.vue';
 import DeleteConfirmModal from './map/DeleteConfirmModal.vue';
-import MapControls from './map/MapControls.vue';
 import AppHeader from './map/AppHeader.vue';
 import MapStats from './map/MapStats.vue';
 import BottomNav from './map/BottomNav.vue';
 import ShopPopup from './map/ShopPopup.vue';
 import LocationComparisonPanel from './map/LocationComparisonPanel.vue';
 import AreaAnalysisPanel from './map/AreaAnalysisPanel.vue';
+import MapStyleSwitcher from './map/MapStyleSwitcher.vue';
+import { isDarkMap } from '@/stores/mapConfig';
 
 const { isAuthenticated, userProfile, login, logout } = auth;
 
 const mapContainer = ref<HTMLElement | null>(null);
-const { mapInstance, initMap } = useMapInstance();
+const { mapInstance, initMap, switchBaseLayer } = useMapInstance();
+
+function onSwitchBaseLayer(name: string) {
+  if (mapInstance.value) switchBaseLayer(mapInstance.value, name);
+}
 const { isMobile } = useMobileDetection();
 
 const isSidebarOpen = ref(true);
@@ -346,6 +349,8 @@ const handleSetHeatmapCategory = (cat: string) => setHeatmapCategory(cat as any,
 
 // Per-category HTML marker caches: category → Map<placeId, maplibregl.Marker>
 const markerCaches = new Map<string, Map<string, maplibregl.Marker>>();
+// Per-category HTML cluster marker caches: category → Map<"c-{clusterId}", maplibregl.Marker>
+const clusterMarkerCaches = new Map<string, Map<string, maplibregl.Marker>>();
 // Comparison pin markers
 const comparisonMarkers = new Map<string, maplibregl.Marker>();
 // Popup app instances — track to unmount on close
@@ -371,10 +376,33 @@ function placesToGeoJSON(places: Place[]): GeoJSON.FeatureCollection {
   return { type: 'FeatureCollection', features: places.map(placeToFeature) };
 }
 
-function sourceId(category: string) { return `places-${category.replace(/ /g, '-')}`; }
-function clusterLayerId(category: string) { return `${sourceId(category)}-clusters`; }
-function clusterCountId(category: string) { return `${sourceId(category)}-cluster-count`; }
-function pointLayerId(category: string) { return `${sourceId(category)}-points`; }
+function sourceId(category: string)         { return `places-${category.replace(/ /g, '-')}`; }
+function clusterSourceLayerId(category: string) { return `${sourceId(category)}-cluster-src`; }
+function pointLayerId(category: string)         { return `${sourceId(category)}-points`; }
+
+/** Convert a 6-digit hex colour to an rgba() string. */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** Build the HTML element for a cluster bubble. */
+function createClusterElement(count: number, inst: (typeof placeInstances)[0]): HTMLElement {
+  const color = inst.config.clusterColor;
+  const size   = count < 10 ? 38 : count < 50 ? 48 : count < 200 ? 58 : 68;
+  const label  = count >= 1000 ? `${Math.round(count / 100) / 10}k` : String(count);
+  const el = document.createElement('div');
+  el.className = 'cluster-marker-wrapper';
+  el.innerHTML = `<div class="cluster-bubble" style="
+    width:${size}px;height:${size}px;
+    background:${color};
+    font-size:${size < 48 ? 13 : size < 58 ? 14 : 15}px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.28),0 0 0 3px rgba(255,255,255,0.9),0 0 0 8px ${hexToRgba(color, 0.22)};
+  ">${label}</div>`;
+  return el;
+}
 
 function setupCategoryLayers(map: MapLibreMap, inst: (typeof placeInstances)[0]) {
   const cat = inst.config.category;
@@ -387,87 +415,58 @@ function setupCategoryLayers(map: MapLibreMap, inst: (typeof placeInstances)[0])
     data: placesToGeoJSON([]),
     cluster: true,
     clusterMaxZoom: 14,
-    clusterRadius: 50,
+    clusterRadius: 60,
   });
 
-  const initVis = inst.visible ? 'visible' : 'none';
+  const clusterVis = inst.visible && enableClustering.value ? 'visible' : 'none';
+  const initVis    = inst.visible ? 'visible' : 'none';
 
-  // Cluster circles
+  // ── Invisible cluster-centroid layer ──────────────────────────────────
+  // queryRenderedFeatures target for custom HTML cluster bubbles.
+  // MapLibre produces cluster features (has point_count) only below
+  // clusterMaxZoom (14), so this layer auto-empties at zoom ≥ 14.
   map.addLayer({
-    id: clusterLayerId(cat),
+    id: clusterSourceLayerId(cat),
     type: 'circle',
     source: sid,
     filter: ['has', 'point_count'],
-    layout: { visibility: inst.visible && enableClustering.value ? 'visible' : 'none' },
-    paint: {
-      'circle-color': [
-        'step', ['get', 'point_count'],
-        '#51bbd6', 10, '#f1f075', 30, '#f28cb1',
-      ],
-      'circle-radius': ['step', ['get', 'point_count'], 18, 10, 24, 30, 30],
-      'circle-stroke-width': 2,
-      'circle-stroke-color': '#fff',
-      'circle-opacity': 0.85,
-    },
+    layout: { visibility: clusterVis },
+    paint: { 'circle-radius': 1, 'circle-opacity': 0 },
   });
 
-  // Cluster count labels
-  map.addLayer({
-    id: clusterCountId(cat),
-    type: 'symbol',
-    source: sid,
-    filter: ['has', 'point_count'],
-    layout: {
-      visibility: inst.visible && enableClustering.value ? 'visible' : 'none',
-      'text-field': '{point_count_abbreviated}',
-      'text-size': 13,
-      'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
-    },
-    paint: { 'text-color': '#fff' },
-  });
-
-  // Near-invisible unclustered point layer — queryRenderedFeatures target for HTML markers
+  // ── Invisible individual-point layer ──────────────────────────────────
+  // queryRenderedFeatures target for individual HTML emoji markers.
+  // minzoom: 13 so individual markers only emerge once the map is
+  // zoomed in enough to distinguish them from clusters.
   map.addLayer({
     id: pointLayerId(cat),
     type: 'circle',
     source: sid,
     filter: ['!', ['has', 'point_count']],
+    minzoom: 13,
     layout: { visibility: initVis },
     paint: { 'circle-radius': 4, 'circle-opacity': 0.02 },
   });
 
-  // Cluster click → zoom to expand
-  map.on('click', clusterLayerId(cat), async (e) => {
-    const features = map.queryRenderedFeatures(e.point, { layers: [clusterLayerId(cat)] });
-    if (!features.length) return;
-    const clusterId = features[0]!.properties!.cluster_id as number;
-    try {
-      const zoom = await (map.getSource(sid) as maplibregl.GeoJSONSource).getClusterExpansionZoom(clusterId);
-      map.easeTo({ center: (features[0]!.geometry as GeoJSON.Point).coordinates as [number, number], zoom });
-    } catch { /* ignore */ }
-  });
-
-  map.on('mouseenter', clusterLayerId(cat), () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', clusterLayerId(cat), () => { map.getCanvas().style.cursor = ''; });
-
+  clusterMarkerCaches.set(cat, new Map());
   markerCaches.set(cat, new Map());
 }
 
-function getMarkerEmoji(props: Record<string, any>, inst: (typeof placeInstances)[0]): string {
+function getMarkerIcon(props: Record<string, any>, inst: (typeof placeInstances)[0]): string {
   let tags: string[] = [];
   try { tags = JSON.parse(props.tags ?? '[]'); } catch { /* ignore */ }
   if (tags.includes('lidl')) return '<img src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl"/>';
   if (tags.includes('kaufland')) return '<img src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland"/>';
   if (tags.includes('billa')) return '<img src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa"/>';
   if (tags.includes('fantastico')) return '<img src="/Fantastico.png" class="chain-logo" alt="Fantastico"/>';
-  return inst.config.emoji;
+  return `<span class="material-symbols-outlined">${inst.config.emoji}</span>`;
 }
 
 function createMarkerElement(props: Record<string, any>, inst: (typeof placeInstances)[0]): HTMLElement {
   const el = document.createElement('div');
   el.className = `shop-marker-wrapper ${inst.config.markerClass}`;
-  el.style.cssText = 'cursor:pointer;transform:translate(-50%,-100%)';
-  el.innerHTML = `<div class="shop-marker-content saved">${getMarkerEmoji(props, inst)}</div>`;
+  el.style.cssText = 'cursor:pointer;transform:translate(-50%,-50%)';
+  el.innerHTML = `<div class="shop-pin-marker"><div class="shop-pin-head">${getMarkerIcon(props, inst)}</div></div>`;
   return el;
 }
 
@@ -489,76 +488,98 @@ function openShopPopup(place: Place, lngLat: maplibregl.LngLat, inst: (typeof pl
 }
 
 function syncCategoryMarkers(map: MapLibreMap, inst: (typeof placeInstances)[0]) {
+  const cat          = inst.config.category;
+  const markerCache  = markerCaches.get(cat);
+  const clusterCache = clusterMarkerCaches.get(cat);
+
   if (!inst.visible) {
-    const cache = markerCaches.get(inst.config.category);
-    cache?.forEach(m => m.remove());
-    cache?.clear();
+    markerCache?.forEach(m => m.remove());  markerCache?.clear();
+    clusterCache?.forEach(m => m.remove()); clusterCache?.clear();
     return;
   }
 
-  const cat = inst.config.category;
-  const cache = markerCaches.get(cat);
-  if (!cache) return;
-
-  type MarkerEntry = { id: string; lngLat: [number, number]; props: Record<string, any> };
-  let visibleIds: Set<string>;
-  const toAdd: MarkerEntry[] = [];
+  if (!markerCache || !clusterCache) return;
 
   if (enableClustering.value) {
-    // Clustering on: show HTML markers only for individual (unclustered) points
-    const rendered = map.queryRenderedFeatures({ layers: [pointLayerId(cat)] });
-    visibleIds = new Set(rendered.map(f => String(f.properties!.id)));
+    // ── Cluster bubbles ────────────────────────────────────────────────────
+    const clusterFeatures = map.queryRenderedFeatures({ layers: [clusterSourceLayerId(cat)] });
+    const visClusterIds   = new Set(clusterFeatures.map(f => `c-${f.properties!.cluster_id}`));
+
+    for (const f of clusterFeatures) {
+      const cid   = `c-${f.properties!.cluster_id}`;
+      if (clusterCache.has(cid)) continue;
+      const coords    = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+      const clusterId = f.properties!.cluster_id as number;
+      const el        = createClusterElement(f.properties!.point_count as number, inst);
+      const marker    = new maplibregl.Marker({ element: el }).setLngLat(coords).addTo(map);
+      el.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        try {
+          const zoom = await (map.getSource(sourceId(cat)) as maplibregl.GeoJSONSource)
+            .getClusterExpansionZoom(clusterId);
+          map.easeTo({ center: coords, zoom: zoom + 0.5 });
+        } catch { /* ignore */ }
+      });
+      clusterCache.set(cid, marker);
+    }
+
+    for (const [cid, marker] of clusterCache) {
+      if (!visClusterIds.has(cid)) { marker.remove(); clusterCache.delete(cid); }
+    }
+
+    // ── Individual point markers (zoom ≥ 13, unclustered points) ──────────
+    const rendered  = map.queryRenderedFeatures({ layers: [pointLayerId(cat)] });
+    const visIds    = new Set(rendered.map(f => String(f.properties!.id)));
+
     for (const f of rendered) {
       const id = String(f.properties!.id);
-      if (!cache.has(id)) {
-        toAdd.push({
-          id,
-          lngLat: (f.geometry as GeoJSON.Point).coordinates as [number, number],
-          props: f.properties as Record<string, any>,
-        });
-      }
+      if (markerCache.has(id)) continue;
+      const lngLat = (f.geometry as GeoJSON.Point).coordinates as [number, number];
+      const el     = createMarkerElement(f.properties as Record<string, any>, inst);
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(lngLat).addTo(map);
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const place = inst.filteredPlaces.find(p => String(p.place_id || p.id) === id);
+        if (place) openShopPopup(place, marker.getLngLat(), inst);
+      });
+      markerCache.set(id, marker);
     }
+
+    for (const [id, marker] of markerCache) {
+      if (!visIds.has(id)) { marker.remove(); markerCache.delete(id); }
+    }
+
   } else {
-    // Clustering off: show all places within viewport bounds
-    const bounds = map.getBounds();
-    const inView = inst.filteredPlaces.filter(p => !bounds || bounds.contains([p.lng, p.lat]));
-    visibleIds = new Set(inView.map(p => String(p.place_id || p.id)));
+    // ── Clustering off: show all individual markers in viewport ────────────
+    clusterCache.forEach(m => m.remove()); clusterCache.clear();
+
+    const bounds    = map.getBounds();
+    const inView    = inst.filteredPlaces.filter(p => !bounds || bounds.contains([p.lng, p.lat]));
+    const visibleIds = new Set(inView.map(p => String(p.place_id || p.id)));
+
     for (const place of inView) {
       const id = String(place.place_id || place.id);
-      if (!cache.has(id)) {
-        toAdd.push({
-          id,
-          lngLat: [place.lng, place.lat],
-          props: {
-            id,
-            name: place.name,
-            category: place.category,
-            tags: Array.isArray(place.tags) ? JSON.stringify(place.tags) : (place.tags ?? '[]'),
-          },
-        });
-      }
+      if (markerCache.has(id)) continue;
+      const props = {
+        id,
+        name: place.name,
+        category: place.category,
+        tags: Array.isArray(place.tags) ? JSON.stringify(place.tags) : (place.tags ?? '[]'),
+      };
+      const el     = createMarkerElement(props, inst);
+      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
+        .setLngLat([place.lng, place.lat])
+        .addTo(map);
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const found = inst.filteredPlaces.find(p => String(p.place_id || p.id) === id);
+        if (found) openShopPopup(found, marker.getLngLat(), inst);
+      });
+      markerCache.set(id, marker);
     }
-  }
 
-  // Add new markers
-  for (const { id, lngLat, props } of toAdd) {
-    const el = createMarkerElement(props, inst);
-    const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-      .setLngLat(lngLat)
-      .addTo(map);
-    el.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const place = inst.filteredPlaces.find(p => String(p.place_id || p.id) === id);
-      if (place) openShopPopup(place, marker.getLngLat(), inst);
-    });
-    cache.set(id, marker);
-  }
-
-  // Remove markers no longer in view
-  for (const [id, marker] of cache) {
-    if (!visibleIds.has(id)) {
-      marker.remove();
-      cache.delete(id);
+    for (const [id, marker] of markerCache) {
+      if (!visibleIds.has(id)) { marker.remove(); markerCache.delete(id); }
     }
   }
 }
@@ -575,7 +596,7 @@ function syncUserAddedShops(map: MapLibreMap) {
     const el = document.createElement('div');
     el.className = 'shop-marker-wrapper saved-shop-marker';
     el.style.cssText = 'cursor:pointer;transform:translate(-50%,-100%)';
-    el.innerHTML = '<div class="shop-marker-content saved">💈</div>';
+    el.innerHTML = '<div class="shop-pin-marker"><div class="shop-pin-head"><span class="material-symbols-outlined">content_cut</span></div></div>';
     const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
       .setLngLat([shop.lng, shop.lat])
       .addTo(map);
@@ -740,27 +761,25 @@ onMounted(async () => {
   for (const inst of placeInstances) {
     watch(() => inst.visible, (visible) => {
       const cat = inst.config.category;
-      if (!map.getLayer(clusterLayerId(cat))) return;
+      if (!map.getLayer(clusterSourceLayerId(cat))) return;
       const clusterVis = visible && enableClustering.value ? 'visible' : 'none';
-      map.setLayoutProperty(clusterLayerId(cat), 'visibility', clusterVis);
-      map.setLayoutProperty(clusterCountId(cat), 'visibility', clusterVis);
-      map.setLayoutProperty(pointLayerId(cat), 'visibility', visible ? 'visible' : 'none');
+      map.setLayoutProperty(clusterSourceLayerId(cat), 'visibility', clusterVis);
+      map.setLayoutProperty(pointLayerId(cat),         'visibility', visible ? 'visible' : 'none');
     });
   }
 
-  // Watch enableClustering → toggle cluster layer visibility
+  // Watch enableClustering → toggle cluster source layer visibility + flush caches
   watch(enableClustering, (clustering) => {
     for (const inst of placeInstances) {
       const cat = inst.config.category;
-      if (!map.getLayer(clusterLayerId(cat))) continue;
+      if (!map.getLayer(clusterSourceLayerId(cat))) continue;
       const vis = clustering && inst.visible ? 'visible' : 'none';
-      map.setLayoutProperty(clusterLayerId(cat), 'visibility', vis);
-      map.setLayoutProperty(clusterCountId(cat), 'visibility', vis);
+      map.setLayoutProperty(clusterSourceLayerId(cat), 'visibility', vis);
     }
     for (const inst of placeInstances) {
-      const cache = markerCaches.get(inst.config.category);
-      cache?.forEach(m => m.remove());
-      cache?.clear();
+      const cat = inst.config.category;
+      markerCaches.get(cat)?.forEach(m => m.remove());  markerCaches.get(cat)?.clear();
+      clusterMarkerCaches.get(cat)?.forEach(m => m.remove()); clusterMarkerCaches.get(cat)?.clear();
     }
   });
 });
@@ -773,7 +792,7 @@ function syncNewShopPin(map: MapLibreMap) {
       const el = document.createElement('div');
       el.className = 'shop-marker-wrapper new-shop-marker';
       el.style.cssText = 'transform:translate(-50%,-100%)';
-      el.innerHTML = '<div class="shop-marker-content new">📍</div>';
+      el.innerHTML = '<div class="shop-pin-marker"><div class="shop-pin-head new-pin"><span class="material-symbols-outlined">location_on</span></div></div>';
       newShopPinMarker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([newShopPin.value.lng, newShopPin.value.lat])
         .addTo(map);
@@ -801,10 +820,10 @@ for (const inst of placeInstances) {
     }
     source.setData(placesToGeoJSON(places));
 
-    // Also clear marker cache since data changed (render loop will recreate)
-    const cache = markerCaches.get(inst.config.category);
-    cache?.forEach(m => m.remove());
-    cache?.clear();
+    // Flush both caches — the render loop will recreate all markers
+    const cat = inst.config.category;
+    markerCaches.get(cat)?.forEach(m => m.remove());      markerCaches.get(cat)?.clear();
+    clusterMarkerCaches.get(cat)?.forEach(m => m.remove()); clusterMarkerCaches.get(cat)?.clear();
   }, { deep: false });
 }
 
@@ -884,7 +903,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   width: 32px;
   height: 64px;
   transform: translateY(-50%);
-  background: #161B16;
+  background: #08090C;
   border: 1px solid rgba(245, 240, 232, 0.12);
   border-left: none;
   border-radius: 0 12px 12px 0;
@@ -1035,21 +1054,82 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   white-space: nowrap;
 }
 
-/* Marker styles */
-:deep(.shop-marker-content) {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+/* ── Cluster bubble markers ─────────────────────────────────────────────── */
+:deep(.cluster-marker-wrapper) {
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+:deep(.cluster-bubble) {
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-family: system-ui, -apple-system, sans-serif;
+  letter-spacing: -0.5px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  will-change: transform;
+}
+
+:deep(.cluster-bubble:hover) {
+  transform: scale(1.12);
+}
+
+/* Per-category pin colors */
+:deep(.shop-marker-wrapper.barbershop-marker) { --pin-color: #d97757; }
+:deep(.shop-marker-wrapper.gym-marker) { --pin-color: #5b8dd9; }
+:deep(.shop-marker-wrapper.carwash-marker) { --pin-color: #4db89e; }
+:deep(.shop-marker-wrapper.grocery-marker) { --pin-color: #7bc96f; }
+:deep(.shop-marker-wrapper.saved-shop-marker) { --pin-color: #d97757; }
+:deep(.shop-marker-wrapper.new-shop-marker) { --pin-color: #6366f1; }
+
+/* Pin marker shape */
+:deep(.shop-pin-marker) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.2s;
 }
 
-:deep(.shop-marker-content:hover) {
-  transform: scale(1.2);
+:deep(.shop-pin-marker:hover) {
+  transform: scale(1.18);
+}
+
+:deep(.shop-pin-head) {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pin-color, #d97757);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+:deep(.map-dark .shop-pin-head) {
+  background: rgba(15, 15, 20, 0.65);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.5);
+}
+
+:deep(.shop-pin-head .material-symbols-outlined) {
+  font-size: 20px;
+  line-height: 1;
+  color: var(--pin-color, #d97757);
 }
 
 :deep(.chain-logo) {
   width: 24px;
   height: 24px;
+  object-fit: contain;
   display: block;
+  border-radius: 3px;
 }
 
 :deep(.chain-logo[alt="Billa"]),

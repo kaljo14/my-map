@@ -1,17 +1,17 @@
 <template>
   <div class="area-panel">
-    <PanelHeader icon="⬡" title="Area Analysis" close-title="Clear selection" @close="$emit('clear')" />
+    <PanelHeader icon="hexagon" title="Area Analysis" close-title="Clear selection" @close="$emit('clear')" />
 
     <!-- Summary bar -->
     <div class="summary-bar">
       <StatItem class="summary-stat" label="places in area">{{ totalCount }}</StatItem>
       <StatItem v-if="categoriesWithData.length > 0" class="summary-stat" label="categories">{{ categoriesWithData.length }}</StatItem>
-      <StatItem v-if="overallAvgRating > 0" class="summary-stat" label="avg rating">★ {{ overallAvgRating.toFixed(1) }}</StatItem>
+      <StatItem v-if="overallAvgRating > 0" class="summary-stat" label="avg rating"><span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;line-height:1">star</span> {{ overallAvgRating.toFixed(1) }}</StatItem>
     </div>
 
     <!-- Empty state -->
     <div v-if="totalCount === 0" class="empty-state">
-      <span class="empty-icon">⬡</span>
+      <span class="material-symbols-outlined empty-icon">hexagon</span>
       <p>No visible places found in the selected area.</p>
       <p class="empty-hint">Try enabling more layers in the sidebar.</p>
     </div>
@@ -28,7 +28,7 @@
 
     <!-- Footer -->
     <div class="panel-footer">
-      <button class="clear-btn" @click="$emit('clear')">✕ Clear Selection</button>
+      <button class="clear-btn" @click="$emit('clear')"><span class="material-symbols-outlined" style="font-size:16px;line-height:1">close</span> Clear Selection</button>
     </div>
   </div>
 </template>
@@ -179,6 +179,10 @@ const overallAvgRating = computed(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .clear-btn:hover {

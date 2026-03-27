@@ -14,24 +14,26 @@ const CATEGORY_COLORS: Record<string, string> = {
 };
 
 const CATEGORY_EMOJIS: Record<string, string> = {
-    food:      '🍽️',
-    retail:    '🛍️',
-    education: '🎓',
-    health:    '🏥',
-    finance:   '💳',
-    culture:   '🏛️',
-    leisure:   '🌳',
-    other:     '📍',
+    food:      'restaurant',
+    retail:    'shopping_bag',
+    education: 'school',
+    health:    'local_hospital',
+    finance:   'credit_card',
+    culture:   'museum',
+    leisure:   'park',
+    other:     'location_on',
 };
 
+const GROCERY_SHOP_TYPES = ['supermarket', 'convenience', 'grocery', 'greengrocer', 'deli'];
+
 const TYPE_EMOJIS: Record<string, string> = {
-    restaurant:'🍽️', cafe:'☕', bar:'🍺', fast_food:'🍔', pub:'🍻',
-    pharmacy:'💊', hospital:'🏥', dentist:'🦷', clinic:'🩺', doctors:'🩺',
-    bank:'🏦', atm:'💳',
-    school:'🏫', university:'🎓', library:'📚', kindergarten:'🧒',
-    supermarket:'🛒', hairdresser:'✂️', clothes:'👗', bakery:'🥐', butcher:'🥩', florist:'💐',
-    museum:'🏛️', hotel:'🏨', attraction:'📍',
-    playground:'🛝', park:'🌳', fitness_centre:'🏋️', sports_centre:'🏟️', swimming_pool:'🏊',
+    restaurant:'restaurant', cafe:'local_cafe', bar:'local_bar', fast_food:'fastfood', pub:'sports_bar',
+    pharmacy:'local_pharmacy', hospital:'local_hospital', dentist:'dentistry', clinic:'medical_services', doctors:'medical_services',
+    bank:'account_balance', atm:'atm',
+    school:'school', university:'school', library:'local_library', kindergarten:'child_care',
+    supermarket:'shopping_cart', hairdresser:'content_cut', clothes:'checkroom', bakery:'bakery_dining', butcher:'set_meal', florist:'local_florist',
+    museum:'museum', hotel:'hotel', attraction:'attractions',
+    playground:'child_friendly', park:'park', fitness_centre:'fitness_center', sports_centre:'stadium', swimming_pool:'pool',
 };
 
 const LEGEND_ENTRIES = [
@@ -47,7 +49,7 @@ const LEGEND_ENTRIES = [
 
 function poiEmoji(p: Record<string, any>): string {
     const type = p.amenity || p.shop || p.tourism || p.leisure;
-    return TYPE_EMOJIS[type] ?? CATEGORY_EMOJIS[p.category] ?? '📍';
+    return TYPE_EMOJIS[type] ?? CATEGORY_EMOJIS[p.category] ?? 'location_on';
 }
 
 function poiLabel(p: Record<string, any>): string {
@@ -70,20 +72,30 @@ export function useOsmPois() {
 
     function applyFilter(map: MapLibreMap) {
         if (!map.getLayer('osm-pois-layer')) return;
-        const filters: maplibregl.ExpressionSpecification[] = [];
+
+        const baseFilters: maplibregl.ExpressionSpecification[] = [];
         if (activeCategoryFilter.value) {
-            filters.push(['==', ['get', 'category'], activeCategoryFilter.value]);
+            baseFilters.push(['==', ['get', 'category'], activeCategoryFilter.value]);
         }
         if (areaPolygon.value && areaPolygon.value.length >= 3) {
             const coords = [...areaPolygon.value, areaPolygon.value[0]!].map(([lat, lng]) => [lng, lat]);
-            filters.push(['within', { type: 'Polygon', coordinates: [coords] }] as maplibregl.ExpressionSpecification);
+            baseFilters.push(['within', { type: 'Polygon', coordinates: [coords] }] as maplibregl.ExpressionSpecification);
         }
-        if (filters.length === 0) {
-            map.setFilter('osm-pois-layer', null);
-        } else if (filters.length === 1) {
-            map.setFilter('osm-pois-layer', filters[0]!);
-        } else {
-            map.setFilter('osm-pois-layer', ['all', ...filters]);
+
+        // Circle layer: always exclude grocery types
+        const circleFilters: maplibregl.ExpressionSpecification[] = [
+            ...baseFilters,
+            ['!', ['in', ['get', 'shop'], ['literal', GROCERY_SHOP_TYPES]]],
+        ];
+        map.setFilter('osm-pois-layer', ['all', ...circleFilters]);
+
+        // Grocery icon layer: only grocery types, same area/category filters
+        if (map.getLayer('osm-grocery-layer')) {
+            const groceryFilters: maplibregl.ExpressionSpecification[] = [
+                ...baseFilters,
+                ['in', ['get', 'shop'], ['literal', GROCERY_SHOP_TYPES]],
+            ];
+            map.setFilter('osm-grocery-layer', ['all', ...groceryFilters]);
         }
     }
 
@@ -102,7 +114,7 @@ export function useOsmPois() {
 
         const rows = LEGEND_ENTRIES.map(e => `
             <div class="poi-legend-row" data-key="${e.key}" title="Filter to ${e.label}">
-                <span class="poi-legend-emoji">${CATEGORY_EMOJIS[e.key]}</span>
+                <span class="material-symbols-outlined poi-legend-emoji">${CATEGORY_EMOJIS[e.key]}</span>
                 <span class="poi-legend-dot" style="background:${CATEGORY_COLORS[e.key] ?? '#94a3b8'}"></span>
                 <span class="poi-legend-label">${e.label}</span>
             </div>
@@ -111,7 +123,7 @@ export function useOsmPois() {
         div.innerHTML = `
             <div class="poi-legend-title">OSM POIs</div>
             ${rows}
-            <div class="poi-legend-clear" style="display:none">✕ Show all</div>
+            <div class="poi-legend-clear" style="display:none"><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">close</span> Show all</div>
         `;
 
         div.querySelectorAll<HTMLElement>('.poi-legend-row').forEach(row => {
@@ -190,6 +202,21 @@ export function useOsmPois() {
             },
         });
 
+        map.addLayer({
+            id: 'osm-grocery-layer',
+            type: 'symbol',
+            source: 'osm-pois',
+            'source-layer': 'osm_pois',
+            filter: ['in', ['get', 'shop'], ['literal', GROCERY_SHOP_TYPES]],
+            layout: {
+                visibility: 'none',
+                'text-field': '🛒',
+                'text-size': 18,
+                'text-allow-overlap': false,
+                'text-ignore-placement': false,
+            },
+        });
+
         map.on('click', 'osm-pois-layer', (e) => {
             const p = e.features?.[0]?.properties ?? {};
             const emoji = poiEmoji(p);
@@ -215,7 +242,7 @@ export function useOsmPois() {
                 .setLngLat(e.lngLat)
                 .setHTML(`
                     <div style="font-family:system-ui,sans-serif;padding:2px 0;min-width:180px">
-                        <div style="font-size:24px;margin-bottom:5px;line-height:1">${emoji}</div>
+                        <div style="margin-bottom:5px;line-height:1"><span class="material-symbols-outlined" style="font-size:28px;color:#475569">${emoji}</span></div>
                         <div style="font-weight:700;font-size:14px;margin-bottom:8px;color:#1a1a1a;line-height:1.3">${label}</div>
                         ${chips ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">${chips}</div>` : ''}
                         <div style="display:flex;align-items:center;gap:5px;padding-top:7px;border-top:1px solid #e2e8f0">
@@ -256,10 +283,14 @@ export function useOsmPois() {
         if (showOsmPois.value) {
             ensureLayer(map);
             map.setLayoutProperty('osm-pois-layer', 'visibility', 'visible');
+            map.setLayoutProperty('osm-grocery-layer', 'visibility', 'visible');
             attachLegend(map);
         } else {
             if (map.getLayer('osm-pois-layer')) {
                 map.setLayoutProperty('osm-pois-layer', 'visibility', 'none');
+            }
+            if (map.getLayer('osm-grocery-layer')) {
+                map.setLayoutProperty('osm-grocery-layer', 'visibility', 'none');
             }
             detachLegend();
         }

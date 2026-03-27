@@ -93,8 +93,8 @@ export function usePopulationLayers() {
                                 ${Number(total).toLocaleString()} <span style="font-size:12px;font-weight:400;color:#64748b">Residents</span>
                             </div>
                             <div style="display:flex;gap:12px;font-size:13px;color:#475569">
-                                <span>👨 ${Number(male).toLocaleString()}</span>
-                                <span>👩 ${Number(female).toLocaleString()}</span>
+                                <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">man</span> ${Number(male).toLocaleString()}</span>
+                                <span><span class="material-symbols-outlined" style="font-size:14px;vertical-align:middle">woman</span> ${Number(female).toLocaleString()}</span>
                             </div>
                         </div>
                         <h4 style="margin:0 0 8px 0;font-size:11px;text-transform:uppercase;letter-spacing:0.5px;color:#94a3b8">Age Distribution</h4>

@@ -3,7 +3,7 @@
     <div class="panel-scroll">
 
     <!-- Section 1: Data Layers -->
-    <SidebarSection :title="$t('analysis.settings.title')" :default-open="true">
+    <SidebarSection :title="$t('analysis.settings.title')" :default-open="true" icon="tune">
       <div class="layer-cards">
         <button
           v-for="pt in placeTypes"
@@ -11,7 +11,7 @@
           :class="['layer-card', { active: pt.visible }]"
           @click="$emit('togglePlaceType', pt.category)"
         >
-          <span class="layer-card-emoji">{{ pt.emoji }}</span>
+          <span class="material-symbols-outlined layer-card-emoji">{{ pt.emoji }}</span>
           <span class="layer-card-label">{{ $t(`analysis.settings.${pt.labelKey}`) || pt.category }}</span>
           <span class="layer-card-indicator"></span>
         </button>
@@ -33,10 +33,79 @@
       </div>
     </SidebarSection>
 
-    <!-- Section 2: Infrastructure -->
-    <SidebarSection title="Infrastructure" :default-open="false">
+    <!-- Section 2: Map Layers -->
+    <SidebarSection title="Map Layers" :default-open="true" icon="layers">
       <div class="toggle-row-group">
-        <ToggleRow icon="🚇" label="Metro Lines" :model-value="showMetroVector" @toggle="$emit('toggleMetroVector')" />
+        <ToggleRow
+          label="Population Density"
+          variant="sidebar"
+          :model-value="showPopulationGrid"
+          @toggle="$emit('togglePopulationGrid')"
+        >
+          <template #icon>
+            <span class="material-symbols-outlined">group</span>
+          </template>
+        </ToggleRow>
+        <div v-if="showPopulationGrid" class="layer-filter-inline">
+          <span class="filter-inline-label">Density threshold</span>
+          <div class="filter-inline-options">
+            <button
+              v-for="opt in densityOptions"
+              :key="opt.value"
+              :class="['filter-inline-btn', { selected: selectedThreshold === opt.value }]"
+              @click="$emit('updateThreshold', opt.value)"
+            >
+              <span class="dot" :style="{ background: opt.color }"></span>
+              {{ opt.label }}
+            </button>
+          </div>
+        </div>
+
+        <ToggleRow
+          label="Analysis Grid"
+          variant="sidebar"
+          :model-value="showAnalysisGrid"
+          @toggle="$emit('toggleAnalysisGrid')"
+        >
+          <template #icon>
+            <span class="material-symbols-outlined">grid_on</span>
+          </template>
+        </ToggleRow>
+
+        <ToggleRow
+          label="Opportunity Heatmap"
+          variant="sidebar"
+          :model-value="showOpportunityHeatmap"
+          @toggle="$emit('toggleOpportunityHeatmap')"
+        >
+          <template #icon>
+            <span class="material-symbols-outlined">local_fire_department</span>
+          </template>
+        </ToggleRow>
+        <div v-if="showOpportunityHeatmap" class="layer-filter-inline">
+          <span class="filter-inline-label">Category</span>
+          <div class="heatmap-pills">
+            <button
+              :class="['heatmap-pill', { active: activeCategoryHeatmap === 'barbershop' }]"
+              @click="$emit('setHeatmapCategory', 'barbershop')"
+            ><span class="material-symbols-outlined" style="font-size:14px;line-height:1">content_cut</span> Barbershop</button>
+            <button
+              :class="['heatmap-pill', { active: activeCategoryHeatmap === 'gym' }]"
+              @click="$emit('setHeatmapCategory', 'gym')"
+            ><span class="material-symbols-outlined" style="font-size:14px;line-height:1">fitness_center</span> Gym</button>
+          </div>
+        </div>
+      </div>
+    </SidebarSection>
+
+    <!-- Section 3: Infrastructure -->
+    <SidebarSection title="Infrastructure" :default-open="false" icon="route">
+      <div class="toggle-row-group">
+        <ToggleRow label="Metro Lines" :model-value="showMetroVector" @toggle="$emit('toggleMetroVector')">
+          <template #icon>
+            <span class="material-symbols-outlined">train</span>
+          </template>
+        </ToggleRow>
         <CheckboxGroup
           v-if="showMetroVector"
           :items="metroLineItems"
@@ -44,7 +113,11 @@
           @change="$emit('toggleMetroLine', $event)"
         />
 
-        <ToggleRow icon="📍" label="Metro Stops" :model-value="showMetroStops" @toggle="$emit('toggleMetroStops')" />
+        <ToggleRow label="Metro Stops" :model-value="showMetroStops" @toggle="$emit('toggleMetroStops')">
+          <template #icon>
+            <span class="material-symbols-outlined">directions_transit</span>
+          </template>
+        </ToggleRow>
         <CheckboxGroup
           v-if="showMetroStops"
           :items="metroLineItems"
@@ -52,43 +125,54 @@
           @change="$emit('toggleStopLine', $event)"
         />
 
-        <ToggleRow icon="🚶" label="Walk Score Network" :model-value="showPedestrianNetwork" @toggle="$emit('togglePedestrianNetwork')" />
-        <ToggleRow icon="📍" label="OSM POIs" :model-value="showOsmPois" @toggle="$emit('toggleOsmPois')" />
+        <ToggleRow label="Walk Score Network" :model-value="showPedestrianNetwork" @toggle="$emit('togglePedestrianNetwork')">
+          <template #icon>
+            <span class="material-symbols-outlined">directions_walk</span>
+          </template>
+        </ToggleRow>
+        <ToggleRow label="OSM POIs" :model-value="showOsmPois" @toggle="$emit('toggleOsmPois')">
+          <template #icon>
+            <span class="material-symbols-outlined">pin_drop</span>
+          </template>
+        </ToggleRow>
       </div>
     </SidebarSection>
 
-    <!-- Section 3: Spatial Tools -->
-    <SidebarSection title="Spatial Tools" :default-open="false">
+    <!-- Section 4: Spatial Tools -->
+    <SidebarSection title="Spatial Tools" :default-open="false" icon="draw">
       <div class="toggle-row-group">
-        <ToggleRow icon="⬡" :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')" />
+        <ToggleRow :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')">
+          <template #icon>
+            <span class="material-symbols-outlined">bubble_chart</span>
+          </template>
+        </ToggleRow>
 
         <ToggleRow
-          icon="⬡"
           :model-value="hasActivePolygon"
           :disabled="isDrawingMode"
           :class="{ 'area-select-btn': true, drawing: isDrawingMode }"
           @toggle="hasActivePolygon ? $emit('clearPolygon') : $emit('startDrawing')"
         >
+          <template #icon>
+            <span class="material-symbols-outlined">format_shapes</span>
+          </template>
           {{ isDrawingMode ? 'Drawing on map...' : hasActivePolygon ? 'Area selected' : 'Select Area for Analysis' }}
           <template #trailing>
-            <span v-if="hasActivePolygon" class="area-clear-x">✕</span>
+            <span v-if="hasActivePolygon" class="material-symbols-outlined area-clear-x">close</span>
             <TogglePill v-else-if="!isDrawingMode" :model-value="false" />
           </template>
         </ToggleRow>
       </div>
     </SidebarSection>
 
-    <!-- Section 4: Location Comparison -->
-    <SidebarSection title="Location Comparison" :default-open="true">
+    <!-- Section 5: Location Comparison -->
+    <SidebarSection title="Location Comparison" :default-open="true" icon="compare_arrows">
       <!-- Drop Pin button -->
       <button
         :class="['drop-pin-btn', { active: isPinMode }]"
         @click="$emit('togglePinMode')"
       >
-        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" style="flex-shrink:0">
-          <circle cx="8" cy="6" r="3" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M8 16c0 0-5-5.5-5-10a5 5 0 0110 0c0 4.5-5 10-5 10z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-        </svg>
+        <span class="material-symbols-outlined" style="font-size:16px;line-height:1;flex-shrink:0">location_on</span>
         {{ isPinMode ? 'Click map to place pin…' : '+ Drop Pin' }}
       </button>
 
@@ -111,7 +195,8 @@
         :class="['compare-btn', { 'compare-btn--close': isComparisonOpen }]"
         @click="isComparisonOpen ? $emit('closeComparison') : $emit('compareLocations')"
       >
-        {{ isComparisonOpen ? '× Close Comparison' : `Compare ${pins.length} Location${pins.length !== 1 ? 's' : ''}` }}
+        <template v-if="isComparisonOpen"><span class="material-symbols-outlined" style="font-size:16px;line-height:1">close</span> Close Comparison</template>
+        <template v-else>Compare {{ pins.length }} Location{{ pins.length !== 1 ? 's' : '' }}</template>
       </button>
     </SidebarSection>
 
@@ -151,6 +236,11 @@ const props = defineProps<{
   groceryTagFilters: string[];
   showPedestrianNetwork: boolean;
   showOsmPois: boolean;
+  showPopulationGrid: boolean;
+  selectedThreshold: number;
+  showAnalysisGrid: boolean;
+  showOpportunityHeatmap: boolean;
+  activeCategoryHeatmap: string;
   isDrawingMode: boolean;
   hasActivePolygon: boolean;
   pins: ComparisonPin[];
@@ -169,6 +259,11 @@ defineEmits<{
   (e: 'toggleGroceryTagFilter', tag: string): void;
   (e: 'togglePedestrianNetwork'): void;
   (e: 'toggleOsmPois'): void;
+  (e: 'togglePopulationGrid'): void;
+  (e: 'toggleAnalysisGrid'): void;
+  (e: 'updateThreshold', value: number): void;
+  (e: 'toggleOpportunityHeatmap'): void;
+  (e: 'setHeatmapCategory', category: string): void;
   (e: 'startDrawing'): void;
   (e: 'clearPolygon'): void;
   (e: 'togglePinMode'): void;
@@ -176,6 +271,16 @@ defineEmits<{
   (e: 'compareLocations'): void;
   (e: 'closeComparison'): void;
 }>();
+
+const densityOptions = computed(() => [
+  { value: 0,     label: t('map.filters.allAreas'),       color: '#3288bd' },
+  { value: 1000,  label: t('map.filters.residents1k'),    color: '#66c2a5' },
+  { value: 5000,  label: t('map.filters.residents5k'),    color: '#abdda4' },
+  { value: 10000, label: t('map.filters.residents10k'),   color: '#e6f598' },
+  { value: 15000, label: t('map.filters.residents15k'),   color: '#fee08b' },
+  { value: 20000, label: t('map.filters.residents20k'),   color: '#fdae61' },
+  { value: 24000, label: t('map.filters.residents24k'),   color: '#f46d43' },
+]);
 
 const metroLineItems = computed(() =>
   props.metroLinesList.map(line => ({
@@ -210,7 +315,7 @@ const groceryTags = computed(() => [
 .analysis-panel {
   width: 100%;
   height: 100%;
-  background: #161B16;
+  background: #08090C;
   color: #f5f0e8;
   padding: 0;
   overflow: hidden;
@@ -239,7 +344,7 @@ const groceryTags = computed(() => [
   flex-shrink: 0;
   padding: 12px 16px;
   border-top: 1px solid rgba(245, 240, 232, 0.07);
-  background: #161B16;
+  background: #08090C;
 }
 
 .filter-group {
@@ -257,20 +362,20 @@ const groceryTags = computed(() => [
 /* ── Place type layer cards ─────────────────────────────── */
 .layer-cards {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 6px;
   margin-bottom: 8px;
 }
 
 .layer-card {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 5px;
-  padding: 13px 6px 11px;
-  border-radius: 10px;
-  border: 1px solid rgba(245, 240, 232, 0.07);
-  background: rgba(245, 240, 232, 0.03);
+  gap: 10px;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 240, 232, 0.06);
+  background: rgba(245, 240, 232, 0.04);
   color: #5a5048;
   cursor: pointer;
   transition: all 0.18s ease;
@@ -279,48 +384,43 @@ const groceryTags = computed(() => [
 }
 
 .layer-card:hover {
-  border-color: rgba(217, 119, 87, 0.35);
-  background: rgba(217, 119, 87, 0.06);
+  border-color: rgba(245, 240, 232, 0.12);
+  background: rgba(245, 240, 232, 0.07);
   color: #a89e94;
 }
 
 .layer-card.active {
-  border-color: rgba(217, 119, 87, 0.6);
-  background: rgba(217, 119, 87, 0.12);
+  border-color: rgba(217, 119, 87, 0.45);
+  background: rgba(217, 119, 87, 0.1);
   color: #f5f0e8;
-  box-shadow: 0 0 12px rgba(217, 119, 87, 0.15);
 }
 
 .layer-card:active {
-  transform: scale(1.02);
+  transform: scale(0.98);
 }
 
 .layer-card-emoji {
-  font-size: 1.4rem;
+  font-size: 20px;
   line-height: 1;
-  transition: transform 0.2s;
+  flex-shrink: 0;
+  color: #8a7e72;
+  transition: color 0.18s;
 }
 
-.layer-card.active .layer-card-emoji { transform: scale(1.1); }
+.layer-card.active .layer-card-emoji {
+  color: #d97757;
+}
 
 .layer-card-label {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  text-align: center;
   line-height: 1.2;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+  color: inherit;
 }
 
 .layer-card-indicator {
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 2px;
-  background: transparent;
-  transition: background 0.2s;
+  display: none;
 }
-
-.layer-card.active .layer-card-indicator { background: #d97757; }
 
 /* ── Utility toggle rows ────────────────────────────────── */
 .toggle-row-group {
@@ -342,11 +442,8 @@ const groceryTags = computed(() => [
 }
 
 .area-clear-x {
-  font-size: 12px;
+  font-size: 16px;
   color: #ef4444;
-  font-weight: 600;
-  padding: 2px 4px;
-  border-radius: 4px;
   line-height: 1;
   flex-shrink: 0;
 }
@@ -462,5 +559,97 @@ const groceryTags = computed(() => [
   opacity: 1;
   background: rgba(239, 68, 68, 0.25);
   transform: translateY(-1px);
+}
+
+/* ── Inline layer filters ──────────────────────────────── */
+.layer-filter-inline {
+  margin: 4px 0 6px 0;
+  padding: 10px 10px 10px 12px;
+  border-radius: 8px;
+  background: rgba(245, 240, 232, 0.04);
+  border: 1px solid rgba(245, 240, 232, 0.06);
+}
+
+.filter-inline-label {
+  display: block;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #5a5048;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.filter-inline-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-inline-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #8a7e72;
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.filter-inline-btn:hover {
+  background: rgba(245, 240, 232, 0.06);
+  color: #c4b8ae;
+}
+
+.filter-inline-btn.selected {
+  background: rgba(217, 119, 87, 0.12);
+  color: #d97757;
+}
+
+.filter-inline-btn .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.heatmap-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.heatmap-pill {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 7px;
+  border: 1px solid rgba(245, 240, 232, 0.1);
+  background: rgba(245, 240, 232, 0.04);
+  color: #8a7e72;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.heatmap-pill:hover {
+  background: rgba(245, 240, 232, 0.08);
+  color: #c4b8ae;
+}
+
+.heatmap-pill.active {
+  background: rgba(217, 119, 87, 0.15);
+  border-color: rgba(217, 119, 87, 0.4);
+  color: #d97757;
 }
 </style>

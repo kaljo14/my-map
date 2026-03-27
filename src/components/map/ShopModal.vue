@@ -6,9 +6,7 @@
     @cancel="$emit('cancel')"
   >
     <template #icon>
-      <svg class="modal-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M6 18L8.5 15.5M8.5 15.5L12 12M8.5 15.5L5 12M12 12L15.5 8.5M12 12L18 6M15.5 8.5L19 5M15.5 8.5L12 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <span class="material-symbols-outlined modal-icon" aria-hidden="true">content_cut</span>
     </template>
 
     <div class="form-group">
@@ -47,8 +45,8 @@ defineEmits<{
 
 <style scoped>
 .modal-icon {
-  width: 20px;
-  height: 20px;
+  font-size: 22px;
+  line-height: 1;
   color: #d97757;
   flex-shrink: 0;
 }

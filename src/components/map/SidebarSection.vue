@@ -1,18 +1,12 @@
 <template>
   <div class="sidebar-section">
     <button class="section-header" @click="open = !open" :aria-expanded="open">
-      <span class="section-accent"></span>
+      <span v-if="icon" class="section-icon-wrap" aria-hidden="true">
+        <span class="material-symbols-outlined section-icon">{{ icon }}</span>
+      </span>
+      <span v-else class="section-accent"></span>
       <span class="section-title">{{ title }}</span>
-      <svg
-        class="section-chevron"
-        :class="{ rotated: open }"
-        viewBox="0 0 16 16"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        aria-hidden="true"
-      >
-        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <span class="material-symbols-outlined section-chevron" :class="{ rotated: open }" aria-hidden="true">expand_more</span>
     </button>
     <Transition name="section-slide">
       <div v-show="open" class="section-body">
@@ -28,6 +22,7 @@ import { ref } from 'vue';
 const props = defineProps<{
   title: string;
   defaultOpen?: boolean;
+  icon?: string;
 }>();
 
 const open = ref(props.defaultOpen ?? true);
@@ -47,13 +42,12 @@ const open = ref(props.defaultOpen ?? true);
   background: transparent;
   border: none;
   border-radius: 0;
-  color: #8a7e72;
+  color: #c4b8ae;
   cursor: pointer;
   text-align: left;
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1.1px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
   transition: color 0.2s, background 0.2s;
   user-select: none;
 }
@@ -77,13 +71,30 @@ const open = ref(props.defaultOpen ?? true);
   opacity: 0.7;
 }
 
+.section-icon-wrap {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(217, 119, 87, 0.12);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.section-icon {
+  font-size: 15px;
+  line-height: 1;
+  color: #d97757;
+}
+
 .section-title {
   flex: 1;
 }
 
 .section-chevron {
-  width: 14px;
-  height: 14px;
+  font-size: 18px;
+  line-height: 1;
   color: #5a5048;
   transition: transform 0.22s ease, color 0.2s;
   flex-shrink: 0;

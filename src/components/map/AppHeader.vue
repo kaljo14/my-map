@@ -1,17 +1,27 @@
 <template>
   <header class="app-header">
     <div class="header-left">
-      <div class="logo">💈</div>
-      <h1 class="app-title">Barbershop Analysis</h1>
+      <div class="logo">
+        <img src="/log.png" alt="Lonctus" class="logo-img" />
+        <span class="logo-text">Lonctus</span>
+      </div>
     </div>
 
     <div class="header-right">
       <div class="auth-controls">
-        <button v-if="!isAuthenticated" @click="$emit('login')" class="auth-btn login">
+        <button
+          v-if="!isAuthenticated"
+          @click="$emit('login')"
+          class="auth-btn login"
+        >
           {{ $t('common.login') }}
         </button>
         <div v-else class="user-info">
-          <div class="user-avatar" :title="userProfile?.username || 'User'" aria-hidden="true">
+          <div
+            class="user-avatar"
+            :title="userProfile?.username || 'User'"
+            aria-hidden="true"
+          >
             {{ (userProfile?.username || 'U')[0].toUpperCase() }}
           </div>
           <span class="username">{{ userProfile?.username || 'User' }}</span>
@@ -25,29 +35,28 @@
 </template>
 
 <script setup lang="ts">
-
 defineProps<{
-  isAuthenticated: boolean;
-  userProfile: any;
-}>();
+  isAuthenticated: boolean
+  userProfile: any
+}>()
 
 defineEmits<{
-  (e: 'login'): void;
-  (e: 'logout'): void;
-}>();
+  (e: 'login'): void
+  (e: 'logout'): void
+}>()
 </script>
 
 <style scoped>
 .app-header {
-  height: 64px;
-  background: #161B16;
-  border-bottom: 1px solid rgba(245, 240, 232, 0.08);
+  height: 80px;
+  background: #08090C;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
   color: #f5f0e8;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   z-index: 2000;
   position: relative;
 }
@@ -59,7 +68,24 @@ defineEmits<{
 }
 
 .logo {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 64px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.4)); /* makes the logo appear slightly thicker */
+}
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 2rem;
+  letter-spacing: -0.01em;
+  color: #f5f0e8;
+  margin-left: 12px;
 }
 
 .app-title {

@@ -17,7 +17,7 @@
   -moz-osx-font-smoothing: grayscale;
 
   /* ── Design token palette ─────────────────────────────── */
-  --color-bg:           #161B16;
+  --color-bg:           #08090C;
   --color-bg-elevated:  #252018;
   --color-surface:      #f5f0e8;
   --color-surface-alt:  #ede7dc;
@@ -171,7 +171,7 @@ button:focus-visible {
 }
 
 .poi-legend-emoji {
-    font-size: 12px;
+    font-size: 14px;
     flex-shrink: 0;
     line-height: 1;
 }
@@ -241,6 +241,22 @@ button:focus-visible {
     justify-content: space-between;
     font-size: 10px;
     color: #9d9080;
+}
+
+/* ── MapLibre Popup Close Button ────────────────────────────────────────── */
+.maplibregl-popup-close-button {
+  background-color: transparent;
+  color: #4a4030;
+  border: none;
+  padding: 2px 6px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.maplibregl-popup-close-button:hover {
+  background-color: rgba(192, 94, 58, 0.1);
+  border-color: transparent;
+  color: #c05e3a;
 }
 
 .label-content {

@@ -1,7 +1,7 @@
 <template>
   <div class="category-card">
     <div class="category-header">
-      <span class="category-emoji">{{ category.emoji }}</span>
+      <span class="material-symbols-outlined category-emoji">{{ category.emoji }}</span>
       <span class="category-name">{{ category.label }}</span>
       <span class="category-count">{{ category.count }}</span>
     </div>
@@ -14,7 +14,7 @@
     </div>
 
     <div class="category-meta">
-      <span v-if="category.avgRating > 0" class="meta-rating">★ {{ category.avgRating.toFixed(1) }} avg</span>
+      <span v-if="category.avgRating > 0" class="meta-rating"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:middle;line-height:1">star</span> {{ category.avgRating.toFixed(1) }} avg</span>
       <span class="meta-pct">{{ Math.round(category.count / totalCount * 100) }}% of area</span>
     </div>
 
@@ -25,7 +25,7 @@
         class="place-row"
       >
         <span class="place-name">{{ place.name }}</span>
-        <span v-if="place.rating" class="place-rating">★ {{ place.rating.toFixed(1) }}</span>
+        <span v-if="place.rating" class="place-rating"><span class="material-symbols-outlined" style="font-size:10px;vertical-align:middle;line-height:1">star</span> {{ place.rating.toFixed(1) }}</span>
       </div>
       <span v-if="category.count > category.topPlaces.length" class="places-more">
         +{{ category.count - category.topPlaces.length }} more
@@ -68,7 +68,7 @@ defineProps<{
 }
 
 .category-emoji {
-  font-size: 1.1rem;
+  font-size: 18px;
   width: 26px;
   height: 26px;
   display: flex;
