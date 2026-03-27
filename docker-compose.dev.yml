@@ -15,8 +15,7 @@ services:
       # Tileserver is running in this same compose stack, so we can address it by service name
       - TILES_API_URL=http://tileserver:8080
       - MARTIN_API_URL=http://host.docker.internal:3000
-      - KEYCLOAK_URL=http://localhost:8081
-      - CHOKIDAR_USEPOLLING=true 
+      - CHOKIDAR_USEPOLLING=true
     command: sh -c "npm install && npm run dev -- --host"
     restart: always
     depends_on:

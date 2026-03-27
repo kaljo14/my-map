@@ -1,12 +1,6 @@
 <template>
   <div class="map-container">
-    <AppHeader
-      v-if="!isMobile"
-      :isAuthenticated="isAuthenticated"
-      :userProfile="userProfile"
-      @login="login"
-      @logout="logout"
-    />
+    <AppHeader v-if="!isMobile" />
 
     <div class="content-wrapper">
       <!-- Sidebar Wrapper -->
@@ -184,7 +178,7 @@ import AreaAnalysisPanel from './map/AreaAnalysisPanel.vue';
 import MapStyleSwitcher from './map/MapStyleSwitcher.vue';
 import { isDarkMap } from '@/stores/mapConfig';
 
-const { isAuthenticated, userProfile, login, logout } = auth;
+const { isAuthenticated, logout } = auth;
 
 const mapContainer = ref<HTMLElement | null>(null);
 const { mapInstance, initMap, switchBaseLayer } = useMapInstance();

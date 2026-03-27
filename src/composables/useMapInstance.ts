@@ -95,7 +95,7 @@ export function useMapInstance() {
             zoom: mapZoom.value,
             attributionControl: false,
             transformRequest: (url, resourceType) => {
-                if (resourceType === 'Tile') {
+                if (resourceType === 'Tile' && url.includes('/api/')) {
                     const token = auth.getTokenSync();
                     if (token) {
                         return { url, headers: { Authorization: `Bearer ${token}` } };

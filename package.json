@@ -11,7 +11,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "keycloak-js": "^26.2.1",
+    "@clerk/vue": "^2.0.7",
     "maplibre-gl": "^5.21.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.24",

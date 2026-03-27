@@ -243,6 +243,22 @@ button:focus-visible {
     color: #9d9080;
 }
 
+/* ── MapLibre Attribution ───────────────────────────────────────────────── */
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+.maplibregl-ctrl-attrib:hover {
+  opacity: 1;
+}
+
+.maplibregl-ctrl-attrib-button {
+  width: 20px !important;
+  height: 20px !important;
+}
+
 /* ── MapLibre Popup Close Button ────────────────────────────────────────── */
 .maplibregl-popup-close-button {
   background-color: transparent;

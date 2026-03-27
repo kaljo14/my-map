@@ -8,8 +8,6 @@ services:
       - PLACES_API_URL=http://host.docker.internal:8080
       - TILES_API_URL=http://host.docker.internal:4000
       - MARTIN_API_URL=http://host.docker.internal:3000
-      - KEYCLOAK_URL=http://localhost:8081
-      - ENABLE_AUTH=false # Set to true to enable Keycloak authentication
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     restart: always

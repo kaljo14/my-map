@@ -1,89 +1,44 @@
-import Keycloak from 'keycloak-js';
-import { ref } from 'vue';
+import { ref } from 'vue'
 
-const keycloakUrl = (window as any).KEYCLOAK_URL === "__KEYCLOAK_URL_PLACEHOLDER__"
-    ? 'http://localhost:8081' // Default for local dev
-    : (window as any).KEYCLOAK_URL;
+export const isLoaded = ref(false)
+export const isAuthenticated = ref(false)
+export const userProfile = ref<{
+  username: string
+  email: string
+  firstName: string
+  lastName: string
+} | null>(null)
 
-const keycloak = new Keycloak({
-    url: keycloakUrl,
-    realm: 'barbershop-realm',
-    clientId: 'barbershop-app',
-});
-
-const isAuthenticated = ref(false);
-const userProfile = ref<any>(null);
-
-const initKeycloak = async () => {
-    // Check if auth should be enabled (defaults to true if not specified)
-    const enableAuth = (window as any).ENABLE_AUTH !== 'false';
-
-    if (import.meta.env.DEV || !enableAuth) {
-        isAuthenticated.value = true;
-        userProfile.value = {
-            username: 'dev-user',
-            email: 'dev@example.com',
-            firstName: 'Dev',
-            lastName: 'User'
-        };
-        return;
+// Called by App.vue via useAuth() watch — keeps refs in sync with Clerk state
+export function syncAuthState(signedIn: boolean, user: any, loaded: boolean) {
+  isLoaded.value = loaded
+  isAuthenticated.value = signedIn
+  if (user) {
+    userProfile.value = {
+      username: user.username ?? user.fullName ?? '',
+      email: user.primaryEmailAddress?.emailAddress ?? '',
+      firstName: user.firstName ?? '',
+      lastName: user.lastName ?? '',
     }
+  } else {
+    userProfile.value = null
+  }
+}
 
-    try {
-        const authenticated = await keycloak.init({
-            onLoad: 'check-sso',
-            silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-            pkceMethod: 'S256',
-        });
+export function login() {
+  window.location.href = '/sign-in'
+}
 
-        isAuthenticated.value = authenticated;
+export function logout() {
+  window.Clerk?.signOut()
+}
 
-        if (authenticated) {
-            try {
-                userProfile.value = await keycloak.loadUserProfile();
-            } catch (error) {
-                console.error('Failed to load user profile', error);
-            }
-        }
-    } catch (error) {
-        console.error('Keycloak init failed', error);
-    }
-};
+export async function getToken(): Promise<string | null> {
+  return (await window.Clerk?.session?.getToken()) ?? null
+}
 
-const login = () => {
-    keycloak.login();
-};
+export function getTokenSync(): string | undefined {
+  return (window.Clerk?.session as any)?.lastActiveToken?.getRawString()
+}
 
-const logout = () => {
-    keycloak.logout();
-};
-
-const getTokenSync = (): string | undefined => {
-    const enableAuth = (window as any).ENABLE_AUTH !== 'false';
-    if (import.meta.env.DEV || !enableAuth) return undefined;
-    return keycloak.token;
-};
-
-const getToken = async () => {
-    const enableAuth = (window as any).ENABLE_AUTH !== 'false';
-    if (import.meta.env.DEV || !enableAuth) {
-        return null;
-    }
-    try {
-        await keycloak.updateToken(30);
-    } catch {
-        keycloak.login();
-        return null;
-    }
-    return keycloak.token;
-};
-
-export default {
-    initKeycloak,
-    login,
-    logout,
-    getToken,
-    getTokenSync,
-    isAuthenticated,
-    userProfile,
-};
+export default { isLoaded, isAuthenticated, userProfile, syncAuthState, login, logout, getToken, getTokenSync }

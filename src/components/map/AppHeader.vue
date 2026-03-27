@@ -3,47 +3,25 @@
     <div class="header-left">
       <div class="logo">
         <img src="/log.png" alt="Lonctus" class="logo-img" />
-        <span class="logo-text">Lonctus</span>
+        <span class="logo-text">Lucentic</span>
       </div>
     </div>
 
     <div class="header-right">
       <div class="auth-controls">
-        <button
-          v-if="!isAuthenticated"
-          @click="$emit('login')"
-          class="auth-btn login"
-        >
+        <RouterLink v-if="!isSignedIn" to="/sign-in" class="auth-btn login">
           {{ $t('common.login') }}
-        </button>
-        <div v-else class="user-info">
-          <div
-            class="user-avatar"
-            :title="userProfile?.username || 'User'"
-            aria-hidden="true"
-          >
-            {{ (userProfile?.username || 'U')[0].toUpperCase() }}
-          </div>
-          <span class="username">{{ userProfile?.username || 'User' }}</span>
-          <button @click="$emit('logout')" class="auth-btn logout">
-            {{ $t('common.logout') }}
-          </button>
-        </div>
+        </RouterLink>
+        <UserButton v-else />
       </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  isAuthenticated: boolean
-  userProfile: any
-}>()
+import { UserButton, useAuth } from '@clerk/vue'
 
-defineEmits<{
-  (e: 'login'): void
-  (e: 'logout'): void
-}>()
+const { isSignedIn } = useAuth()
 </script>
 
 <style scoped>
@@ -126,44 +104,5 @@ defineEmits<{
   background: #c86843;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(217, 119, 87, 0.4);
-}
-
-.auth-btn.logout {
-  background: rgba(245, 240, 232, 0.06);
-  color: #a89e94;
-  border: 1px solid rgba(245, 240, 232, 0.12);
-}
-
-.auth-btn.logout:hover {
-  background: rgba(245, 240, 232, 0.1);
-  color: #f5f0e8;
-  border-color: rgba(245, 240, 232, 0.2);
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: rgba(217, 119, 87, 0.2);
-  border: 1px solid rgba(217, 119, 87, 0.4);
-  color: #d97757;
-  font-size: 0.75rem;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.username {
-  color: #c4b8ae;
-  font-size: 0.9rem;
-  font-weight: 500;
 }
 </style>
