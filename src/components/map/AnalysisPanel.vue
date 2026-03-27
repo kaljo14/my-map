@@ -101,7 +101,7 @@
     <!-- Section 3: Infrastructure -->
     <SidebarSection title="Infrastructure" :default-open="false" icon="route">
       <div class="toggle-row-group">
-        <ToggleRow label="Metro Lines" :model-value="showMetroVector" @toggle="$emit('toggleMetroVector')">
+        <ToggleRow label="Metro Lines" variant="sidebar" :model-value="showMetroVector" @toggle="$emit('toggleMetroVector')">
           <template #icon>
             <span class="material-symbols-outlined">train</span>
           </template>
@@ -113,7 +113,7 @@
           @change="$emit('toggleMetroLine', $event)"
         />
 
-        <ToggleRow label="Metro Stops" :model-value="showMetroStops" @toggle="$emit('toggleMetroStops')">
+        <ToggleRow label="Metro Stops" variant="sidebar" :model-value="showMetroStops" @toggle="$emit('toggleMetroStops')">
           <template #icon>
             <span class="material-symbols-outlined">directions_transit</span>
           </template>
@@ -125,12 +125,12 @@
           @change="$emit('toggleStopLine', $event)"
         />
 
-        <ToggleRow label="Walk Score Network" :model-value="showPedestrianNetwork" @toggle="$emit('togglePedestrianNetwork')">
+        <ToggleRow label="Walk Score Network" variant="sidebar" :model-value="showPedestrianNetwork" @toggle="$emit('togglePedestrianNetwork')">
           <template #icon>
             <span class="material-symbols-outlined">directions_walk</span>
           </template>
         </ToggleRow>
-        <ToggleRow label="OSM POIs" :model-value="showOsmPois" @toggle="$emit('toggleOsmPois')">
+        <ToggleRow label="OSM POIs" variant="sidebar" :model-value="showOsmPois" @toggle="$emit('toggleOsmPois')">
           <template #icon>
             <span class="material-symbols-outlined">pin_drop</span>
           </template>

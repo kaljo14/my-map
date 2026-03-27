@@ -82,20 +82,12 @@ export function useOsmPois() {
             baseFilters.push(['within', { type: 'Polygon', coordinates: [coords] }] as maplibregl.ExpressionSpecification);
         }
 
-        // Circle layer: always exclude grocery types
-        const circleFilters: maplibregl.ExpressionSpecification[] = [
-            ...baseFilters,
-            ['!', ['in', ['get', 'shop'], ['literal', GROCERY_SHOP_TYPES]]],
-        ];
-        map.setFilter('osm-pois-layer', ['all', ...circleFilters]);
-
-        // Grocery icon layer: only grocery types, same area/category filters
-        if (map.getLayer('osm-grocery-layer')) {
-            const groceryFilters: maplibregl.ExpressionSpecification[] = [
-                ...baseFilters,
-                ['in', ['get', 'shop'], ['literal', GROCERY_SHOP_TYPES]],
-            ];
-            map.setFilter('osm-grocery-layer', ['all', ...groceryFilters]);
+        if (baseFilters.length === 0) {
+            map.setFilter('osm-pois-layer', null);
+        } else if (baseFilters.length === 1) {
+            map.setFilter('osm-pois-layer', baseFilters[0]!);
+        } else {
+            map.setFilter('osm-pois-layer', ['all', ...baseFilters]);
         }
     }
 
@@ -202,23 +194,9 @@ export function useOsmPois() {
             },
         });
 
-        map.addLayer({
-            id: 'osm-grocery-layer',
-            type: 'symbol',
-            source: 'osm-pois',
-            'source-layer': 'osm_pois',
-            filter: ['in', ['get', 'shop'], ['literal', GROCERY_SHOP_TYPES]],
-            layout: {
-                visibility: 'none',
-                'text-field': '🛒',
-                'text-size': 18,
-                'text-allow-overlap': false,
-                'text-ignore-placement': false,
-            },
-        });
-
         map.on('click', 'osm-pois-layer', (e) => {
             const p = e.features?.[0]?.properties ?? {};
+            if (GROCERY_SHOP_TYPES.includes(p.shop)) return;
             const emoji = poiEmoji(p);
             const label = poiLabel(p);
             const color = CATEGORY_COLORS[p.category] ?? CATEGORY_COLORS.other!;
@@ -283,14 +261,10 @@ export function useOsmPois() {
         if (showOsmPois.value) {
             ensureLayer(map);
             map.setLayoutProperty('osm-pois-layer', 'visibility', 'visible');
-            map.setLayoutProperty('osm-grocery-layer', 'visibility', 'visible');
             attachLegend(map);
         } else {
             if (map.getLayer('osm-pois-layer')) {
                 map.setLayoutProperty('osm-pois-layer', 'visibility', 'none');
-            }
-            if (map.getLayer('osm-grocery-layer')) {
-                map.setLayoutProperty('osm-grocery-layer', 'visibility', 'none');
             }
             detachLegend();
         }

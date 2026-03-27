@@ -105,8 +105,8 @@ const pillSize = props.variant === 'control' ? 'md' : 'sm';
 }
 
 .toggle-row--sidebar.active .toggle-row-icon {
-  background: rgba(217, 119, 87, 0.12);
-  border-color: rgba(217, 119, 87, 0.2);
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.2);
 }
 
 /* ── Control variant (light popover) ─────────────────────── */

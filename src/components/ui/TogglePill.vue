@@ -38,12 +38,12 @@ defineProps<{
 }
 
 .toggle-pill.on {
-  background: rgba(217, 119, 87, 0.4);
+  background: rgba(34, 197, 94, 0.25);
 }
 
 .toggle-pill.on::after {
   transform: translateX(16px);
-  background: #d97757;
+  background: #16a34a;
 }
 
 /* md variant — light surface (MapControls) */
