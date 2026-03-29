@@ -19,6 +19,26 @@ const EXPECTED_MARTIN_SOURCES: Record<string, string> = {
     'opportunity_heatmap':'opportunity_heatmap',
     'osm_edges':          'osm_edges',
     'osm_pois':           'osm_pois',
+    'sofiaplan_zoning_tiles':               'sofiaplan_zoning_tiles',
+    'sofiaplan_income_tiles':               'sofiaplan_income_tiles',
+    'sofiaplan_property_prices_tiles':      'sofiaplan_property_prices_tiles',
+    'sofiaplan_metro_catchments_tiles':     'sofiaplan_metro_catchments_tiles',
+    'sofiaplan_pedestrian_syntax_tiles':    'sofiaplan_pedestrian_syntax_tiles',
+    'sofiaplan_population_grid_tiles':      'sofiaplan_population_grid_tiles',
+    'sofiaplan_business_turnover_tiles':    'sofiaplan_business_turnover_tiles',
+    'sofiaplan_development_potential_tiles':'sofiaplan_development_potential_tiles',
+    'sofiaplan_zoning_params':              'sofiaplan_zoning_params',
+    // Accessibility & Transport
+    'sofiaplan_transit_access_ge_tiles':         'sofiaplan_transit_access_ge_tiles',
+    'sofiaplan_transit_access_district_tiles':   'sofiaplan_transit_access_district_tiles',
+    'sofiaplan_metro_access_800m_tiles':         'sofiaplan_metro_access_800m_tiles',
+    'sofiaplan_metro_access_1200m_tiles':        'sofiaplan_metro_access_1200m_tiles',
+    'sofiaplan_bus_lines_tiles':                 'sofiaplan_bus_lines_tiles',
+    'sofiaplan_bus_lines_alt_tiles':             'sofiaplan_bus_lines_alt_tiles',
+    'sofiaplan_trolleybus_lines_tiles':          'sofiaplan_trolleybus_lines_tiles',
+    'sofiaplan_tram_lines_tiles':                'sofiaplan_tram_lines_tiles',
+    'sofiaplan_tram_lines_alt_tiles':            'sofiaplan_tram_lines_alt_tiles',
+    'sofiaplan_railway_stations_tiles':          'sofiaplan_railway_stations_tiles',
 };
 
 async function checkMartinCatalog() {

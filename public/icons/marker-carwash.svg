@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Shadow -->
+  <circle cx="32" cy="33" r="16" fill="rgba(0,0,0,0.18)"/>
+  <!-- White circle with colored border -->
+  <circle cx="32" cy="32" r="15" fill="rgba(250,248,244,0.85)" stroke="#4db89e" stroke-width="2"/>
+  <!-- Car icon (directions_car) -->
+  <g transform="translate(32,32)" fill="#4db89e">
+    <path d="M-8,1 L-6,-5 C-5.5,-6.5 -4,-7 -3,-7 L3,-7 C4,-7 5.5,-6.5 6,-5 L8,1 L8,5 C8,5.5 7.5,6 7,6 L6,6 C5.5,6 5,5.5 5,5 L5,4 L-5,4 L-5,5 C-5,5.5 -5.5,6 -6,6 L-7,6 C-7.5,6 -8,5.5 -8,5 Z" fill="none" stroke="#4db89e" stroke-width="1.5"/>
+    <circle cx="-5" cy="2" r="1.2"/>
+    <circle cx="5" cy="2" r="1.2"/>
+    <line x1="-4" y1="-4" x2="4" y2="-4" stroke="#4db89e" stroke-width="1.2" stroke-linecap="round"/>
+  </g>
+</svg>

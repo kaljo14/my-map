@@ -84,8 +84,8 @@ export function useAnalysisGrid() {
                     const coords = f.geometry.type === 'Polygon'
                         ? f.geometry.coordinates[0]
                         : f.geometry.coordinates[0][0];
-                    const lng = coords.reduce((s: number, c: number[]) => s + c[0], 0) / coords.length;
-                    const lat = coords.reduce((s: number, c: number[]) => s + c[1], 0) / coords.length;
+                    const lng = coords.reduce((s: number, c: number[]) => s + c[0]!, 0) / coords.length;
+                    const lat = coords.reduce((s: number, c: number[]) => s + c[1]!, 0) / coords.length;
                     return { type: 'Feature', geometry: { type: 'Point', coordinates: [lng, lat] }, properties: f.properties };
                 });
             (map.getSource('analysis-grid-centroids') as maplibregl.GeoJSONSource)

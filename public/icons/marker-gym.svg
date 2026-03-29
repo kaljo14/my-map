@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <!-- Shadow -->
+  <circle cx="32" cy="33" r="16" fill="rgba(0,0,0,0.18)"/>
+  <!-- White circle with colored border -->
+  <circle cx="32" cy="32" r="15" fill="rgba(250,248,244,0.85)" stroke="#5b8dd9" stroke-width="2"/>
+  <!-- Dumbbell icon (fitness_center) -->
+  <g transform="translate(32,32)" fill="none" stroke="#5b8dd9" stroke-width="2" stroke-linecap="round">
+    <line x1="-8" y1="0" x2="8" y2="0"/>
+    <rect x="-10" y="-4" width="4" height="8" rx="1" fill="#5b8dd9"/>
+    <rect x="6" y="-4" width="4" height="8" rx="1" fill="#5b8dd9"/>
+    <rect x="-12" y="-2.5" width="3" height="5" rx="0.8" fill="#5b8dd9"/>
+    <rect x="9" y="-2.5" width="3" height="5" rx="0.8" fill="#5b8dd9"/>
+  </g>
+</svg>

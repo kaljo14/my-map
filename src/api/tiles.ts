@@ -71,6 +71,208 @@ class TilesAPI {
     }
 
     /**
+     * Gets the URL template for SofiaPlan urban zoning vector tiles served by Martin.
+     * Tile layer name: sofiaplan_zoning_tiles; feature properties: score, label.
+     */
+    getSofiaPlanZoningTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_zoning_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan income levels vector tiles served by Martin.
+     * Tile layer name: sofiaplan_income_tiles; feature properties: score (903–1806 BGN), label.
+     */
+    getSofiaPlanIncomeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_income_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan property prices vector tiles served by Martin.
+     * Tile layer name: sofiaplan_property_prices_tiles; feature properties: score (121–2412 BGN/m²), label.
+     */
+    getSofiaPlanPropertyPricesTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_property_prices_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan metro catchment zones vector tiles served by Martin.
+     * Tile layer name: sofiaplan_metro_catchments_tiles; feature properties: score (400–2000 m), label.
+     */
+    getSofiaPlanMetroCatchmentsTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_metro_catchments_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan pedestrian space syntax vector tiles served by Martin.
+     * Tile layer name: sofiaplan_pedestrian_syntax_tiles; feature properties: score (3–17828), label.
+     */
+    getSofiaPlanPedestrianSyntaxTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_syntax_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan population grid vector tiles served by Martin.
+     * Tile layer name: sofiaplan_population_grid_tiles; feature properties: score (0–23934), label.
+     */
+    getSofiaPlanPopulationGridTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_population_grid_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan business turnover vector tiles served by Martin.
+     * Tile layer name: sofiaplan_business_turnover_tiles; feature properties: score (38–14576), label.
+     */
+    getSofiaPlanBusinessTurnoverTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_business_turnover_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan development potential vector tiles served by Martin.
+     * Tile layer name: sofiaplan_development_potential_tiles; feature properties: score (1–3), label.
+     */
+    getSofiaPlanDevelopmentPotentialTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_development_potential_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan zoning parameters vector tiles served by Martin.
+     * Tile layer name: sofiaplan_zoning_params; feature properties: far (float), max_height (integer).
+     */
+    getSofiaPlanZoningParamsTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_zoning_params/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan neighborhoods vector tiles served by Martin.
+     * Tile layer name: sofiaplan_neighborhoods_tiles; feature properties: label (neighborhood name).
+     */
+    getSofiaPlanNeighborhoodsTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_neighborhoods_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan census addresses vector tiles served by Martin.
+     * Tile layer name: sofiaplan_census_addresses_tiles; feature properties: score (population per address).
+     */
+    getSofiaPlanCensusAddressesTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_census_addresses_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan demographic forecast vector tiles served by Martin.
+     * Tile layer name: sofiaplan_demographic_forecast_tiles; feature properties: score (pop 2017), forecast_2030, forecast_2040, forecast_2050.
+     */
+    getSofiaPlanDemographicForecastTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_demographic_forecast_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan demographic forecast GE vector tiles served by Martin.
+     * Tile layer name: sofiaplan_demographic_forecast_ge_tiles; feature properties: score (pop per planning unit), forecast_2030, forecast_2040, forecast_2050.
+     */
+    getSofiaPlanDemographicForecastGeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_demographic_forecast_ge_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan population potential vector tiles served by Martin.
+     * Tile layer name: sofiaplan_population_potential_tiles; feature properties: score (potential pop at 30m²/person).
+     */
+    getSofiaPlanPopulationPotentialTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_population_potential_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan residential load vector tiles served by Martin.
+     * Tile layer name: sofiaplan_residential_load_tiles; feature properties: score (residential load density).
+     */
+    getSofiaPlanResidentialLoadTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_residential_load_tiles/{z}/{x}/{y}`;
+    }
+
+    // ── Accessibility & Transport tile URL templates ──────────────────────────
+
+    /**
+     * Gets the URL template for transit accessibility by GE (urban planning unit) tiles.
+     * Tile layer name: sofiaplan_transit_access_ge_tiles; feature properties: score (accessibility index), label.
+     */
+    getSofiaPlanTransitAccessGeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_transit_access_ge_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for transit accessibility by transport district tiles.
+     * Tile layer name: sofiaplan_transit_access_district_tiles; feature properties: score (accessibility index), label.
+     */
+    getSofiaPlanTransitAccessDistrictTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_transit_access_district_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for metro accessibility 800 m catchment tiles.
+     * Tile layer name: sofiaplan_metro_access_800m_tiles; feature properties: score (break distance m), label.
+     */
+    getSofiaPlanMetroAccess800mTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_metro_access_800m_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for metro accessibility 1200 m+ catchment tiles.
+     * Tile layer name: sofiaplan_metro_access_1200m_tiles; feature properties: score (break distance m), label.
+     */
+    getSofiaPlanMetroAccess1200mTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_metro_access_1200m_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for bus lines (primary dataset) tiles.
+     * Tile layer name: sofiaplan_bus_lines_tiles; feature properties: label (route number).
+     */
+    getSofiaPlanBusLinesTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_bus_lines_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for bus lines (alternate dataset) tiles.
+     * Tile layer name: sofiaplan_bus_lines_alt_tiles; feature properties: label (route number).
+     */
+    getSofiaPlanBusLinesAltTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_bus_lines_alt_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for trolleybus lines tiles.
+     * Tile layer name: sofiaplan_trolleybus_lines_tiles; feature properties: label (route number).
+     */
+    getSofiaPlanTrolleybusLinesTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_trolleybus_lines_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for tram lines (primary dataset) tiles.
+     * Tile layer name: sofiaplan_tram_lines_tiles; feature properties: label (route number).
+     */
+    getSofiaPlanTramLinesTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_tram_lines_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for tram lines (alternate dataset) tiles.
+     * Tile layer name: sofiaplan_tram_lines_alt_tiles; feature properties: label (route number).
+     */
+    getSofiaPlanTramLinesAltTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_tram_lines_alt_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for railway stations with passenger load tiles.
+     * Tile layer name: sofiaplan_railway_stations_tiles; feature properties: score (annual passengers), label.
+     */
+    getSofiaPlanRailwayStationsTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_railway_stations_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
      * Fetches grid labels for analysis
      */
     async getGridLabels(): Promise<any> {

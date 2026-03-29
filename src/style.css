@@ -259,6 +259,11 @@ button:focus-visible {
   height: 20px !important;
 }
 
+/* ── MapLibre Popup ────────────────────────────────────────────────────── */
+.maplibregl-popup {
+  z-index: 10 !important;
+}
+
 /* ── MapLibre Popup Close Button ────────────────────────────────────────── */
 .maplibregl-popup-close-button {
   background-color: transparent;

@@ -51,6 +51,63 @@
           @compareLocations="openComparison"
           @closeComparison="closeComparison"
           @switchBaseLayer="onSwitchBaseLayer"
+          :showSofiaPlanZoning="showZoning"
+          :activeZoningCategories="activeZoningCategories"
+          :zoningCategoryItems="zoningCategoryItems"
+          :showSofiaPlanIncome="showIncome"
+          :showSofiaPlanPropertyPrices="showPropertyPrices"
+          :showSofiaPlanMetroCatchments="showMetroCatchments"
+          :showSofiaPlanPedestrianSyntax="showPedestrianSyntax"
+          :showSofiaPlanPopulation="showSofiaPlanPopulation"
+          :showSofiaPlanBusinessTurnover="showBusinessTurnover"
+          :showSofiaPlanDevelopmentPotential="showDevelopmentPotential"
+          :showSofiaPlanZoningParams="showZoningParams"
+          :showSofiaPlanNeighborhoods="showNeighborhoods"
+          :showSofiaPlanCensusAddresses="showCensusAddresses"
+          :showSofiaPlanDemographicForecast="showDemographicForecast"
+          :showSofiaPlanDemographicForecastGe="showDemographicForecastGe"
+          :showSofiaPlanPopulationPotential="showPopulationPotential"
+          :showSofiaPlanResidentialLoad="showResidentialLoad"
+          :showAnySofiaPlan="showAnySofiaPlan"
+          @toggleZoningCategory="handleToggleZoningCategory"
+          @toggleSofiaPlanZoning="handleToggleSofiaPlanZoning"
+          @toggleSofiaPlanIncome="handleToggleSofiaPlanIncome"
+          @toggleSofiaPlanPropertyPrices="handleToggleSofiaPlanPropertyPrices"
+          @toggleSofiaPlanMetroCatchments="handleToggleSofiaPlanMetroCatchments"
+          @toggleSofiaPlanPedestrianSyntax="handleToggleSofiaPlanPedestrianSyntax"
+          @toggleSofiaPlanPopulation="handleToggleSofiaPlanPopulation"
+          @toggleSofiaPlanBusinessTurnover="handleToggleSofiaPlanBusinessTurnover"
+          @toggleSofiaPlanDevelopmentPotential="handleToggleSofiaPlanDevelopmentPotential"
+          @toggleSofiaPlanZoningParams="handleToggleSofiaPlanZoningParams"
+          @toggleSofiaPlanNeighborhoods="handleToggleSofiaPlanNeighborhoods"
+          @toggleSofiaPlanCensusAddresses="handleToggleSofiaPlanCensusAddresses"
+          @toggleSofiaPlanDemographicForecast="handleToggleSofiaPlanDemographicForecast"
+          @toggleSofiaPlanDemographicForecastGe="handleToggleSofiaPlanDemographicForecastGe"
+          @toggleSofiaPlanPopulationPotential="handleToggleSofiaPlanPopulationPotential"
+          @toggleSofiaPlanResidentialLoad="handleToggleSofiaPlanResidentialLoad"
+          @toggleAllSofiaPlan="handleToggleAllSofiaPlan"
+          :showTransitAccessGe="showTransitAccessGe"
+          :showTransitAccessDistrict="showTransitAccessDistrict"
+          :showMetroAccess800m="showMetroAccess800m"
+          :showMetroAccess1200m="showMetroAccess1200m"
+          :showBusLines="showBusLines"
+          :showBusLinesAlt="showBusLinesAlt"
+          :showTrolleybusLines="showTrolleybusLines"
+          :showTramLines="showTramLines"
+          :showTramLinesAlt="showTramLinesAlt"
+          :showRailwayStations="showRailwayStations"
+          :showAnyTransport="showAnyTransport"
+          @toggleTransitAccessGe="handleToggleTransitAccessGe"
+          @toggleTransitAccessDistrict="handleToggleTransitAccessDistrict"
+          @toggleMetroAccess800m="handleToggleMetroAccess800m"
+          @toggleMetroAccess1200m="handleToggleMetroAccess1200m"
+          @toggleBusLines="handleToggleBusLines"
+          @toggleBusLinesAlt="handleToggleBusLinesAlt"
+          @toggleTrolleybusLines="handleToggleTrolleybusLines"
+          @toggleTramLines="handleToggleTramLines"
+          @toggleTramLinesAlt="handleToggleTramLinesAlt"
+          @toggleRailwayStations="handleToggleRailwayStations"
+          @toggleAllTransport="handleToggleAllTransport"
         />
 
         <button
@@ -164,7 +221,11 @@ import { useMetroLines } from '@/composables/useMetroLines';
 import { useMetroStops } from '@/composables/useMetroStops';
 import { usePedestrianNetwork } from '@/composables/usePedestrianNetwork';
 import { useOsmPois } from '@/composables/useOsmPois';
+import { useSofiaPlanLayers } from '@/composables/useSofiaPlanLayers';
+import { useTransportLayers } from '@/composables/useTransportLayers';
 import { useShopManagement } from '@/composables/useShopManagement';
+import { initDeckOverlay } from '@/composables/useDeckOverlay';
+import { usePlacesDeckLayer } from '@/composables/usePlacesDeckLayer';
 
 // Composables
 import { useLocationComparison } from '@/composables/useLocationComparison';
@@ -266,6 +327,69 @@ const {
 } = useOsmPois();
 
 const {
+  showZoning,
+  toggleZoning,
+  activeZoningCategories,
+  toggleZoningCategory,
+  zoningCategoryItems,
+  showIncome,
+  toggleIncome,
+  showPropertyPrices,
+  togglePropertyPrices,
+  showMetroCatchments,
+  toggleMetroCatchments,
+  showPedestrianSyntax,
+  togglePedestrianSyntax,
+  showSofiaPlanPopulation,
+  toggleSofiaPlanPopulation,
+  showBusinessTurnover,
+  toggleBusinessTurnover,
+  showDevelopmentPotential,
+  toggleDevelopmentPotential,
+  showZoningParams,
+  toggleZoningParams,
+  showNeighborhoods,
+  toggleNeighborhoods,
+  showCensusAddresses,
+  toggleCensusAddresses,
+  showDemographicForecast,
+  toggleDemographicForecast,
+  showDemographicForecastGe,
+  toggleDemographicForecastGe,
+  showPopulationPotential,
+  togglePopulationPotential,
+  showResidentialLoad,
+  toggleResidentialLoad,
+  showAnySofiaPlan,
+  toggleAllSofiaPlan,
+} = useSofiaPlanLayers();
+
+const {
+  showTransitAccessGe,
+  showTransitAccessDistrict,
+  showMetroAccess800m,
+  showMetroAccess1200m,
+  showBusLines,
+  showBusLinesAlt,
+  showTrolleybusLines,
+  showTramLines,
+  showTramLinesAlt,
+  showRailwayStations,
+  showAnyTransport,
+  toggleTransitAccessGe,
+  toggleTransitAccessDistrict,
+  toggleMetroAccess800m,
+  toggleMetroAccess1200m,
+  toggleBusLines,
+  toggleBusLinesAlt,
+  toggleTrolleybusLines,
+  toggleTramLines,
+  toggleTramLinesAlt,
+  toggleRailwayStations,
+  toggleAllTransport,
+} = useTransportLayers();
+
+const {
   showShopModal,
   newShopPin,
   newShopName,
@@ -312,7 +436,7 @@ const statsLabel = computed(() => {
   if (isMobile.value) return i18n.global.t('stats.shops');
   const visible = placeInstances.filter(i => i.visible);
   if (visible.length === 1) {
-    const name = CATEGORY_DISPLAY_NAMES[visible[0].config.category] ?? visible[0].config.category;
+    const name = CATEGORY_DISPLAY_NAMES[visible[0]!.config.category] ?? visible[0]!.config.category;
     return `Total ${name}:`;
   }
   return i18n.global.t('stats.total');
@@ -360,12 +484,38 @@ const handleToggleAnalysisGrid = () => {
 const handleToggleOpportunityHeatmap = () => toggleOpportunityHeatmap(mapInstance.value);
 const handleSetHeatmapCategory = (cat: string) => setHeatmapCategory(cat as any, mapInstance.value);
 
+const handleToggleZoningCategory              = (cat: string) => toggleZoningCategory(mapInstance.value, cat);
+const handleToggleSofiaPlanZoning             = () => toggleZoning(mapInstance.value);
+const handleToggleSofiaPlanIncome             = () => toggleIncome(mapInstance.value);
+const handleToggleSofiaPlanPropertyPrices     = () => togglePropertyPrices(mapInstance.value);
+const handleToggleSofiaPlanMetroCatchments    = () => toggleMetroCatchments(mapInstance.value);
+const handleToggleSofiaPlanPedestrianSyntax   = () => togglePedestrianSyntax(mapInstance.value);
+const handleToggleSofiaPlanPopulation         = () => toggleSofiaPlanPopulation(mapInstance.value);
+const handleToggleSofiaPlanBusinessTurnover   = () => toggleBusinessTurnover(mapInstance.value);
+const handleToggleSofiaPlanDevelopmentPotential = () => toggleDevelopmentPotential(mapInstance.value);
+const handleToggleSofiaPlanZoningParams       = () => toggleZoningParams(mapInstance.value);
+const handleToggleSofiaPlanNeighborhoods        = () => toggleNeighborhoods(mapInstance.value);
+const handleToggleSofiaPlanCensusAddresses     = () => toggleCensusAddresses(mapInstance.value);
+const handleToggleSofiaPlanDemographicForecast = () => toggleDemographicForecast(mapInstance.value);
+const handleToggleSofiaPlanDemographicForecastGe = () => toggleDemographicForecastGe(mapInstance.value);
+const handleToggleSofiaPlanPopulationPotential = () => togglePopulationPotential(mapInstance.value);
+const handleToggleSofiaPlanResidentialLoad     = () => toggleResidentialLoad(mapInstance.value);
+const handleToggleAllSofiaPlan                = () => toggleAllSofiaPlan(mapInstance.value);
+
+const handleToggleTransitAccessGe       = () => toggleTransitAccessGe(mapInstance.value);
+const handleToggleTransitAccessDistrict = () => toggleTransitAccessDistrict(mapInstance.value);
+const handleToggleMetroAccess800m       = () => toggleMetroAccess800m(mapInstance.value);
+const handleToggleMetroAccess1200m      = () => toggleMetroAccess1200m(mapInstance.value);
+const handleToggleBusLines              = () => toggleBusLines(mapInstance.value);
+const handleToggleBusLinesAlt           = () => toggleBusLinesAlt(mapInstance.value);
+const handleToggleTrolleybusLines       = () => toggleTrolleybusLines(mapInstance.value);
+const handleToggleTramLines             = () => toggleTramLines(mapInstance.value);
+const handleToggleTramLinesAlt          = () => toggleTramLinesAlt(mapInstance.value);
+const handleToggleRailwayStations       = () => toggleRailwayStations(mapInstance.value);
+const handleToggleAllTransport          = () => toggleAllTransport(mapInstance.value);
+
 // ── Place markers ────────────────────────────────────────────────────────────
 
-// Per-category HTML marker caches: category → Map<placeId, maplibregl.Marker>
-const markerCaches = new Map<string, Map<string, maplibregl.Marker>>();
-// Per-category HTML cluster marker caches: category → Map<"c-{clusterId}", maplibregl.Marker>
-const clusterMarkerCaches = new Map<string, Map<string, maplibregl.Marker>>();
 // Comparison pin markers
 const comparisonMarkers = new Map<string, maplibregl.Marker>();
 // Popup app instances — track to unmount on close
@@ -374,118 +524,7 @@ let newShopPinMarker: maplibregl.Marker | null = null;
 // User-added shop markers
 const userShopMarkerCache = new Map<string, maplibregl.Marker>();
 
-function placeToFeature(p: Place): GeoJSON.Feature {
-  return {
-    type: 'Feature',
-    geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
-    properties: {
-      id: String(p.place_id || p.id),
-      name: p.name,
-      category: p.category,
-      tags: Array.isArray(p.tags) ? JSON.stringify(p.tags) : (p.tags ?? '[]'),
-    },
-  };
-}
-
-function placesToGeoJSON(places: Place[]): GeoJSON.FeatureCollection {
-  return { type: 'FeatureCollection', features: places.map(placeToFeature) };
-}
-
-function sourceId(category: string)         { return `places-${category.replace(/ /g, '-')}`; }
-function clusterSourceLayerId(category: string) { return `${sourceId(category)}-cluster-src`; }
-function pointLayerId(category: string)         { return `${sourceId(category)}-points`; }
-
-/** Convert a 6-digit hex colour to an rgba() string. */
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
-/** Build the HTML element for a cluster bubble. */
-function createClusterElement(count: number, inst: (typeof placeInstances)[0]): HTMLElement {
-  const color = inst.config.clusterColor;
-  const size   = count < 10 ? 38 : count < 50 ? 48 : count < 200 ? 58 : 68;
-  const label  = count >= 1000 ? `${Math.round(count / 100) / 10}k` : String(count);
-  const el = document.createElement('div');
-  el.className = 'cluster-marker-wrapper';
-  el.innerHTML = `<div class="cluster-bubble" style="
-    width:${size}px;height:${size}px;
-    background:${color};
-    font-size:${size < 48 ? 13 : size < 58 ? 14 : 15}px;
-    box-shadow:0 2px 10px rgba(0,0,0,0.28),0 0 0 3px rgba(255,255,255,0.9),0 0 0 8px ${hexToRgba(color, 0.22)};
-  ">${label}</div>`;
-  return el;
-}
-
-function setupCategoryLayers(map: MapLibreMap, inst: (typeof placeInstances)[0]) {
-  const cat = inst.config.category;
-  const sid = sourceId(cat);
-
-  if (map.getSource(sid)) return;
-
-  map.addSource(sid, {
-    type: 'geojson',
-    data: placesToGeoJSON([]),
-    cluster: true,
-    clusterMaxZoom: 14,
-    clusterRadius: 60,
-  });
-
-  const clusterVis = inst.visible && enableClustering.value ? 'visible' : 'none';
-  const initVis    = inst.visible ? 'visible' : 'none';
-
-  // ── Invisible cluster-centroid layer ──────────────────────────────────
-  // queryRenderedFeatures target for custom HTML cluster bubbles.
-  // MapLibre produces cluster features (has point_count) only below
-  // clusterMaxZoom (14), so this layer auto-empties at zoom ≥ 14.
-  map.addLayer({
-    id: clusterSourceLayerId(cat),
-    type: 'circle',
-    source: sid,
-    filter: ['has', 'point_count'],
-    layout: { visibility: clusterVis },
-    paint: { 'circle-radius': 1, 'circle-opacity': 0 },
-  });
-
-  // ── Invisible individual-point layer ──────────────────────────────────
-  // queryRenderedFeatures target for individual HTML emoji markers.
-  // minzoom: 13 so individual markers only emerge once the map is
-  // zoomed in enough to distinguish them from clusters.
-  map.addLayer({
-    id: pointLayerId(cat),
-    type: 'circle',
-    source: sid,
-    filter: ['!', ['has', 'point_count']],
-    minzoom: 13,
-    layout: { visibility: initVis },
-    paint: { 'circle-radius': 4, 'circle-opacity': 0.02 },
-  });
-
-  clusterMarkerCaches.set(cat, new Map());
-  markerCaches.set(cat, new Map());
-}
-
-function getMarkerIcon(props: Record<string, any>, inst: (typeof placeInstances)[0]): string {
-  let tags: string[] = [];
-  try { tags = JSON.parse(props.tags ?? '[]'); } catch { /* ignore */ }
-  if (tags.includes('lidl')) return '<img src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl"/>';
-  if (tags.includes('kaufland')) return '<img src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland"/>';
-  if (tags.includes('billa')) return '<img src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa"/>';
-  if (tags.includes('fantastico')) return '<img src="/Fantastico.png" class="chain-logo" alt="Fantastico"/>';
-  return `<span class="material-symbols-outlined">${inst.config.emoji}</span>`;
-}
-
-function createMarkerElement(props: Record<string, any>, inst: (typeof placeInstances)[0]): HTMLElement {
-  const el = document.createElement('div');
-  el.className = `shop-marker-wrapper ${inst.config.markerClass}`;
-  el.style.cssText = 'cursor:pointer;transform:translate(-50%,-50%)';
-  el.innerHTML = `<div class="shop-pin-marker"><div class="shop-pin-head">${getMarkerIcon(props, inst)}</div></div>`;
-  return el;
-}
-
-function openShopPopup(place: Place, lngLat: maplibregl.LngLat, inst: (typeof placeInstances)[0]) {
+function openShopPopup(place: Place, lngLat: maplibregl.LngLat, inst: { config: { category: string }; [key: string]: unknown }) {
   const el = document.createElement('div');
   const app = createApp(ShopPopup, {
     shop: place,
@@ -502,102 +541,6 @@ function openShopPopup(place: Place, lngLat: maplibregl.LngLat, inst: (typeof pl
     .addTo(mapInstance.value!);
 }
 
-function syncCategoryMarkers(map: MapLibreMap, inst: (typeof placeInstances)[0]) {
-  const cat          = inst.config.category;
-  const markerCache  = markerCaches.get(cat);
-  const clusterCache = clusterMarkerCaches.get(cat);
-
-  if (!inst.visible) {
-    markerCache?.forEach(m => m.remove());  markerCache?.clear();
-    clusterCache?.forEach(m => m.remove()); clusterCache?.clear();
-    return;
-  }
-
-  if (!markerCache || !clusterCache) return;
-
-  if (enableClustering.value) {
-    // ── Cluster bubbles ────────────────────────────────────────────────────
-    const clusterFeatures = map.queryRenderedFeatures({ layers: [clusterSourceLayerId(cat)] });
-    const visClusterIds   = new Set(clusterFeatures.map(f => `c-${f.properties!.cluster_id}`));
-
-    for (const f of clusterFeatures) {
-      const cid   = `c-${f.properties!.cluster_id}`;
-      if (clusterCache.has(cid)) continue;
-      const coords    = (f.geometry as GeoJSON.Point).coordinates as [number, number];
-      const clusterId = f.properties!.cluster_id as number;
-      const el        = createClusterElement(f.properties!.point_count as number, inst);
-      const marker    = new maplibregl.Marker({ element: el }).setLngLat(coords).addTo(map);
-      el.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        try {
-          const zoom = await (map.getSource(sourceId(cat)) as maplibregl.GeoJSONSource)
-            .getClusterExpansionZoom(clusterId);
-          map.easeTo({ center: coords, zoom: zoom + 0.5 });
-        } catch { /* ignore */ }
-      });
-      clusterCache.set(cid, marker);
-    }
-
-    for (const [cid, marker] of clusterCache) {
-      if (!visClusterIds.has(cid)) { marker.remove(); clusterCache.delete(cid); }
-    }
-
-    // ── Individual point markers (zoom ≥ 13, unclustered points) ──────────
-    const rendered  = map.queryRenderedFeatures({ layers: [pointLayerId(cat)] });
-    const visIds    = new Set(rendered.map(f => String(f.properties!.id)));
-
-    for (const f of rendered) {
-      const id = String(f.properties!.id);
-      if (markerCache.has(id)) continue;
-      const lngLat = (f.geometry as GeoJSON.Point).coordinates as [number, number];
-      const el     = createMarkerElement(f.properties as Record<string, any>, inst);
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' }).setLngLat(lngLat).addTo(map);
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const place = inst.filteredPlaces.find(p => String(p.place_id || p.id) === id);
-        if (place) openShopPopup(place, marker.getLngLat(), inst);
-      });
-      markerCache.set(id, marker);
-    }
-
-    for (const [id, marker] of markerCache) {
-      if (!visIds.has(id)) { marker.remove(); markerCache.delete(id); }
-    }
-
-  } else {
-    // ── Clustering off: show all individual markers in viewport ────────────
-    clusterCache.forEach(m => m.remove()); clusterCache.clear();
-
-    const bounds    = map.getBounds();
-    const inView    = inst.filteredPlaces.filter(p => !bounds || bounds.contains([p.lng, p.lat]));
-    const visibleIds = new Set(inView.map(p => String(p.place_id || p.id)));
-
-    for (const place of inView) {
-      const id = String(place.place_id || place.id);
-      if (markerCache.has(id)) continue;
-      const props = {
-        id,
-        name: place.name,
-        category: place.category,
-        tags: Array.isArray(place.tags) ? JSON.stringify(place.tags) : (place.tags ?? '[]'),
-      };
-      const el     = createMarkerElement(props, inst);
-      const marker = new maplibregl.Marker({ element: el, anchor: 'bottom' })
-        .setLngLat([place.lng, place.lat])
-        .addTo(map);
-      el.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const found = inst.filteredPlaces.find(p => String(p.place_id || p.id) === id);
-        if (found) openShopPopup(found, marker.getLngLat(), inst);
-      });
-      markerCache.set(id, marker);
-    }
-
-    for (const [id, marker] of markerCache) {
-      if (!visibleIds.has(id)) { marker.remove(); markerCache.delete(id); }
-    }
-  }
-}
 
 // ── User-added shops ─────────────────────────────────────────────────────────
 
@@ -719,19 +662,10 @@ onMounted(async () => {
   // Set up drawing layers
   setupDrawingLayers(map);
 
-  // Set up place layers (bottom-to-top: least important categories first)
-  for (const inst of [...placeInstances].reverse()) {
-    setupCategoryLayers(map, inst);
-  }
-
-  // Race-condition fix: fetchAll() runs concurrently with map init. If the API
-  // responded before sources were registered above, the watcher fired but found
-  // no source and dropped the data. Re-sync any data that already arrived.
+  // Initialize deck.gl overlay for GPU-rendered place markers
+  initDeckOverlay(map);
   for (const inst of placeInstances) {
-    if (inst.filteredPlaces.length > 0) {
-      const src = map.getSource(sourceId(inst.config.category)) as GeoJSONSource | undefined;
-      if (src) src.setData(placesToGeoJSON(inst.filteredPlaces));
-    }
+    usePlacesDeckLayer(inst, mapInstance, enableClustering, openShopPopup);
   }
 
   // Map click handler
@@ -763,39 +697,10 @@ onMounted(async () => {
     }
   });
 
-  // Render loop: sync HTML markers every frame (queryRenderedFeatures is fast)
+  // Render loop: sync low-count DOM markers (user-added shops, new shop pin)
   map.on('render', () => {
-    for (const inst of placeInstances) {
-      syncCategoryMarkers(map, inst);
-    }
     syncUserAddedShops(map);
     syncNewShopPin(map);
-  });
-
-  // Watch inst.visible → sync MapLibre layer visibility
-  for (const inst of placeInstances) {
-    watch(() => inst.visible, (visible) => {
-      const cat = inst.config.category;
-      if (!map.getLayer(clusterSourceLayerId(cat))) return;
-      const clusterVis = visible && enableClustering.value ? 'visible' : 'none';
-      map.setLayoutProperty(clusterSourceLayerId(cat), 'visibility', clusterVis);
-      map.setLayoutProperty(pointLayerId(cat),         'visibility', visible ? 'visible' : 'none');
-    });
-  }
-
-  // Watch enableClustering → toggle cluster source layer visibility + flush caches
-  watch(enableClustering, (clustering) => {
-    for (const inst of placeInstances) {
-      const cat = inst.config.category;
-      if (!map.getLayer(clusterSourceLayerId(cat))) continue;
-      const vis = clustering && inst.visible ? 'visible' : 'none';
-      map.setLayoutProperty(clusterSourceLayerId(cat), 'visibility', vis);
-    }
-    for (const inst of placeInstances) {
-      const cat = inst.config.category;
-      markerCaches.get(cat)?.forEach(m => m.remove());  markerCaches.get(cat)?.clear();
-      clusterMarkerCaches.get(cat)?.forEach(m => m.remove()); clusterMarkerCaches.get(cat)?.clear();
-    }
   });
 });
 
@@ -818,28 +723,6 @@ function syncNewShopPin(map: MapLibreMap) {
     newShopPinMarker.remove();
     newShopPinMarker = null;
   }
-}
-
-// ── Watchers: GeoJSON sources ─────────────────────────────────────────────
-
-// Update place GeoJSON sources when filtered data changes
-for (const inst of placeInstances) {
-  watch(() => inst.filteredPlaces, (places) => {
-    const map = mapInstance.value;
-    if (!map) return;
-    const source = map.getSource(sourceId(inst.config.category)) as GeoJSONSource | undefined;
-    if (!source) return;
-
-    if (!inst.visible || !enableClustering.value) {
-      // If not clustering, still update source but use a different display strategy
-    }
-    source.setData(placesToGeoJSON(places));
-
-    // Flush both caches — the render loop will recreate all markers
-    const cat = inst.config.category;
-    markerCaches.get(cat)?.forEach(m => m.remove());      markerCaches.get(cat)?.clear();
-    clusterMarkerCaches.get(cat)?.forEach(m => m.remove()); clusterMarkerCaches.get(cat)?.clear();
-  }, { deep: false });
 }
 
 // Polygon drawing watchers
@@ -1077,39 +960,10 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   white-space: nowrap;
 }
 
-/* ── Cluster bubble markers ─────────────────────────────────────────────── */
-:deep(.cluster-marker-wrapper) {
-  cursor: pointer;
-  transform: translate(-50%, -50%);
-}
-
-:deep(.cluster-bubble) {
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-family: system-ui, -apple-system, sans-serif;
-  letter-spacing: -0.5px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  will-change: transform;
-}
-
-:deep(.cluster-bubble:hover) {
-  transform: scale(1.12);
-}
-
-/* Per-category pin colors */
-:deep(.shop-marker-wrapper.barbershop-marker) { --pin-color: #d97757; }
-:deep(.shop-marker-wrapper.gym-marker) { --pin-color: #5b8dd9; }
-:deep(.shop-marker-wrapper.carwash-marker) { --pin-color: #4db89e; }
-:deep(.shop-marker-wrapper.grocery-marker) { --pin-color: #7bc96f; }
+/* User-added & new shop marker styles (kept as DOM markers) */
 :deep(.shop-marker-wrapper.saved-shop-marker) { --pin-color: #d97757; }
 :deep(.shop-marker-wrapper.new-shop-marker) { --pin-color: #6366f1; }
 
-/* Pin marker shape */
 :deep(.shop-pin-marker) {
   display: flex;
   align-items: center;
@@ -1122,8 +976,8 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 }
 
 :deep(.shop-pin-head) {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   background: rgba(250, 248, 244, 0.72);
   backdrop-filter: blur(4px);
@@ -1142,23 +996,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 }
 
 :deep(.shop-pin-head .material-symbols-outlined) {
-  font-size: 20px;
+  font-size: 15px;
   line-height: 1;
   color: var(--pin-color, #d97757);
-}
-
-:deep(.chain-logo) {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  display: block;
-  border-radius: 3px;
-}
-
-:deep(.chain-logo[alt="Billa"]),
-:deep(.chain-logo[alt="Fantastico"]) {
-  width: auto;
-  height: 18px;
 }
 
 /* Comparison pin markers */

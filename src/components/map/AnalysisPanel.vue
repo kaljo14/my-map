@@ -31,6 +31,13 @@
           </button>
         </div>
       </div>
+      <div class="toggle-row-group">
+        <ToggleRow variant="sidebar" :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')">
+          <template #icon>
+            <span class="material-symbols-outlined">bubble_chart</span>
+          </template>
+        </ToggleRow>
+      </div>
     </SidebarSection>
 
     <!-- Section 2: Map Layers -->
@@ -98,7 +105,119 @@
       </div>
     </SidebarSection>
 
-    <!-- Section 3: Infrastructure -->
+    <!-- Section 3: SofiaPlan -->
+    <SidebarSection title="SofiaPlan" :default-open="false" icon="location_city">
+      <div class="toggle-row-group">
+        <ToggleRow
+          label="Show All Layers"
+          variant="sidebar"
+          :model-value="showAnySofiaPlan"
+          @toggle="$emit('toggleAllSofiaPlan')"
+        >
+          <template #icon>
+            <span class="material-symbols-outlined">layers</span>
+          </template>
+        </ToggleRow>
+        <ToggleRow label="Urban Zoning" variant="sidebar" :model-value="showSofiaPlanZoning" @toggle="$emit('toggleSofiaPlanZoning')">
+          <template #icon><span class="material-symbols-outlined">domain</span></template>
+        </ToggleRow>
+        <CheckboxGroup
+          v-if="showSofiaPlanZoning"
+          :items="zoningCategoryItems"
+          :checked-items="activeZoningCategories"
+          @change="$emit('toggleZoningCategory', $event)"
+        />
+        <ToggleRow label="Income Levels" variant="sidebar" :model-value="showSofiaPlanIncome" @toggle="$emit('toggleSofiaPlanIncome')">
+          <template #icon><span class="material-symbols-outlined">payments</span></template>
+        </ToggleRow>
+        <ToggleRow label="Property Prices" variant="sidebar" :model-value="showSofiaPlanPropertyPrices" @toggle="$emit('toggleSofiaPlanPropertyPrices')">
+          <template #icon><span class="material-symbols-outlined">real_estate_agent</span></template>
+        </ToggleRow>
+        <ToggleRow label="Metro Catchments" variant="sidebar" :model-value="showSofiaPlanMetroCatchments" @toggle="$emit('toggleSofiaPlanMetroCatchments')">
+          <template #icon><span class="material-symbols-outlined">train</span></template>
+        </ToggleRow>
+        <ToggleRow label="Pedestrian Syntax" variant="sidebar" :model-value="showSofiaPlanPedestrianSyntax" @toggle="$emit('toggleSofiaPlanPedestrianSyntax')">
+          <template #icon><span class="material-symbols-outlined">schema</span></template>
+        </ToggleRow>
+        <ToggleRow label="Population Density" variant="sidebar" :model-value="showSofiaPlanPopulation" @toggle="$emit('toggleSofiaPlanPopulation')">
+          <template #icon><span class="material-symbols-outlined">group</span></template>
+        </ToggleRow>
+        <ToggleRow label="Business Turnover" variant="sidebar" :model-value="showSofiaPlanBusinessTurnover" @toggle="$emit('toggleSofiaPlanBusinessTurnover')">
+          <template #icon><span class="material-symbols-outlined">storefront</span></template>
+        </ToggleRow>
+        <ToggleRow label="Development Potential" variant="sidebar" :model-value="showSofiaPlanDevelopmentPotential" @toggle="$emit('toggleSofiaPlanDevelopmentPotential')">
+          <template #icon><span class="material-symbols-outlined">construction</span></template>
+        </ToggleRow>
+        <ToggleRow label="Zoning Parameters" variant="sidebar" :model-value="showSofiaPlanZoningParams" @toggle="$emit('toggleSofiaPlanZoningParams')">
+          <template #icon><span class="material-symbols-outlined">rule</span></template>
+        </ToggleRow>
+        <ToggleRow label="Neighborhoods" variant="sidebar" :model-value="showSofiaPlanNeighborhoods" @toggle="$emit('toggleSofiaPlanNeighborhoods')">
+          <template #icon><span class="material-symbols-outlined">location_city</span></template>
+        </ToggleRow>
+        <ToggleRow label="Census Addresses" variant="sidebar" :model-value="showSofiaPlanCensusAddresses" @toggle="$emit('toggleSofiaPlanCensusAddresses')">
+          <template #icon><span class="material-symbols-outlined">home</span></template>
+        </ToggleRow>
+        <ToggleRow label="Demographic Forecast" variant="sidebar" :model-value="showSofiaPlanDemographicForecast" @toggle="$emit('toggleSofiaPlanDemographicForecast')">
+          <template #icon><span class="material-symbols-outlined">trending_up</span></template>
+        </ToggleRow>
+        <ToggleRow label="Forecast (Planning Unit)" variant="sidebar" :model-value="showSofiaPlanDemographicForecastGe" @toggle="$emit('toggleSofiaPlanDemographicForecastGe')">
+          <template #icon><span class="material-symbols-outlined">area_chart</span></template>
+        </ToggleRow>
+        <ToggleRow label="Population Potential" variant="sidebar" :model-value="showSofiaPlanPopulationPotential" @toggle="$emit('toggleSofiaPlanPopulationPotential')">
+          <template #icon><span class="material-symbols-outlined">groups</span></template>
+        </ToggleRow>
+        <ToggleRow label="Residential Load" variant="sidebar" :model-value="showSofiaPlanResidentialLoad" @toggle="$emit('toggleSofiaPlanResidentialLoad')">
+          <template #icon><span class="material-symbols-outlined">apartment</span></template>
+        </ToggleRow>
+      </div>
+    </SidebarSection>
+
+    <!-- Section 4: Transport & Accessibility -->
+    <SidebarSection title="Transport & Accessibility" :default-open="false" icon="directions_transit">
+      <div class="toggle-row-group">
+        <ToggleRow
+          label="Show All Layers"
+          variant="sidebar"
+          :model-value="showAnyTransport"
+          @toggle="$emit('toggleAllTransport')"
+        >
+          <template #icon><span class="material-symbols-outlined">layers</span></template>
+        </ToggleRow>
+
+        <ToggleRow label="PT Access (by GE)" variant="sidebar" :model-value="showTransitAccessGe" @toggle="$emit('toggleTransitAccessGe')">
+          <template #icon><span class="material-symbols-outlined">directions_transit</span></template>
+        </ToggleRow>
+        <ToggleRow label="PT Access (by District)" variant="sidebar" :model-value="showTransitAccessDistrict" @toggle="$emit('toggleTransitAccessDistrict')">
+          <template #icon><span class="material-symbols-outlined">map</span></template>
+        </ToggleRow>
+        <ToggleRow label="Metro Access 800 m" variant="sidebar" :model-value="showMetroAccess800m" @toggle="$emit('toggleMetroAccess800m')">
+          <template #icon><span class="material-symbols-outlined">train</span></template>
+        </ToggleRow>
+        <ToggleRow label="Metro Access 1200 m+" variant="sidebar" :model-value="showMetroAccess1200m" @toggle="$emit('toggleMetroAccess1200m')">
+          <template #icon><span class="material-symbols-outlined">train</span></template>
+        </ToggleRow>
+        <ToggleRow label="Bus Lines" variant="sidebar" :model-value="showBusLines" @toggle="$emit('toggleBusLines')">
+          <template #icon><span class="material-symbols-outlined">directions_bus</span></template>
+        </ToggleRow>
+        <ToggleRow label="Bus Lines (alt)" variant="sidebar" :model-value="showBusLinesAlt" @toggle="$emit('toggleBusLinesAlt')">
+          <template #icon><span class="material-symbols-outlined">directions_bus</span></template>
+        </ToggleRow>
+        <ToggleRow label="Trolleybus Lines" variant="sidebar" :model-value="showTrolleybusLines" @toggle="$emit('toggleTrolleybusLines')">
+          <template #icon><span class="material-symbols-outlined">electric_bolt</span></template>
+        </ToggleRow>
+        <ToggleRow label="Tram Lines" variant="sidebar" :model-value="showTramLines" @toggle="$emit('toggleTramLines')">
+          <template #icon><span class="material-symbols-outlined">tram</span></template>
+        </ToggleRow>
+        <ToggleRow label="Tram Lines (alt)" variant="sidebar" :model-value="showTramLinesAlt" @toggle="$emit('toggleTramLinesAlt')">
+          <template #icon><span class="material-symbols-outlined">tram</span></template>
+        </ToggleRow>
+        <ToggleRow label="Railway Stations" variant="sidebar" :model-value="showRailwayStations" @toggle="$emit('toggleRailwayStations')">
+          <template #icon><span class="material-symbols-outlined">directions_railway</span></template>
+        </ToggleRow>
+      </div>
+    </SidebarSection>
+
+    <!-- Section 5: Infrastructure -->
     <SidebarSection title="Infrastructure" :default-open="false" icon="route">
       <div class="toggle-row-group">
         <ToggleRow label="Metro Lines" variant="sidebar" :model-value="showMetroVector" @toggle="$emit('toggleMetroVector')">
@@ -141,12 +260,6 @@
     <!-- Section 4: Spatial Tools -->
     <SidebarSection title="Spatial Tools" :default-open="false" icon="draw">
       <div class="toggle-row-group">
-        <ToggleRow variant="sidebar" :label="$t('analysis.settings.enableClustering')" :model-value="enableClustering" @toggle="$emit('toggleClustering')">
-          <template #icon>
-            <span class="material-symbols-outlined">bubble_chart</span>
-          </template>
-        </ToggleRow>
-
         <ToggleRow
           variant="sidebar"
           :model-value="hasActivePolygon || isDrawingMode"
@@ -250,6 +363,36 @@ const props = defineProps<{
   pinCount: number;
   isPinMode: boolean;
   isComparisonOpen: boolean;
+  showSofiaPlanZoning: boolean;
+  activeZoningCategories: string[];
+  zoningCategoryItems: Array<{ value: string; label: string; color?: string }>;
+  showSofiaPlanIncome: boolean;
+  showSofiaPlanPropertyPrices: boolean;
+  showSofiaPlanMetroCatchments: boolean;
+  showSofiaPlanPedestrianSyntax: boolean;
+  showSofiaPlanPopulation: boolean;
+  showSofiaPlanBusinessTurnover: boolean;
+  showSofiaPlanDevelopmentPotential: boolean;
+  showSofiaPlanZoningParams: boolean;
+  showSofiaPlanNeighborhoods: boolean;
+  showSofiaPlanCensusAddresses: boolean;
+  showSofiaPlanDemographicForecast: boolean;
+  showSofiaPlanDemographicForecastGe: boolean;
+  showSofiaPlanPopulationPotential: boolean;
+  showSofiaPlanResidentialLoad: boolean;
+  showAnySofiaPlan: boolean;
+  // Transport & Accessibility
+  showTransitAccessGe: boolean;
+  showTransitAccessDistrict: boolean;
+  showMetroAccess800m: boolean;
+  showMetroAccess1200m: boolean;
+  showBusLines: boolean;
+  showBusLinesAlt: boolean;
+  showTrolleybusLines: boolean;
+  showTramLines: boolean;
+  showTramLinesAlt: boolean;
+  showRailwayStations: boolean;
+  showAnyTransport: boolean;
 }>();
 
 defineEmits<{
@@ -275,6 +418,35 @@ defineEmits<{
   (e: 'compareLocations'): void;
   (e: 'closeComparison'): void;
   (e: 'switchBaseLayer', name: string): void;
+  (e: 'toggleZoningCategory', category: string): void;
+  (e: 'toggleSofiaPlanZoning'): void;
+  (e: 'toggleSofiaPlanIncome'): void;
+  (e: 'toggleSofiaPlanPropertyPrices'): void;
+  (e: 'toggleSofiaPlanMetroCatchments'): void;
+  (e: 'toggleSofiaPlanPedestrianSyntax'): void;
+  (e: 'toggleSofiaPlanPopulation'): void;
+  (e: 'toggleSofiaPlanBusinessTurnover'): void;
+  (e: 'toggleSofiaPlanDevelopmentPotential'): void;
+  (e: 'toggleSofiaPlanZoningParams'): void;
+  (e: 'toggleSofiaPlanNeighborhoods'): void;
+  (e: 'toggleSofiaPlanCensusAddresses'): void;
+  (e: 'toggleSofiaPlanDemographicForecast'): void;
+  (e: 'toggleSofiaPlanDemographicForecastGe'): void;
+  (e: 'toggleSofiaPlanPopulationPotential'): void;
+  (e: 'toggleSofiaPlanResidentialLoad'): void;
+  (e: 'toggleAllSofiaPlan'): void;
+  // Transport & Accessibility
+  (e: 'toggleTransitAccessGe'): void;
+  (e: 'toggleTransitAccessDistrict'): void;
+  (e: 'toggleMetroAccess800m'): void;
+  (e: 'toggleMetroAccess1200m'): void;
+  (e: 'toggleBusLines'): void;
+  (e: 'toggleBusLinesAlt'): void;
+  (e: 'toggleTrolleybusLines'): void;
+  (e: 'toggleTramLines'): void;
+  (e: 'toggleTramLinesAlt'): void;
+  (e: 'toggleRailwayStations'): void;
+  (e: 'toggleAllTransport'): void;
 }>();
 
 const densityOptions = computed(() => [

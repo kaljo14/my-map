@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: ['maplibre-gl'],
+      include: ['maplibre-gl', '@deck.gl/core', '@deck.gl/layers', '@deck.gl/mapbox', 'supercluster'],
     },
     server: {
       port: 8888,
