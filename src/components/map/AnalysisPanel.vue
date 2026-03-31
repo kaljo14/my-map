@@ -196,6 +196,12 @@
         <ToggleRow label="Residential Load" variant="sidebar" :model-value="showSofiaPlanResidentialLoad" @toggle="$emit('toggleSofiaPlanResidentialLoad')">
           <template #icon><span class="material-symbols-outlined">apartment</span></template>
         </ToggleRow>
+        <ToggleRow label="Health Service Concentration" variant="sidebar" :model-value="showSofiaPlanHealthServiceConcentration" @toggle="$emit('toggleSofiaPlanHealthServiceConcentration')">
+          <template #icon><span class="material-symbols-outlined">medical_services</span></template>
+        </ToggleRow>
+        <ToggleRow label="Health Infrastructure Concentration" variant="sidebar" :model-value="showSofiaPlanHealthInfrastructureConcentration" @toggle="$emit('toggleSofiaPlanHealthInfrastructureConcentration')">
+          <template #icon><span class="material-symbols-outlined">local_hospital</span></template>
+        </ToggleRow>
       </div>
     </SidebarSection>
 
@@ -445,6 +451,8 @@ const props = defineProps<{
   showSofiaPlanDemographicForecastGe: boolean;
   showSofiaPlanPopulationPotential: boolean;
   showSofiaPlanResidentialLoad: boolean;
+  showSofiaPlanHealthServiceConcentration: boolean;
+  showSofiaPlanHealthInfrastructureConcentration: boolean;
   showAnySofiaPlan: boolean;
   // Transport & Accessibility
   showTransitAccessGe: boolean;
@@ -507,6 +515,8 @@ defineEmits<{
   (e: 'toggleSofiaPlanDemographicForecastGe'): void;
   (e: 'toggleSofiaPlanPopulationPotential'): void;
   (e: 'toggleSofiaPlanResidentialLoad'): void;
+  (e: 'toggleSofiaPlanHealthServiceConcentration'): void;
+  (e: 'toggleSofiaPlanHealthInfrastructureConcentration'): void;
   (e: 'toggleAllSofiaPlan'): void;
   // Transport & Accessibility
   (e: 'toggleTransitAccessGe'): void;

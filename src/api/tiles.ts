@@ -296,6 +296,22 @@ class TilesAPI {
         return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_cycling_planned_tiles/{z}/{x}/{y}`;
     }
 
+    /**
+     * Gets the URL template for health service concentration vector tiles served by Martin.
+     * Tile layer name: sofiaplan_health_service_concentration_tiles; feature properties: score (concentration index), label.
+     */
+    getSofiaPlanHealthServiceConcentrationTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_health_service_concentration_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for health infrastructure concentration by GE vector tiles served by Martin.
+     * Tile layer name: sofiaplan_health_infrastructure_concentration_tiles; feature properties: score (concentration index), label.
+     */
+    getSofiaPlanHealthInfrastructureConcentrationTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_health_infrastructure_concentration_tiles/{z}/{x}/{y}`;
+    }
+
     /** Blue (city-centre) parking zone — table sofiaplan_parking_green */
     getParkingBlueTileUrl(): string {
         return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_parking_green/{z}/{x}/{y}`;

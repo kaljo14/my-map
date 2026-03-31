@@ -73,13 +73,16 @@ export function useSofiaPlanLayers() {
     const showDemographicForecastGe = ref(false);
     const showPopulationPotential = ref(false);
     const showResidentialLoad = ref(false);
+    const showHealthServiceConcentration = ref(false);
+    const showHealthInfrastructureConcentration = ref(false);
 
     const showAnySofiaPlan = computed(() =>
         showZoning.value || showIncome.value || showPropertyPrices.value ||
         showMetroCatchments.value || showPedestrianSyntax.value || showSofiaPlanPopulation.value ||
         showBusinessTurnover.value || showDevelopmentPotential.value || showZoningParams.value ||
         showNeighborhoods.value || showCensusAddresses.value || showDemographicForecast.value ||
-        showDemographicForecastGe.value || showPopulationPotential.value || showResidentialLoad.value
+        showDemographicForecastGe.value || showPopulationPotential.value || showResidentialLoad.value ||
+        showHealthServiceConcentration.value || showHealthInfrastructureConcentration.value
     );
 
     // ── Active popup (shared across all layers) ───────────────────────────────
@@ -1376,6 +1379,180 @@ export function useSofiaPlanLayers() {
     };
 
     // ═════════════════════════════════════════════════════════════════════════
+    // 15. HEALTH SERVICE CONCENTRATION (dataset 597)
+    // ═════════════════════════════════════════════════════════════════════════
+    function ensureHealthServiceConcentration(map: MapLibreMap) {
+        if (map.getSource('sofiaplan-health-service-concentration')) return;
+
+        map.addSource('sofiaplan-health-service-concentration', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanHealthServiceConcentrationTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-health-service-concentration-fill',
+            type: 'fill',
+            source: 'sofiaplan-health-service-concentration',
+            'source-layer': 'sofiaplan_health_service_concentration_tiles',
+            layout: { visibility: 'none' },
+            paint: {
+                'fill-color': ['interpolate', ['linear'], ['to-number', ['get', 'score'], 0],
+                    0, '#ffffe5', 5, '#f7fcb9', 12, '#addd8e', 25, '#41ab5d', 50, '#006837'],
+                'fill-opacity': 0.6,
+            },
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-health-service-concentration-outline',
+            type: 'line',
+            source: 'sofiaplan-health-service-concentration',
+            'source-layer': 'sofiaplan_health_service_concentration_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#ffffff', 'line-width': 0.5, 'line-opacity': 0.4 },
+        });
+
+        map.on('click', 'sofiaplan-health-service-concentration-fill', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const n = Number(props.score ?? 0);
+            const label = props.label || '';
+            const district = props.district || '';
+            const rating = n === 0  ? { text: 'No services', color: '#94a3b8' }
+                : n <= 10  ? { text: 'Low', color: '#addd8e' }
+                : n <= 20  ? { text: 'Medium', color: '#41ab5d' }
+                : n <= 35  ? { text: 'Good', color: '#238b45' }
+                :             { text: 'High', color: '#006837' };
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '260px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px">medical_services</span>Health Service Concentration
+                    </h3>
+                    ${label ? `<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">${label}</div>` : ''}
+                    ${district ? `<div style="font-size:11px;color:#64748b;margin-bottom:10px">${district} district</div>` : ''}
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+                        <span style="font-size:32px;font-weight:700;color:${rating.color}">${n}</span>
+                        <span style="font-size:13px;color:#64748b">health service facilities</span>
+                    </div>
+                    <div style="display:inline-block;padding:3px 10px;border-radius:12px;background:${rating.color}22;border:1px solid ${rating.color}66;color:${rating.color};font-size:12px;font-weight:600;margin-bottom:10px">${rating.text} coverage</div>
+                    <div style="font-size:11px;color:#475569;line-height:1.6;margin-bottom:4px">
+                        <b>What is counted:</b> pharmacies, opticians, and medical laboratories within the planning unit (GE).
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:8px">
+                        Source: ОП „Софияплан" — Programme for Sofia 2020–2027, analysis I.7.1. Points georeferenced from official national registers (НСИ, НЗОК).
+                    </div>
+                    ${gradientBar('linear-gradient(to right,#ffffe5,#addd8e,#41ab5d,#006837)', ['0', '12', '50'])}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'sofiaplan-health-service-concentration-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-health-service-concentration-fill', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    function setHealthServiceConcentrationVisibility(map: MapLibreMap, visible: boolean) {
+        const v = visible ? 'visible' : 'none';
+        ['sofiaplan-health-service-concentration-fill', 'sofiaplan-health-service-concentration-outline'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+    }
+
+    const toggleHealthServiceConcentration = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showHealthServiceConcentration.value = forceState ?? !showHealthServiceConcentration.value;
+        ensureHealthServiceConcentration(map);
+        setHealthServiceConcentrationVisibility(map, showHealthServiceConcentration.value);
+    };
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // 16. HEALTH INFRASTRUCTURE CONCENTRATION BY GE (dataset 598)
+    // ═════════════════════════════════════════════════════════════════════════
+    function ensureHealthInfrastructureConcentration(map: MapLibreMap) {
+        if (map.getSource('sofiaplan-health-infrastructure-concentration')) return;
+
+        map.addSource('sofiaplan-health-infrastructure-concentration', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanHealthInfrastructureConcentrationTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-health-infrastructure-concentration-fill',
+            type: 'fill',
+            source: 'sofiaplan-health-infrastructure-concentration',
+            'source-layer': 'sofiaplan_health_infrastructure_concentration_tiles',
+            layout: { visibility: 'none' },
+            paint: {
+                'fill-color': ['interpolate', ['linear'], ['to-number', ['get', 'score'], 0],
+                    0, '#ffffcc', 25, '#fed976', 50, '#fd8d3c', 100, '#f03b20', 192, '#bd0026'],
+                'fill-opacity': 0.6,
+            },
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-health-infrastructure-concentration-outline',
+            type: 'line',
+            source: 'sofiaplan-health-infrastructure-concentration',
+            'source-layer': 'sofiaplan_health_infrastructure_concentration_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#ffffff', 'line-width': 0.5, 'line-opacity': 0.4 },
+        });
+
+        map.on('click', 'sofiaplan-health-infrastructure-concentration-fill', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const n = Number(props.score ?? 0);
+            const label = props.label || '';
+            const district = props.district || '';
+            const rating = n === 0  ? { text: 'No infrastructure', color: '#94a3b8' }
+                : n <= 10  ? { text: 'Very low', color: '#fed976' }
+                : n <= 30  ? { text: 'Low', color: '#fd8d3c' }
+                : n <= 80  ? { text: 'Medium', color: '#f03b20' }
+                :             { text: 'High', color: '#bd0026' };
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '260px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px">local_hospital</span>Health Infrastructure Concentration
+                    </h3>
+                    ${label ? `<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">${label}</div>` : ''}
+                    ${district ? `<div style="font-size:11px;color:#64748b;margin-bottom:10px">${district} district</div>` : ''}
+                    <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+                        <span style="font-size:32px;font-weight:700;color:${rating.color}">${n}</span>
+                        <span style="font-size:13px;color:#64748b">health infrastructure points</span>
+                    </div>
+                    <div style="display:inline-block;padding:3px 10px;border-radius:12px;background:${rating.color}22;border:1px solid ${rating.color}66;color:${rating.color};font-size:12px;font-weight:600;margin-bottom:10px">${rating.text} density</div>
+                    <div style="font-size:11px;color:#475569;line-height:1.6;margin-bottom:4px">
+                        <b>What is counted:</b> licensed medical treatment facilities — hospitals, diagnostic-consultative centres (ДКЦ), GP and specialist doctor practices, dental practices, and emergency services within the planning unit (GE).
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;line-height:1.5;margin-bottom:8px">
+                        The highest value in Sofia (192) is the Medical Academy complex in Триадица, which concentrates 8 specialised hospitals on one campus. Areas with 0 points have no registered medical treatment facilities. Source: ОП „Софияплан" — Programme for Sofia 2020–2027, analysis I.7.1 (data as of 2021).
+                    </div>
+                    ${gradientBar('linear-gradient(to right,#ffffcc,#fed976,#fd8d3c,#f03b20,#bd0026)', ['0', '50', '100', '192'])}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'sofiaplan-health-infrastructure-concentration-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-health-infrastructure-concentration-fill', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    function setHealthInfrastructureConcentrationVisibility(map: MapLibreMap, visible: boolean) {
+        const v = visible ? 'visible' : 'none';
+        ['sofiaplan-health-infrastructure-concentration-fill', 'sofiaplan-health-infrastructure-concentration-outline'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+    }
+
+    const toggleHealthInfrastructureConcentration = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showHealthInfrastructureConcentration.value = forceState ?? !showHealthInfrastructureConcentration.value;
+        ensureHealthInfrastructureConcentration(map);
+        setHealthInfrastructureConcentrationVisibility(map, showHealthInfrastructureConcentration.value);
+    };
+
+    // ═════════════════════════════════════════════════════════════════════════
     // MASTER TOGGLE
     // ═════════════════════════════════════════════════════════════════════════
     function toggleAllSofiaPlan(map: MapLibreMap | null, forceState?: boolean) {
@@ -1395,6 +1572,8 @@ export function useSofiaPlanLayers() {
         toggleDemographicForecastGe(map, target);
         togglePopulationPotential(map, target);
         toggleResidentialLoad(map, target);
+        toggleHealthServiceConcentration(map, target);
+        toggleHealthInfrastructureConcentration(map, target);
     }
 
     return {
@@ -1421,6 +1600,8 @@ export function useSofiaPlanLayers() {
         showDemographicForecastGe, toggleDemographicForecastGe,
         showPopulationPotential, togglePopulationPotential,
         showResidentialLoad, toggleResidentialLoad,
+        showHealthServiceConcentration, toggleHealthServiceConcentration,
+        showHealthInfrastructureConcentration, toggleHealthInfrastructureConcentration,
         showAnySofiaPlan,
         toggleAllSofiaPlan,
     };

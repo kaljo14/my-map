@@ -71,6 +71,8 @@
           :showSofiaPlanDemographicForecastGe="showDemographicForecastGe"
           :showSofiaPlanPopulationPotential="showPopulationPotential"
           :showSofiaPlanResidentialLoad="showResidentialLoad"
+          :showSofiaPlanHealthServiceConcentration="showHealthServiceConcentration"
+          :showSofiaPlanHealthInfrastructureConcentration="showHealthInfrastructureConcentration"
           :showAnySofiaPlan="showAnySofiaPlan"
           @toggleZoningCategory="handleToggleZoningCategory"
           @toggleSofiaPlanZoning="handleToggleSofiaPlanZoning"
@@ -90,6 +92,8 @@
           @toggleSofiaPlanDemographicForecastGe="handleToggleSofiaPlanDemographicForecastGe"
           @toggleSofiaPlanPopulationPotential="handleToggleSofiaPlanPopulationPotential"
           @toggleSofiaPlanResidentialLoad="handleToggleSofiaPlanResidentialLoad"
+          @toggleSofiaPlanHealthServiceConcentration="handleToggleSofiaPlanHealthServiceConcentration"
+          @toggleSofiaPlanHealthInfrastructureConcentration="handleToggleSofiaPlanHealthInfrastructureConcentration"
           @toggleAllSofiaPlan="handleToggleAllSofiaPlan"
           :showTransitAccessGe="showTransitAccessGe"
           :showTransitAccessDistrict="showTransitAccessDistrict"
@@ -383,6 +387,10 @@ const {
   togglePopulationPotential,
   showResidentialLoad,
   toggleResidentialLoad,
+  showHealthServiceConcentration,
+  toggleHealthServiceConcentration,
+  showHealthInfrastructureConcentration,
+  toggleHealthInfrastructureConcentration,
   showAnySofiaPlan,
   toggleAllSofiaPlan,
 } = useSofiaPlanLayers();
@@ -540,6 +548,8 @@ const handleToggleSofiaPlanDemographicForecast = () => toggleDemographicForecast
 const handleToggleSofiaPlanDemographicForecastGe = () => toggleDemographicForecastGe(mapInstance.value);
 const handleToggleSofiaPlanPopulationPotential = () => togglePopulationPotential(mapInstance.value);
 const handleToggleSofiaPlanResidentialLoad     = () => toggleResidentialLoad(mapInstance.value);
+const handleToggleSofiaPlanHealthServiceConcentration        = () => toggleHealthServiceConcentration(mapInstance.value);
+const handleToggleSofiaPlanHealthInfrastructureConcentration = () => toggleHealthInfrastructureConcentration(mapInstance.value);
 const handleToggleAllSofiaPlan                = () => toggleAllSofiaPlan(mapInstance.value);
 
 const handleToggleTransitAccessGe       = () => toggleTransitAccessGe(mapInstance.value);
