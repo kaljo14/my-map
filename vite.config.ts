@@ -38,6 +38,14 @@ export default defineConfig(({ mode }) => {
           target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },
+        '/api/parking-zones': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/sofiaplan': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
         '/api/martin': {
           target: process.env.MARTIN_API_URL || env.MARTIN_API_URL || 'http://localhost:3000',
           changeOrigin: true,

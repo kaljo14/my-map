@@ -139,6 +139,33 @@
         <ToggleRow label="Pedestrian Syntax" variant="sidebar" :model-value="showSofiaPlanPedestrianSyntax" @toggle="$emit('toggleSofiaPlanPedestrianSyntax')">
           <template #icon><span class="material-symbols-outlined">schema</span></template>
         </ToggleRow>
+        <div v-if="showSofiaPlanPedestrianSyntax" style="padding:6px 12px 10px 36px">
+          <NeighborhoodPicker
+            :neighborhoods="neighborhoods"
+            :model-value="selectedPedestrianNeighborhoods"
+            @update:model-value="$emit('selectPedestrianNeighborhood', $event)"
+            style="margin-bottom:8px"
+          />
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:11px;color:#64748b">Min rank within neighbourhood</span>
+            <span style="font-size:11px;font-weight:600;color:#f46d43">
+              {{ pedestrianSyntaxThreshold === 0 ? 'All' : `top ${100 - pedestrianSyntaxThreshold}%` }}
+            </span>
+          </div>
+          <input
+            type="range"
+            :min="0"
+            :max="95"
+            :step="5"
+            :value="pedestrianSyntaxThreshold"
+            @input="$emit('updatePedestrianSyntaxThreshold', Number(($event.target as HTMLInputElement).value))"
+            style="width:100%;accent-color:#f46d43"
+          />
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:2px">
+            <span>All streets</span>
+            <span>Best only</span>
+          </div>
+        </div>
         <ToggleRow label="Population Density" variant="sidebar" :model-value="showSofiaPlanPopulation" @toggle="$emit('toggleSofiaPlanPopulation')">
           <template #icon><span class="material-symbols-outlined">group</span></template>
         </ToggleRow>
@@ -184,7 +211,7 @@
           <template #icon><span class="material-symbols-outlined">layers</span></template>
         </ToggleRow>
 
-        <ToggleRow label="PT Access (by GE)" variant="sidebar" :model-value="showTransitAccessGe" @toggle="$emit('toggleTransitAccessGe')">
+        <ToggleRow label="Transit Access (Planning Zone)" variant="sidebar" :model-value="showTransitAccessGe" @toggle="$emit('toggleTransitAccessGe')">
           <template #icon><span class="material-symbols-outlined">directions_transit</span></template>
         </ToggleRow>
         <ToggleRow label="PT Access (by District)" variant="sidebar" :model-value="showTransitAccessDistrict" @toggle="$emit('toggleTransitAccessDistrict')">
@@ -213,6 +240,15 @@
         </ToggleRow>
         <ToggleRow label="Railway Stations" variant="sidebar" :model-value="showRailwayStations" @toggle="$emit('toggleRailwayStations')">
           <template #icon><span class="material-symbols-outlined">directions_railway</span></template>
+        </ToggleRow>
+        <ToggleRow label="Cycling Network" variant="sidebar" :model-value="showCyclingNetwork" @toggle="$emit('toggleCyclingNetwork')">
+          <template #icon><span class="material-symbols-outlined">pedal_bike</span></template>
+        </ToggleRow>
+        <ToggleRow label="Cycling Network (alt)" variant="sidebar" :model-value="showCyclingNetworkAlt" @toggle="$emit('toggleCyclingNetworkAlt')">
+          <template #icon><span class="material-symbols-outlined">pedal_bike</span></template>
+        </ToggleRow>
+        <ToggleRow label="Planned Cycling" variant="sidebar" :model-value="showCyclingPlanned" @toggle="$emit('toggleCyclingPlanned')">
+          <template #icon><span class="material-symbols-outlined">route</span></template>
         </ToggleRow>
       </div>
     </SidebarSection>
@@ -254,6 +290,31 @@
             <span class="material-symbols-outlined">pin_drop</span>
           </template>
         </ToggleRow>
+        <ToggleRow label="Parking Zones" variant="sidebar" :model-value="showParkingZones" @toggle="$emit('toggleParkingZones')">
+          <template #icon>
+            <span class="material-symbols-outlined">local_parking</span>
+          </template>
+        </ToggleRow>
+        <div v-if="showParkingZones" class="parking-zone-legend">
+          <button
+            class="parking-filter-pill"
+            :class="{ active: showBlueZone }"
+            style="--pill-color:#0064ff;--pill-fill:rgba(0,100,255,0.2)"
+            @click="$emit('toggleBlueZone')"
+          >
+            <span class="parking-legend-swatch"></span>
+            <span class="parking-legend-label">Blue Zone</span>
+          </button>
+          <button
+            class="parking-filter-pill"
+            :class="{ active: showGreenZone }"
+            style="--pill-color:#00b400;--pill-fill:rgba(0,180,0,0.2)"
+            @click="$emit('toggleGreenZone')"
+          >
+            <span class="parking-legend-swatch"></span>
+            <span class="parking-legend-label">Green Zone</span>
+          </button>
+        </div>
       </div>
     </SidebarSection>
 
@@ -335,6 +396,7 @@ import TogglePill from '../ui/TogglePill.vue';
 import ToggleRow from '../ui/ToggleRow.vue';
 import CheckboxGroup from '../ui/CheckboxGroup.vue';
 import PinItem from '../ui/PinItem.vue';
+import NeighborhoodPicker from '../ui/NeighborhoodPicker.vue';
 import type { ComparisonPin } from '@/composables/useLocationComparison';
 
 const { t } = useI18n();
@@ -370,6 +432,9 @@ const props = defineProps<{
   showSofiaPlanPropertyPrices: boolean;
   showSofiaPlanMetroCatchments: boolean;
   showSofiaPlanPedestrianSyntax: boolean;
+  pedestrianSyntaxThreshold: number;
+  selectedPedestrianNeighborhoods: string[];
+  neighborhoods: string[];
   showSofiaPlanPopulation: boolean;
   showSofiaPlanBusinessTurnover: boolean;
   showSofiaPlanDevelopmentPotential: boolean;
@@ -392,7 +457,13 @@ const props = defineProps<{
   showTramLines: boolean;
   showTramLinesAlt: boolean;
   showRailwayStations: boolean;
+  showCyclingNetwork: boolean;
+  showCyclingNetworkAlt: boolean;
+  showCyclingPlanned: boolean;
   showAnyTransport: boolean;
+  showParkingZones: boolean;
+  showBlueZone: boolean;
+  showGreenZone: boolean;
 }>();
 
 defineEmits<{
@@ -424,6 +495,8 @@ defineEmits<{
   (e: 'toggleSofiaPlanPropertyPrices'): void;
   (e: 'toggleSofiaPlanMetroCatchments'): void;
   (e: 'toggleSofiaPlanPedestrianSyntax'): void;
+  (e: 'updatePedestrianSyntaxThreshold', value: number): void;
+  (e: 'selectPedestrianNeighborhood', names: string[]): void;
   (e: 'toggleSofiaPlanPopulation'): void;
   (e: 'toggleSofiaPlanBusinessTurnover'): void;
   (e: 'toggleSofiaPlanDevelopmentPotential'): void;
@@ -446,7 +519,13 @@ defineEmits<{
   (e: 'toggleTramLines'): void;
   (e: 'toggleTramLinesAlt'): void;
   (e: 'toggleRailwayStations'): void;
+  (e: 'toggleCyclingNetwork'): void;
+  (e: 'toggleCyclingNetworkAlt'): void;
+  (e: 'toggleCyclingPlanned'): void;
   (e: 'toggleAllTransport'): void;
+  (e: 'toggleParkingZones'): void;
+  (e: 'toggleBlueZone'): void;
+  (e: 'toggleGreenZone'): void;
 }>();
 
 const densityOptions = computed(() => [
@@ -794,5 +873,43 @@ const groceryTags = computed(() => [
   background: rgba(217, 119, 87, 0.15);
   border-color: rgba(217, 119, 87, 0.4);
   color: #d97757;
+}
+
+/* ── Parking zone filter pills ─────────────────────────── */
+.parking-zone-legend {
+  display: flex;
+  gap: 8px;
+  padding: 6px 12px 4px;
+}
+.parking-filter-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 5px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(138, 126, 114, 0.3);
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.45;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+.parking-filter-pill.active {
+  opacity: 1;
+  border-color: var(--pill-color);
+}
+.parking-filter-pill:hover {
+  opacity: 0.8;
+}
+.parking-legend-swatch {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--pill-fill);
+  border: 1.5px solid var(--pill-color);
+}
+.parking-legend-label {
+  font-size: 11px;
+  color: #8a7e72;
 }
 </style>

@@ -4,15 +4,18 @@ import TilesAPI from '@/api/tiles';
 
 // ── Mode colors ───────────────────────────────────────────────────────────────
 const COLOR = {
-    bus:          '#1565C0',  // dark blue
-    busAlt:       '#42A5F5',  // mid blue
-    trolleybus:   '#00695C',  // dark teal
-    tram:         '#C62828',  // dark red
-    tramAlt:      '#EF5350',  // mid red
-    railway:      '#F57F17',  // amber
-    transit:      '#2E7D32',  // dark green (transit accessibility)
-    metro800:     '#6A1B9A',  // deep purple (800 m catchment)
-    metro1200:    '#1565C0',  // dark blue  (1200 m+ catchment)
+    bus:             '#1565C0',  // dark blue
+    busAlt:          '#42A5F5',  // mid blue
+    trolleybus:      '#00695C',  // dark teal
+    tram:            '#C62828',  // dark red
+    tramAlt:         '#EF5350',  // mid red
+    railway:         '#F57F17',  // amber
+    transit:         '#2E7D32',  // dark green (transit accessibility)
+    metro800:        '#6A1B9A',  // deep purple (800 m catchment)
+    metro1200:       '#1565C0',  // dark blue  (1200 m+ catchment)
+    cycling:         '#1B5E20',  // deep green (built cycling network)
+    cyclingAlt:      '#66BB6A',  // light green (built cycling alt)
+    cyclingPlanned:  '#FF8F00',  // amber (planned extensions)
 };
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
@@ -46,13 +49,18 @@ export function useTransportLayers() {
     const showTramLines             = ref(false);
     const showTramLinesAlt          = ref(false);
     const showRailwayStations       = ref(false);
+    const showCyclingNetwork        = ref(false);
+    const showCyclingNetworkAlt     = ref(false);
+    const showCyclingPlanned        = ref(false);
 
     const showAnyTransport = computed(() =>
         showTransitAccessGe.value || showTransitAccessDistrict.value ||
         showMetroAccess800m.value  || showMetroAccess1200m.value      ||
         showBusLines.value         || showBusLinesAlt.value           ||
         showTrolleybusLines.value  || showTramLines.value             ||
-        showTramLinesAlt.value     || showRailwayStations.value
+        showTramLinesAlt.value     || showRailwayStations.value       ||
+        showCyclingNetwork.value   || showCyclingNetworkAlt.value     ||
+        showCyclingPlanned.value
     );
 
     let activePopup: maplibregl.Popup | null = null;
@@ -193,24 +201,79 @@ export function useTransportLayers() {
     }
 
     // =========================================================================
-    // 1. TRANSIT ACCESSIBILITY BY GE (score = index, higher = better)
+    // 1. TRANSIT ACCESSIBILITY BY PLANNING ZONE (score = index 0–1.2, higher = better)
+    //    Data is heavily right-skewed: ~75 % of zones score 0; top 10 % exceed 0.9.
+    //    Use `step` so zero-score zones show as neutral gray and non-zero zones
+    //    are coloured with a blue sequential ramp.
     // =========================================================================
     function ensureTransitAccessGe(map: MapLibreMap) {
-        addChoroLayer(
-            map,
-            'transport-transit-access-ge',
-            TilesAPI.getSofiaPlanTransitAccessGeTileUrlTemplate(),
-            'sofiaplan_transit_access_ge_tiles',
-            'transport-transit-access-ge-fill',
-            'transport-transit-access-ge-outline',
-            [0, 0.3, 0.6, 0.9, 1.2],
-            ['#f7fcf5', '#74c476', '#238b45', '#006d2c', '#00441b'],
-            'PT Access (by GE)',
-            'directions_transit',
-            '',
-            'linear-gradient(to right,#f7fcf5,#74c476,#238b45,#00441b)',
-            ['0', '0.6', '1.2'],
-        );
+        const sourceId    = 'transport-transit-access-ge';
+        const sourceLayer = 'sofiaplan_transit_access_ge_tiles';
+        const layerFill   = 'transport-transit-access-ge-fill';
+        const layerOutline = 'transport-transit-access-ge-outline';
+
+        if (map.getSource(sourceId)) return;
+
+        map.addSource(sourceId, {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanTransitAccessGeTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        map.addLayer({
+            id: layerFill,
+            type: 'fill',
+            source: sourceId,
+            'source-layer': sourceLayer,
+            layout: { visibility: 'none' },
+            paint: {
+                'fill-color': [
+                    'step', ['to-number', ['get', 'score'], 0],
+                    '#cbd5e1',   // score = 0  → slate-300   (no access)
+                    0.05, '#bfdbfe',   // 0.05–0.35 → pale blue   (minimal)
+                    0.35, '#60a5fa',   // 0.35–0.65 → sky blue    (low)
+                    0.65, '#2563eb',   // 0.65–0.95 → medium blue (moderate)
+                    0.95, '#1d4ed8',   // > 0.95    → dark blue   (high)
+                ] as maplibregl.ExpressionSpecification,
+                'fill-opacity': 0.7,
+            },
+        });
+
+        map.addLayer({
+            id: layerOutline,
+            type: 'line',
+            source: sourceId,
+            'source-layer': sourceLayer,
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#475569', 'line-width': 1, 'line-opacity': 0.7 },
+        });
+
+        const gradientCss = 'linear-gradient(to right,#e5e7eb,#bfdbfe,#60a5fa,#2563eb,#1d4ed8)';
+
+        map.on('click', layerFill, (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const score = Number(props.score ?? 0);
+            const label = props.label || '';
+            const [accessLabel, accessColor] =
+                score === 0    ? ['No transit access',     '#64748b'] :
+                score < 0.35   ? ['Poor transit access',   '#93c5fd'] :
+                score < 0.65   ? ['Moderate transit access', '#3b82f6'] :
+                score < 0.95   ? ['Good transit access',   '#2563eb'] :
+                                 ['Excellent transit access', '#1d4ed8'];
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '260px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    ${popupHeader('directions_transit', 'Transit Access — Planning Zone')}
+                    ${label ? `<div style="font-size:12px;color:#64748b;margin-bottom:6px">${label}</div>` : ''}
+                    <div style="font-size:18px;font-weight:700;color:${accessColor}">${accessLabel}</div>
+                    ${gradientBar(gradientCss, ['None', 'Poor', 'Moderate', 'Good', 'Excellent'])}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', layerFill, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', layerFill, () => { map.getCanvas().style.cursor = ''; });
     }
 
     const toggleTransitAccessGe = (map: MapLibreMap | null, forceState?: boolean) => {
@@ -551,6 +614,148 @@ export function useTransportLayers() {
     };
 
     // =========================================================================
+    // 11. BUILT CYCLING NETWORK (primary) — ID 606
+    // =========================================================================
+    function ensureCyclingNetwork(map: MapLibreMap) {
+        if (map.getSource('transport-cycling-network')) return;
+
+        map.addSource('transport-cycling-network', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanCyclingNetworkTileUrlTemplate()],
+            maxzoom: 16,
+        });
+
+        map.addLayer({
+            id: 'transport-cycling-network-line',
+            type: 'line',
+            source: 'transport-cycling-network',
+            'source-layer': 'sofiaplan_cycling_network_tiles',
+            layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': COLOR.cycling, 'line-width': 2.5 },
+        });
+
+        map.on('click', 'transport-cycling-network-line', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '240px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    ${popupHeader('pedal_bike', 'Built Cycling Network')}
+                    ${props.label ? `<div style="font-size:13px;color:#475569;margin-bottom:4px">${props.label}</div>` : ''}
+                    ${props.direction ? `<div style="font-size:12px;color:#64748b">Direction: ${props.direction}</div>` : ''}
+                    ${props.length_m ? `<div style="font-size:12px;color:#64748b">Length: ${Number(props.length_m).toFixed(0)} m</div>` : ''}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'transport-cycling-network-line', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'transport-cycling-network-line', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    const toggleCyclingNetwork = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showCyclingNetwork.value = forceState ?? !showCyclingNetwork.value;
+        ensureCyclingNetwork(map);
+        setLayerPairVisibility(map, ['transport-cycling-network-line'], showCyclingNetwork.value);
+    };
+
+    // =========================================================================
+    // 12. BUILT CYCLING NETWORK (alternate) — ID 290
+    // =========================================================================
+    function ensureCyclingNetworkAlt(map: MapLibreMap) {
+        if (map.getSource('transport-cycling-network-alt')) return;
+
+        map.addSource('transport-cycling-network-alt', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanCyclingNetworkAltTileUrlTemplate()],
+            maxzoom: 16,
+        });
+
+        map.addLayer({
+            id: 'transport-cycling-network-alt-line',
+            type: 'line',
+            source: 'transport-cycling-network-alt',
+            'source-layer': 'sofiaplan_cycling_network_alt_tiles',
+            layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+            paint: { 'line-color': COLOR.cyclingAlt, 'line-width': 2 },
+        });
+
+        map.on('click', 'transport-cycling-network-alt-line', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '240px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    ${popupHeader('pedal_bike', 'Built Cycling Network (alt)')}
+                    ${props.label ? `<div style="font-size:13px;color:#475569;margin-bottom:4px">${props.label}</div>` : ''}
+                    ${props.direction ? `<div style="font-size:12px;color:#64748b">Direction: ${props.direction}</div>` : ''}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'transport-cycling-network-alt-line', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'transport-cycling-network-alt-line', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    const toggleCyclingNetworkAlt = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showCyclingNetworkAlt.value = forceState ?? !showCyclingNetworkAlt.value;
+        ensureCyclingNetworkAlt(map);
+        setLayerPairVisibility(map, ['transport-cycling-network-alt-line'], showCyclingNetworkAlt.value);
+    };
+
+    // =========================================================================
+    // 13. PLANNED CYCLING EXTENSIONS — ID 146
+    // =========================================================================
+    function ensureCyclingPlanned(map: MapLibreMap) {
+        if (map.getSource('transport-cycling-planned')) return;
+
+        map.addSource('transport-cycling-planned', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanCyclingPlannedTileUrlTemplate()],
+            maxzoom: 16,
+        });
+
+        map.addLayer({
+            id: 'transport-cycling-planned-line',
+            type: 'line',
+            source: 'transport-cycling-planned',
+            'source-layer': 'sofiaplan_cycling_planned_tiles',
+            layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
+            paint: {
+                'line-color': COLOR.cyclingPlanned,
+                'line-width': 2,
+                'line-dasharray': [4, 3],
+            },
+        });
+
+        map.on('click', 'transport-cycling-planned-line', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '260px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    ${popupHeader('route', 'Planned Cycling Extension')}
+                    ${props.label ? `<div style="font-size:14px;font-weight:600;color:#1e293b;margin-bottom:6px">${props.label}</div>` : ''}
+                    ${props.priority != null ? `<div style="font-size:12px;color:#64748b">Priority: ${props.priority}</div>` : ''}
+                    ${props.project != null ? `<div style="font-size:12px;color:#64748b">Project: ${props.project}</div>` : ''}
+                    ${props.note ? `<div style="font-size:12px;color:#64748b;margin-top:4px;font-style:italic">${props.note}</div>` : ''}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'transport-cycling-planned-line', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'transport-cycling-planned-line', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    const toggleCyclingPlanned = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showCyclingPlanned.value = forceState ?? !showCyclingPlanned.value;
+        ensureCyclingPlanned(map);
+        setLayerPairVisibility(map, ['transport-cycling-planned-line'], showCyclingPlanned.value);
+    };
+
+    // =========================================================================
     // Toggle all transport layers on/off
     // =========================================================================
     const toggleAllTransport = (map: MapLibreMap | null) => {
@@ -566,6 +771,9 @@ export function useTransportLayers() {
         toggleTramLines(map, next);
         toggleTramLinesAlt(map, next);
         toggleRailwayStations(map, next);
+        toggleCyclingNetwork(map, next);
+        toggleCyclingNetworkAlt(map, next);
+        toggleCyclingPlanned(map, next);
     };
 
     return {
@@ -580,6 +788,9 @@ export function useTransportLayers() {
         showTramLines,
         showTramLinesAlt,
         showRailwayStations,
+        showCyclingNetwork,
+        showCyclingNetworkAlt,
+        showCyclingPlanned,
         showAnyTransport,
         // Toggle functions
         toggleTransitAccessGe,
@@ -592,6 +803,9 @@ export function useTransportLayers() {
         toggleTramLines,
         toggleTramLinesAlt,
         toggleRailwayStations,
+        toggleCyclingNetwork,
+        toggleCyclingNetworkAlt,
+        toggleCyclingPlanned,
         toggleAllTransport,
     };
 }

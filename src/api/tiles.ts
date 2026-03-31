@@ -273,6 +273,40 @@ class TilesAPI {
     }
 
     /**
+     * Gets the URL template for built cycling network (primary) tiles.
+     * Tile layer name: sofiaplan_cycling_network_tiles; feature properties: label (path type), direction, length_m.
+     */
+    getSofiaPlanCyclingNetworkTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_cycling_network_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for built cycling network (alternate) tiles.
+     * Tile layer name: sofiaplan_cycling_network_alt_tiles; feature properties: label (path type), direction.
+     */
+    getSofiaPlanCyclingNetworkAltTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_cycling_network_alt_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for planned cycling extensions tiles.
+     * Tile layer name: sofiaplan_cycling_planned_tiles; feature properties: label (street name), priority, project, note.
+     */
+    getSofiaPlanCyclingPlannedTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_cycling_planned_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Blue (city-centre) parking zone — table sofiaplan_parking_green */
+    getParkingBlueTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_parking_green/{z}/{x}/{y}`;
+    }
+
+    /** Green (outer) parking zone — table sofiaplan_parking_blue */
+    getParkingGreenTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_parking_blue/{z}/{x}/{y}`;
+    }
+
+    /**
      * Fetches grid labels for analysis
      */
     async getGridLabels(): Promise<any> {

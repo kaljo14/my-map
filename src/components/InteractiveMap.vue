@@ -58,6 +58,9 @@
           :showSofiaPlanPropertyPrices="showPropertyPrices"
           :showSofiaPlanMetroCatchments="showMetroCatchments"
           :showSofiaPlanPedestrianSyntax="showPedestrianSyntax"
+          :pedestrianSyntaxThreshold="pedestrianSyntaxThreshold"
+          :selectedPedestrianNeighborhoods="selectedPedestrianNeighborhoods"
+          :neighborhoods="neighborhoodNames"
           :showSofiaPlanPopulation="showSofiaPlanPopulation"
           :showSofiaPlanBusinessTurnover="showBusinessTurnover"
           :showSofiaPlanDevelopmentPotential="showDevelopmentPotential"
@@ -75,6 +78,8 @@
           @toggleSofiaPlanPropertyPrices="handleToggleSofiaPlanPropertyPrices"
           @toggleSofiaPlanMetroCatchments="handleToggleSofiaPlanMetroCatchments"
           @toggleSofiaPlanPedestrianSyntax="handleToggleSofiaPlanPedestrianSyntax"
+          @updatePedestrianSyntaxThreshold="handleUpdatePedestrianSyntaxThreshold"
+          @selectPedestrianNeighborhood="handleSelectPedestrianNeighborhood"
           @toggleSofiaPlanPopulation="handleToggleSofiaPlanPopulation"
           @toggleSofiaPlanBusinessTurnover="handleToggleSofiaPlanBusinessTurnover"
           @toggleSofiaPlanDevelopmentPotential="handleToggleSofiaPlanDevelopmentPotential"
@@ -96,6 +101,9 @@
           :showTramLines="showTramLines"
           :showTramLinesAlt="showTramLinesAlt"
           :showRailwayStations="showRailwayStations"
+          :showCyclingNetwork="showCyclingNetwork"
+          :showCyclingNetworkAlt="showCyclingNetworkAlt"
+          :showCyclingPlanned="showCyclingPlanned"
           :showAnyTransport="showAnyTransport"
           @toggleTransitAccessGe="handleToggleTransitAccessGe"
           @toggleTransitAccessDistrict="handleToggleTransitAccessDistrict"
@@ -107,7 +115,16 @@
           @toggleTramLines="handleToggleTramLines"
           @toggleTramLinesAlt="handleToggleTramLinesAlt"
           @toggleRailwayStations="handleToggleRailwayStations"
+          @toggleCyclingNetwork="handleToggleCyclingNetwork"
+          @toggleCyclingNetworkAlt="handleToggleCyclingNetworkAlt"
+          @toggleCyclingPlanned="handleToggleCyclingPlanned"
           @toggleAllTransport="handleToggleAllTransport"
+          :showParkingZones="showParkingZones"
+          :showBlueZone="showBlueZone"
+          :showGreenZone="showGreenZone"
+          @toggleParkingZones="handleToggleParkingZones"
+          @toggleBlueZone="handleToggleBlueZone"
+          @toggleGreenZone="handleToggleGreenZone"
         />
 
         <button
@@ -223,6 +240,7 @@ import { usePedestrianNetwork } from '@/composables/usePedestrianNetwork';
 import { useOsmPois } from '@/composables/useOsmPois';
 import { useSofiaPlanLayers } from '@/composables/useSofiaPlanLayers';
 import { useTransportLayers } from '@/composables/useTransportLayers';
+import { useParkingZones } from '@/composables/useParkingZones';
 import { useShopManagement } from '@/composables/useShopManagement';
 import { initDeckOverlay } from '@/composables/useDeckOverlay';
 import { usePlacesDeckLayer } from '@/composables/usePlacesDeckLayer';
@@ -340,6 +358,11 @@ const {
   toggleMetroCatchments,
   showPedestrianSyntax,
   togglePedestrianSyntax,
+  pedestrianSyntaxThreshold,
+  setPedestrianSyntaxThreshold,
+  neighborhoodNames,
+  selectedPedestrianNeighborhoods,
+  selectPedestrianNeighborhood,
   showSofiaPlanPopulation,
   toggleSofiaPlanPopulation,
   showBusinessTurnover,
@@ -386,8 +409,23 @@ const {
   toggleTramLines,
   toggleTramLinesAlt,
   toggleRailwayStations,
+  showCyclingNetwork,
+  showCyclingNetworkAlt,
+  showCyclingPlanned,
+  toggleCyclingNetwork,
+  toggleCyclingNetworkAlt,
+  toggleCyclingPlanned,
   toggleAllTransport,
 } = useTransportLayers();
+
+const {
+  showParkingZones,
+  showBlueZone,
+  showGreenZone,
+  toggleParkingZones,
+  toggleBlueZone,
+  toggleGreenZone,
+} = useParkingZones();
 
 const {
   showShopModal,
@@ -490,6 +528,8 @@ const handleToggleSofiaPlanIncome             = () => toggleIncome(mapInstance.v
 const handleToggleSofiaPlanPropertyPrices     = () => togglePropertyPrices(mapInstance.value);
 const handleToggleSofiaPlanMetroCatchments    = () => toggleMetroCatchments(mapInstance.value);
 const handleToggleSofiaPlanPedestrianSyntax   = () => togglePedestrianSyntax(mapInstance.value);
+const handleUpdatePedestrianSyntaxThreshold   = (v: number) => setPedestrianSyntaxThreshold(mapInstance.value, v);
+const handleSelectPedestrianNeighborhood      = (names: string[]) => selectPedestrianNeighborhood(mapInstance.value, names);
 const handleToggleSofiaPlanPopulation         = () => toggleSofiaPlanPopulation(mapInstance.value);
 const handleToggleSofiaPlanBusinessTurnover   = () => toggleBusinessTurnover(mapInstance.value);
 const handleToggleSofiaPlanDevelopmentPotential = () => toggleDevelopmentPotential(mapInstance.value);
@@ -512,7 +552,14 @@ const handleToggleTrolleybusLines       = () => toggleTrolleybusLines(mapInstanc
 const handleToggleTramLines             = () => toggleTramLines(mapInstance.value);
 const handleToggleTramLinesAlt          = () => toggleTramLinesAlt(mapInstance.value);
 const handleToggleRailwayStations       = () => toggleRailwayStations(mapInstance.value);
+const handleToggleCyclingNetwork        = () => toggleCyclingNetwork(mapInstance.value);
+const handleToggleCyclingNetworkAlt     = () => toggleCyclingNetworkAlt(mapInstance.value);
+const handleToggleCyclingPlanned        = () => toggleCyclingPlanned(mapInstance.value);
 const handleToggleAllTransport          = () => toggleAllTransport(mapInstance.value);
+
+const handleToggleParkingZones          = () => toggleParkingZones(mapInstance.value);
+const handleToggleBlueZone              = () => toggleBlueZone(mapInstance.value);
+const handleToggleGreenZone             = () => toggleGreenZone(mapInstance.value);
 
 // ── Place markers ────────────────────────────────────────────────────────────
 

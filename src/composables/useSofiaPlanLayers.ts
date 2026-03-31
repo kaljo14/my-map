@@ -60,6 +60,9 @@ export function useSofiaPlanLayers() {
     const showPropertyPrices = ref(false);
     const showMetroCatchments = ref(false);
     const showPedestrianSyntax = ref(false);
+    const pedestrianSyntaxThreshold = ref(0);        // 0–100 (percentage)
+    const selectedPedestrianNeighborhoods = ref<string[]>([]);
+    const neighborhoodNames = ref<string[]>([]);
     const showSofiaPlanPopulation = ref(false);
     const showBusinessTurnover = ref(false);
     const showDevelopmentPotential = ref(false);
@@ -407,6 +410,19 @@ export function useSofiaPlanLayers() {
     // ═════════════════════════════════════════════════════════════════════════
     // 5. PEDESTRIAN SYNTAX (integration metric, range 3–17828)
     // ═════════════════════════════════════════════════════════════════════════
+    // Build the combined MapLibre filter for the pedestrian syntax layer,
+    // combining neighbourhood selection and percentile threshold.
+    function buildPedestrianFilter(threshold: number, neighborhoods: string[]) {
+        const conditions: maplibregl.ExpressionSpecification[] = [];
+        if (threshold > 0)
+            conditions.push(['>=', ['coalesce', ['get', 'local_percentile'], 0], threshold / 100]);
+        if (neighborhoods.length > 0)
+            conditions.push(['in', ['get', 'neighborhood'], ['literal', neighborhoods]]);
+        if (conditions.length === 0) return null;
+        if (conditions.length === 1) return conditions[0];
+        return ['all', ...conditions] as maplibregl.ExpressionSpecification;
+    }
+
     function ensurePedestrianSyntax(map: MapLibreMap) {
         if (map.getSource('sofiaplan-pedestrian-syntax')) return;
 
@@ -423,28 +439,128 @@ export function useSofiaPlanLayers() {
             'source-layer': 'sofiaplan_pedestrian_syntax_tiles',
             layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' },
             paint: {
-                'line-color': ['interpolate', ['linear'], ['to-number', ['get', 'score'], 0],
-                    0, '#006837', 4500, '#66bd63', 9000, '#ffffbf', 13500, '#f46d43', 18000, '#a50026'],
-                'line-width': 2,
+                'line-color': ['interpolate', ['linear'], ['get', 'local_percentile'],
+                    0,    '#313695',
+                    0.25, '#74add1',
+                    0.5,  '#ffffbf',
+                    0.75, '#f46d43',
+                    1,    '#a50026'],
+                'line-width': ['interpolate', ['linear'], ['zoom'], 10, 1, 14, 2.5],
                 'line-opacity': 0.85,
             },
         });
 
+        // Neighbourhood layers — borders, click-picker, and selected highlight.
+        if (!map.getSource('sofiaplan-neighborhoods')) {
+            map.addSource('sofiaplan-neighborhoods', {
+                type: 'vector',
+                tiles: [TilesAPI.getSofiaPlanNeighborhoodsTileUrlTemplate()],
+                maxzoom: 14,
+            });
+        }
+
+        // Collect neighbourhood names from tile data as tiles load.
+        // querySourceFeatures returns all features in the tile cache — no extra API call needed.
+        const collectNames = () => {
+            const features = map.querySourceFeatures('sofiaplan-neighborhoods', {
+                sourceLayer: 'sofiaplan_neighborhoods_tiles',
+            });
+            const incoming = features
+                .map(f => f.properties?.label as string)
+                .filter(Boolean);
+            if (incoming.length === 0) return;
+            const merged = [...new Set([...neighborhoodNames.value, ...incoming])].sort();
+            if (merged.length !== neighborhoodNames.value.length)
+                neighborhoodNames.value = merged;
+        };
+        map.on('sourcedata', (e) => {
+            if (e.sourceId === 'sofiaplan-neighborhoods') collectNames();
+        });
+        map.on('idle', collectNames);
+
+        // Visible grey borders
+        map.addLayer({
+            id: 'sofiaplan-pedestrian-neighborhood-borders',
+            type: 'line',
+            source: 'sofiaplan-neighborhoods',
+            'source-layer': 'sofiaplan_neighborhoods_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#94a3b8', 'line-width': 1, 'line-opacity': 0.6 },
+        });
+
+        // Invisible fill used only as a click hit-area
+        map.addLayer({
+            id: 'sofiaplan-pedestrian-neighborhood-picker',
+            type: 'fill',
+            source: 'sofiaplan-neighborhoods',
+            'source-layer': 'sofiaplan_neighborhoods_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'fill-color': 'rgba(0,0,0,0)' },
+        });
+
+        // Purple outline for selected neighbourhood
+        map.addLayer({
+            id: 'sofiaplan-pedestrian-neighborhood-selected',
+            type: 'line',
+            source: 'sofiaplan-neighborhoods',
+            'source-layer': 'sofiaplan_neighborhoods_tiles',
+            layout: { visibility: 'none' },
+            filter: ['==', ['get', 'label'], ''],
+            paint: { 'line-color': '#6366f1', 'line-width': 2.5, 'line-opacity': 1 },
+        });
+
+        // Click on the invisible picker to toggle a neighbourhood in/out of the selection
+        map.on('click', 'sofiaplan-pedestrian-neighborhood-picker', (e) => {
+            const name: string = e.features?.[0]?.properties?.label ?? '';
+            if (!name) return;
+            const current = selectedPedestrianNeighborhoods.value;
+            const next = current.includes(name)
+                ? current.filter(n => n !== name)
+                : [...current, name];
+            selectedPedestrianNeighborhoods.value = next;
+            if (map.getLayer('sofiaplan-pedestrian-neighborhood-selected'))
+                map.setFilter('sofiaplan-pedestrian-neighborhood-selected',
+                    next.length > 0
+                        ? ['in', ['get', 'label'], ['literal', next]]
+                        : ['==', ['get', 'label'], '']);
+            if (map.getLayer('sofiaplan-pedestrian-syntax-fill'))
+                map.setFilter('sofiaplan-pedestrian-syntax-fill',
+                    buildPedestrianFilter(pedestrianSyntaxThreshold.value, next));
+        });
+        map.on('mouseenter', 'sofiaplan-pedestrian-neighborhood-picker', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-pedestrian-neighborhood-picker', () => { map.getCanvas().style.cursor = ''; });
+
         map.on('click', 'sofiaplan-pedestrian-syntax-fill', (e) => {
             const props = e.features?.[0]?.properties ?? {};
             const score = Number(props.score ?? 0).toLocaleString();
-            const label = props.label || '';
+            const neighborhood = props.neighborhood || '';
+            const pct = props.local_percentile != null
+                ? Math.round(Number(props.local_percentile) * 100)
+                : null;
+            const pctColor = pct == null ? '#94a3b8'
+                : pct >= 75 ? '#a50026'
+                : pct >= 50 ? '#f46d43'
+                : pct >= 25 ? '#74add1'
+                : '#313695';
             activePopup?.remove();
-            activePopup = new maplibregl.Popup({ maxWidth: '240px' })
+            activePopup = new maplibregl.Popup({ maxWidth: '260px' })
                 .setLngLat(e.lngLat)
                 .setHTML(popupWrap(`
-                    <h3 style="margin:0 0 12px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
                         <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px">schema</span>Pedestrian Integration
                     </h3>
-                    ${label ? `<div style="font-size:12px;color:#64748b;margin-bottom:6px">${label}</div>` : ''}
-                    <div style="font-size:28px;font-weight:700;color:#f46d43">${score}</div>
-                    <div style="font-size:11px;color:#94a3b8;margin-top:4px">Space syntax integration value</div>
-                    ${gradientBar('linear-gradient(to right,#006837,#66bd63,#ffffbf,#f46d43,#a50026)', ['0', '9,000', '18,000'])}
+                    ${neighborhood ? `<div style="font-size:12px;color:#64748b;margin-bottom:8px">
+                        <span class="material-symbols-outlined" style="font-size:12px;vertical-align:middle;margin-right:3px">location_city</span>${neighborhood}
+                    </div>` : ''}
+                    ${pct != null ? `
+                    <div style="margin-bottom:10px">
+                        <div style="font-size:11px;color:#64748b;margin-bottom:2px">Rank within neighbourhood</div>
+                        <div style="font-size:30px;font-weight:700;color:${pctColor};line-height:1">${pct}<span style="font-size:16px">%</span></div>
+                        <div style="font-size:11px;color:#94a3b8">top ${100 - pct}% of streets here</div>
+                    </div>` : ''}
+                    <div style="font-size:11px;color:#64748b;margin-bottom:2px">Global integration score</div>
+                    <div style="font-size:18px;font-weight:600;color:#475569">${score}</div>
+                    ${gradientBar('linear-gradient(to right,#313695,#74add1,#ffffbf,#f46d43,#a50026)', ['Lowest', 'Mid', 'Highest'])}
                 `))
                 .addTo(map);
         });
@@ -455,8 +571,18 @@ export function useSofiaPlanLayers() {
 
     function setPedestrianSyntaxVisibility(map: MapLibreMap, visible: boolean) {
         const v = visible ? 'visible' : 'none';
-        if (map.getLayer('sofiaplan-pedestrian-syntax-fill')) {
-            map.setLayoutProperty('sofiaplan-pedestrian-syntax-fill', 'visibility', v);
+        ['sofiaplan-pedestrian-syntax-fill',
+         'sofiaplan-pedestrian-neighborhood-borders',
+         'sofiaplan-pedestrian-neighborhood-picker',
+         'sofiaplan-pedestrian-neighborhood-selected'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+        if (!visible) {
+            selectedPedestrianNeighborhoods.value = [];
+            if (map.getLayer('sofiaplan-pedestrian-neighborhood-selected'))
+                map.setFilter('sofiaplan-pedestrian-neighborhood-selected', ['==', ['get', 'label'], '']);
+            if (map.getLayer('sofiaplan-pedestrian-syntax-fill'))
+                map.setFilter('sofiaplan-pedestrian-syntax-fill', null);
         }
     }
 
@@ -466,6 +592,31 @@ export function useSofiaPlanLayers() {
         ensurePedestrianSyntax(map);
         setPedestrianSyntaxVisibility(map, showPedestrianSyntax.value);
     };
+
+    const setPedestrianSyntaxThreshold = (map: MapLibreMap | null, threshold: number) => {
+        if (!map) return;
+        pedestrianSyntaxThreshold.value = threshold;
+        if (map.getLayer('sofiaplan-pedestrian-syntax-fill'))
+            map.setFilter('sofiaplan-pedestrian-syntax-fill',
+                buildPedestrianFilter(threshold, selectedPedestrianNeighborhoods.value));
+    };
+
+    // Toggle one neighbourhood in/out of the multi-selection (used by the sidebar picker)
+    const selectPedestrianNeighborhood = (map: MapLibreMap | null, names: string[]) => {
+        if (!map) return;
+        selectedPedestrianNeighborhoods.value = names;
+        if (map.getLayer('sofiaplan-pedestrian-neighborhood-selected'))
+            map.setFilter('sofiaplan-pedestrian-neighborhood-selected',
+                names.length > 0
+                    ? ['in', ['get', 'label'], ['literal', names]]
+                    : ['==', ['get', 'label'], '']);
+        if (map.getLayer('sofiaplan-pedestrian-syntax-fill'))
+            map.setFilter('sofiaplan-pedestrian-syntax-fill',
+                buildPedestrianFilter(pedestrianSyntaxThreshold.value, names));
+    };
+
+    const clearPedestrianNeighborhoods = (map: MapLibreMap | null) =>
+        selectPedestrianNeighborhood(map, []);
 
     // ═════════════════════════════════════════════════════════════════════════
     // 6. POPULATION GRID (total population, range 0–23934)
@@ -1257,6 +1408,9 @@ export function useSofiaPlanLayers() {
         showPropertyPrices, togglePropertyPrices,
         showMetroCatchments, toggleMetroCatchments,
         showPedestrianSyntax, togglePedestrianSyntax,
+        pedestrianSyntaxThreshold, setPedestrianSyntaxThreshold,
+        neighborhoodNames,
+        selectedPedestrianNeighborhoods, selectPedestrianNeighborhood, clearPedestrianNeighborhoods,
         showSofiaPlanPopulation, toggleSofiaPlanPopulation,
         showBusinessTurnover, toggleBusinessTurnover,
         showDevelopmentPotential, toggleDevelopmentPotential,
