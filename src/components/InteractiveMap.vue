@@ -73,6 +73,10 @@
           :showSofiaPlanResidentialLoad="showResidentialLoad"
           :showSofiaPlanHealthServiceConcentration="showHealthServiceConcentration"
           :showSofiaPlanHealthInfrastructureConcentration="showHealthInfrastructureConcentration"
+          :showSofiaPlanBuildingDensityGe="showBuildingDensityGe"
+          :showSofiaPlanBuildingFootprintGe="showBuildingFootprintGe"
+          :showSofiaPlanResidentialTypologyGe="showResidentialTypologyGe"
+          :showSofiaPlanUrbanMorphologyGe="showUrbanMorphologyGe"
           :showAnySofiaPlan="showAnySofiaPlan"
           @toggleZoningCategory="handleToggleZoningCategory"
           @toggleSofiaPlanZoning="handleToggleSofiaPlanZoning"
@@ -94,6 +98,10 @@
           @toggleSofiaPlanResidentialLoad="handleToggleSofiaPlanResidentialLoad"
           @toggleSofiaPlanHealthServiceConcentration="handleToggleSofiaPlanHealthServiceConcentration"
           @toggleSofiaPlanHealthInfrastructureConcentration="handleToggleSofiaPlanHealthInfrastructureConcentration"
+          @toggleSofiaPlanBuildingDensityGe="handleToggleSofiaPlanBuildingDensityGe"
+          @toggleSofiaPlanBuildingFootprintGe="handleToggleSofiaPlanBuildingFootprintGe"
+          @toggleSofiaPlanResidentialTypologyGe="handleToggleSofiaPlanResidentialTypologyGe"
+          @toggleSofiaPlanUrbanMorphologyGe="handleToggleSofiaPlanUrbanMorphologyGe"
           @toggleAllSofiaPlan="handleToggleAllSofiaPlan"
           :showTransitAccessGe="showTransitAccessGe"
           :showTransitAccessDistrict="showTransitAccessDistrict"
@@ -391,6 +399,14 @@ const {
   toggleHealthServiceConcentration,
   showHealthInfrastructureConcentration,
   toggleHealthInfrastructureConcentration,
+  showBuildingDensityGe,
+  toggleBuildingDensityGe,
+  showBuildingFootprintGe,
+  toggleBuildingFootprintGe,
+  showResidentialTypologyGe,
+  toggleResidentialTypologyGe,
+  showUrbanMorphologyGe,
+  toggleUrbanMorphologyGe,
   showAnySofiaPlan,
   toggleAllSofiaPlan,
 } = useSofiaPlanLayers();
@@ -550,6 +566,10 @@ const handleToggleSofiaPlanPopulationPotential = () => togglePopulationPotential
 const handleToggleSofiaPlanResidentialLoad     = () => toggleResidentialLoad(mapInstance.value);
 const handleToggleSofiaPlanHealthServiceConcentration        = () => toggleHealthServiceConcentration(mapInstance.value);
 const handleToggleSofiaPlanHealthInfrastructureConcentration = () => toggleHealthInfrastructureConcentration(mapInstance.value);
+const handleToggleSofiaPlanBuildingDensityGe    = () => toggleBuildingDensityGe(mapInstance.value);
+const handleToggleSofiaPlanBuildingFootprintGe  = () => toggleBuildingFootprintGe(mapInstance.value);
+const handleToggleSofiaPlanResidentialTypologyGe = () => toggleResidentialTypologyGe(mapInstance.value);
+const handleToggleSofiaPlanUrbanMorphologyGe    = () => toggleUrbanMorphologyGe(mapInstance.value);
 const handleToggleAllSofiaPlan                = () => toggleAllSofiaPlan(mapInstance.value);
 
 const handleToggleTransitAccessGe       = () => toggleTransitAccessGe(mapInstance.value);

@@ -312,6 +312,38 @@ class TilesAPI {
         return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_health_infrastructure_concentration_tiles/{z}/{x}/{y}`;
     }
 
+    /**
+     * Gets the URL template for SofiaPlan building density by GE vector tiles served by Martin.
+     * Tile layer name: sofiaplan_building_density_ge_tiles; feature properties: ge_id, label, district, score (density/plot_coverage 0–1), intensity (floor_area_ratio), enclosure_ratio, avg_floors.
+     */
+    getSofiaPlanBuildingDensityGeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_building_density_ge_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan building footprint by GE vector tiles served by Martin.
+     * Tile layer name: sofiaplan_building_footprint_ge_tiles; feature properties: ge_id, label, district, score=rzp (total floor area m²), zp (footprint m²), rzp, avg_floors.
+     */
+    getSofiaPlanBuildingFootprintGeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_building_footprint_ge_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan residential typology by GE vector tiles served by Martin.
+     * Tile layer name: sofiaplan_residential_typology_ge_tiles; feature properties: ge_id, label, district, typology (string), single_pct, multi_pct, panel_pct, score (1=single, 2=multi, 3=panel, 0=unknown).
+     */
+    getSofiaPlanResidentialTypologyGeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_residential_typology_ge_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for SofiaPlan urban morphology by GE vector tiles served by Martin.
+     * Tile layer name: sofiaplan_urban_morphology_ge_tiles; feature properties: ge_id, label, district, morphology (string), score (1=вили, 2=компактна, 3=панелна/масив, 4=индустриална, 5=смесена, 0=unknown).
+     */
+    getSofiaPlanUrbanMorphologyGeTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_urban_morphology_ge_tiles/{z}/{x}/{y}`;
+    }
+
     /** Blue (city-centre) parking zone — table sofiaplan_parking_green */
     getParkingBlueTileUrl(): string {
         return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_parking_green/{z}/{x}/{y}`;

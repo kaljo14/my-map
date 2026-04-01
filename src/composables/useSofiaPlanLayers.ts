@@ -75,6 +75,10 @@ export function useSofiaPlanLayers() {
     const showResidentialLoad = ref(false);
     const showHealthServiceConcentration = ref(false);
     const showHealthInfrastructureConcentration = ref(false);
+    const showBuildingDensityGe = ref(false);
+    const showBuildingFootprintGe = ref(false);
+    const showResidentialTypologyGe = ref(false);
+    const showUrbanMorphologyGe = ref(false);
 
     const showAnySofiaPlan = computed(() =>
         showZoning.value || showIncome.value || showPropertyPrices.value ||
@@ -82,7 +86,9 @@ export function useSofiaPlanLayers() {
         showBusinessTurnover.value || showDevelopmentPotential.value || showZoningParams.value ||
         showNeighborhoods.value || showCensusAddresses.value || showDemographicForecast.value ||
         showDemographicForecastGe.value || showPopulationPotential.value || showResidentialLoad.value ||
-        showHealthServiceConcentration.value || showHealthInfrastructureConcentration.value
+        showHealthServiceConcentration.value || showHealthInfrastructureConcentration.value ||
+        showBuildingDensityGe.value || showBuildingFootprintGe.value ||
+        showResidentialTypologyGe.value || showUrbanMorphologyGe.value
     );
 
     // ── Active popup (shared across all layers) ───────────────────────────────
@@ -1553,6 +1559,420 @@ export function useSofiaPlanLayers() {
     };
 
     // ═════════════════════════════════════════════════════════════════════════
+    // 17. BUILDING DENSITY BY GE (dataset 632)
+    // ═════════════════════════════════════════════════════════════════════════
+    function ensureBuildingDensityGe(map: MapLibreMap) {
+        if (map.getSource('sofiaplan-building-density-ge')) return;
+
+        map.addSource('sofiaplan-building-density-ge', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanBuildingDensityGeTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-building-density-ge-fill',
+            type: 'fill',
+            source: 'sofiaplan-building-density-ge',
+            'source-layer': 'sofiaplan_building_density_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: {
+                'fill-color': ['interpolate', ['linear'], ['to-number', ['get', 'score'], 0],
+                    0.0,  '#ffffcc',
+                    0.15, '#ffeda0',
+                    0.3,  '#fed976',
+                    0.45, '#feb24c',
+                    0.6,  '#fd8d3c',
+                    0.75, '#fc4e2a',
+                    0.9,  '#e31a1c',
+                    1.0,  '#800026'],
+                'fill-opacity': 0.82,
+            },
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-building-density-ge-outline',
+            type: 'line',
+            source: 'sofiaplan-building-density-ge',
+            'source-layer': 'sofiaplan_building_density_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#7f0000', 'line-width': 0.7, 'line-opacity': 0.55 },
+        });
+
+        map.on('click', 'sofiaplan-building-density-ge-fill', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const label = props.label || '';
+            const district = props.district || '';
+            const density = props.score != null ? Math.round(Number(props.score) * 100) : null;
+            const intensity = props.intensity != null ? Number(props.intensity).toFixed(2) : '—';
+            const enclosure = props.enclosure_ratio != null ? Number(props.enclosure_ratio).toFixed(2) : '—';
+            const avgFloors = props.avg_floors != null ? Number(props.avg_floors).toFixed(1) : '—';
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '280px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                        🏗️ Застрояване по ГЕ
+                    </h3>
+                    ${label ? `<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">${label}</div>` : ''}
+                    ${district ? `<div style="font-size:11px;color:#64748b;margin-bottom:10px">${district}</div>` : ''}
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">Плътност</div>
+                            <div style="font-size:18px;font-weight:700;color:#d7301f">${density != null ? density + '%' : '—'}</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">Интензивност</div>
+                            <div style="font-size:18px;font-weight:700;color:#ef6548">${intensity}</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">Затвореност</div>
+                            <div style="font-size:18px;font-weight:700;color:#fc8d59">${enclosure}</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">Ср. етажност</div>
+                            <div style="font-size:18px;font-weight:700;color:#fdbb84">${avgFloors} <span style="font-size:11px;font-weight:400;color:#64748b">ет.</span></div>
+                        </div>
+                    </div>
+                    ${gradientBar('linear-gradient(to right,#ffffcc,#fed976,#fd8d3c,#e31a1c,#800026)', ['0%', '25%', '50%', '75%', '100%'])}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'sofiaplan-building-density-ge-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-building-density-ge-fill', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    function setBuildingDensityGeVisibility(map: MapLibreMap, visible: boolean) {
+        const v = visible ? 'visible' : 'none';
+        ['sofiaplan-building-density-ge-fill', 'sofiaplan-building-density-ge-outline'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+    }
+
+    const toggleBuildingDensityGe = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showBuildingDensityGe.value = forceState ?? !showBuildingDensityGe.value;
+        ensureBuildingDensityGe(map);
+        setBuildingDensityGeVisibility(map, showBuildingDensityGe.value);
+    };
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // 18. BUILDING FOOTPRINT BY GE (dataset 633)
+    // ═════════════════════════════════════════════════════════════════════════
+    function ensureBuildingFootprintGe(map: MapLibreMap) {
+        if (map.getSource('sofiaplan-building-footprint-ge')) return;
+
+        map.addSource('sofiaplan-building-footprint-ge', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanBuildingFootprintGeTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-building-footprint-ge-fill',
+            type: 'fill',
+            source: 'sofiaplan-building-footprint-ge',
+            'source-layer': 'sofiaplan_building_footprint_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: {
+                'fill-color': ['interpolate', ['linear'], ['to-number', ['get', 'score'], 0],
+                    0,      '#fff7bc',
+                    8000,   '#9dd56a',
+                    25000,  '#31b8a3',
+                    55000,  '#2166ac',
+                    100000, '#5e2a84'],
+                'fill-opacity': 0.82,
+            },
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-building-footprint-ge-outline',
+            type: 'line',
+            source: 'sofiaplan-building-footprint-ge',
+            'source-layer': 'sofiaplan_building_footprint_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#1a1a3e', 'line-width': 0.7, 'line-opacity': 0.45 },
+        });
+
+        map.on('click', 'sofiaplan-building-footprint-ge-fill', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const label = props.label || '';
+            const district = props.district || '';
+            const rzp = props.rzp != null ? Number(props.rzp).toLocaleString() : '—';
+            const zp = props.zp != null ? Number(props.zp).toLocaleString() : '—';
+            const buildingCount = props.avg_floors != null && Number(props.avg_floors) > 0 ? Math.round(Number(props.avg_floors)).toLocaleString() : '—';
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '280px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                        🏢 Застроена площ по ГЕ
+                    </h3>
+                    ${label ? `<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">${label}</div>` : ''}
+                    ${district ? `<div style="font-size:11px;color:#64748b;margin-bottom:10px">${district}</div>` : ''}
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">РЗП</div>
+                            <div style="font-size:15px;font-weight:700;color:#2171b5">${rzp}</div>
+                            <div style="font-size:10px;color:#94a3b8">м²</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">ЗП</div>
+                            <div style="font-size:15px;font-weight:700;color:#4292c6">${zp}</div>
+                            <div style="font-size:10px;color:#94a3b8">м²</div>
+                        </div>
+                        <div style="background:#f8fafc;padding:6px 8px;border-radius:6px">
+                            <div style="font-size:10px;color:#64748b;margin-bottom:2px">Сгради</div>
+                            <div style="font-size:15px;font-weight:700;color:#5e2a84">${buildingCount}</div>
+                            <div style="font-size:10px;color:#94a3b8">бр.</div>
+                        </div>
+                    </div>
+                    ${gradientBar('linear-gradient(to right,#fff7bc,#9dd56a,#31b8a3,#2166ac,#5e2a84)', ['0', '25к', '55к', '100к м²'])}
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'sofiaplan-building-footprint-ge-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-building-footprint-ge-fill', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    function setBuildingFootprintGeVisibility(map: MapLibreMap, visible: boolean) {
+        const v = visible ? 'visible' : 'none';
+        ['sofiaplan-building-footprint-ge-fill', 'sofiaplan-building-footprint-ge-outline'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+    }
+
+    const toggleBuildingFootprintGe = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showBuildingFootprintGe.value = forceState ?? !showBuildingFootprintGe.value;
+        ensureBuildingFootprintGe(map);
+        setBuildingFootprintGeVisibility(map, showBuildingFootprintGe.value);
+    };
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // 19. RESIDENTIAL TYPOLOGY BY GE (dataset 626)
+    // ═════════════════════════════════════════════════════════════════════════
+    function ensureResidentialTypologyGe(map: MapLibreMap) {
+        if (map.getSource('sofiaplan-residential-typology-ge')) return;
+
+        map.addSource('sofiaplan-residential-typology-ge', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanResidentialTypologyGeTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        const typologyColorExpr: maplibregl.ExpressionSpecification = [
+            'case',
+            ['==', ['to-number', ['get', 'score'], 0], 1], '#f9c74f',
+            ['==', ['to-number', ['get', 'score'], 0], 2], '#f94144',
+            ['==', ['to-number', ['get', 'score'], 0], 3], '#4361ee',
+            '#b0b0b0',
+        ];
+
+        map.addLayer({
+            id: 'sofiaplan-residential-typology-ge-fill',
+            type: 'fill',
+            source: 'sofiaplan-residential-typology-ge',
+            'source-layer': 'sofiaplan_residential_typology_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'fill-color': typologyColorExpr, 'fill-opacity': 0.8 },
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-residential-typology-ge-outline',
+            type: 'line',
+            source: 'sofiaplan-residential-typology-ge',
+            'source-layer': 'sofiaplan_residential_typology_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#2d2d2d', 'line-width': 0.6, 'line-opacity': 0.5 },
+        });
+
+        map.on('click', 'sofiaplan-residential-typology-ge-fill', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const label = props.label || '';
+            const district = props.district || '';
+            const score = Number(props.score ?? 0);
+            const singlePct = props.single_pct != null ? Number(props.single_pct).toFixed(1) : '—';
+            const multiPct = props.multi_pct != null ? Number(props.multi_pct).toFixed(1) : '—';
+            const panelPct = props.panel_pct != null ? Number(props.panel_pct).toFixed(1) : '—';
+            const typologyLabels: Record<number, string> = {
+                1: 'Ниска жилищна застройка',
+                2: 'Многофамилни сгради',
+                3: 'Панелна застройка',
+                0: 'Смесена / неопределена',
+            };
+            const typologyColors: Record<number, string> = {
+                1: '#f9c74f',
+                2: '#f94144',
+                3: '#4361ee',
+                0: '#b0b0b0',
+            };
+            const typLabel = typologyLabels[score] ?? typologyLabels[0];
+            const typColor = typologyColors[score] ?? typologyColors[0];
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '280px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                        🏘️ Жилищна типология по ГЕ
+                    </h3>
+                    ${label ? `<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">${label}</div>` : ''}
+                    ${district ? `<div style="font-size:11px;color:#64748b;margin-bottom:8px">${district}</div>` : ''}
+                    <div style="display:inline-block;padding:4px 12px;border-radius:16px;background:${typColor}22;border:1px solid ${typColor}88;color:${typColor};font-size:13px;font-weight:600;margin-bottom:10px">
+                        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${typColor};margin-right:5px;vertical-align:middle"></span>
+                        ${typLabel}
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+                        <div style="background:#fffbeb;padding:5px 6px;border-radius:6px;text-align:center;border-left:3px solid #f9c74f">
+                            <div style="font-size:9px;color:#64748b;margin-bottom:2px">Единични</div>
+                            <div style="font-size:15px;font-weight:700;color:#c98d00">${singlePct}%</div>
+                        </div>
+                        <div style="background:#fff0f0;padding:5px 6px;border-radius:6px;text-align:center;border-left:3px solid #f94144">
+                            <div style="font-size:9px;color:#64748b;margin-bottom:2px">Многофам.</div>
+                            <div style="font-size:15px;font-weight:700;color:#c41230">${multiPct}%</div>
+                        </div>
+                        <div style="background:#eff1ff;padding:5px 6px;border-radius:6px;text-align:center;border-left:3px solid #4361ee">
+                            <div style="font-size:9px;color:#64748b;margin-bottom:2px">Панелни</div>
+                            <div style="font-size:15px;font-weight:700;color:#2b3fc7">${panelPct}%</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:8px;margin-top:8px;font-size:11px;flex-wrap:wrap">
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f9c74f;margin-right:3px;vertical-align:middle"></span>Ниска</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f94144;margin-right:3px;vertical-align:middle"></span>Многофамилна</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#4361ee;margin-right:3px;vertical-align:middle"></span>Панелна</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#b0b0b0;margin-right:3px;vertical-align:middle"></span>Смесена</span>
+                    </div>
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'sofiaplan-residential-typology-ge-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-residential-typology-ge-fill', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    function setResidentialTypologyGeVisibility(map: MapLibreMap, visible: boolean) {
+        const v = visible ? 'visible' : 'none';
+        ['sofiaplan-residential-typology-ge-fill', 'sofiaplan-residential-typology-ge-outline'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+    }
+
+    const toggleResidentialTypologyGe = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showResidentialTypologyGe.value = forceState ?? !showResidentialTypologyGe.value;
+        ensureResidentialTypologyGe(map);
+        setResidentialTypologyGeVisibility(map, showResidentialTypologyGe.value);
+    };
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // 20. URBAN MORPHOLOGY BY GE (dataset 455)
+    // ═════════════════════════════════════════════════════════════════════════
+    function ensureUrbanMorphologyGe(map: MapLibreMap) {
+        if (map.getSource('sofiaplan-urban-morphology-ge')) return;
+
+        map.addSource('sofiaplan-urban-morphology-ge', {
+            type: 'vector',
+            tiles: [TilesAPI.getSofiaPlanUrbanMorphologyGeTileUrlTemplate()],
+            maxzoom: 14,
+        });
+
+        const morphologyColorExpr: maplibregl.ExpressionSpecification = [
+            'case',
+            ['==', ['to-number', ['get', 'score'], 0], 1], '#06d6a0',
+            ['==', ['to-number', ['get', 'score'], 0], 2], '#f77f00',
+            ['==', ['to-number', ['get', 'score'], 0], 3], '#118ab2',
+            ['==', ['to-number', ['get', 'score'], 0], 4], '#9b2226',
+            ['==', ['to-number', ['get', 'score'], 0], 5], '#c77dff',
+            '#adb5bd',
+        ];
+
+        map.addLayer({
+            id: 'sofiaplan-urban-morphology-ge-fill',
+            type: 'fill',
+            source: 'sofiaplan-urban-morphology-ge',
+            'source-layer': 'sofiaplan_urban_morphology_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'fill-color': morphologyColorExpr, 'fill-opacity': 0.8 },
+        });
+
+        map.addLayer({
+            id: 'sofiaplan-urban-morphology-ge-outline',
+            type: 'line',
+            source: 'sofiaplan-urban-morphology-ge',
+            'source-layer': 'sofiaplan_urban_morphology_ge_tiles',
+            layout: { visibility: 'none' },
+            paint: { 'line-color': '#2d2d2d', 'line-width': 0.6, 'line-opacity': 0.5 },
+        });
+
+        map.on('click', 'sofiaplan-urban-morphology-ge-fill', (e) => {
+            const props = e.features?.[0]?.properties ?? {};
+            const label = props.label || '';
+            const district = props.district || '';
+            const score = Number(props.score ?? 0);
+            const morphologyLabels: Record<number, string> = {
+                1: 'Вилна зона',
+                2: 'Компактна градска среда',
+                3: 'Панелни масиви',
+                4: 'Индустриална зона',
+                5: 'Смесена среда',
+                0: 'Неопределена',
+            };
+            const morphologyColors: Record<number, string> = {
+                1: '#06d6a0',
+                2: '#f77f00',
+                3: '#118ab2',
+                4: '#9b2226',
+                5: '#c77dff',
+                0: '#adb5bd',
+            };
+            const morphLabel = morphologyLabels[score] ?? morphologyLabels[0];
+            const morphColor = morphologyColors[score] ?? morphologyColors[0];
+            activePopup?.remove();
+            activePopup = new maplibregl.Popup({ maxWidth: '280px' })
+                .setLngLat(e.lngLat)
+                .setHTML(popupWrap(`
+                    <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                        🗺️ Градска морфология по ГЕ
+                    </h3>
+                    ${label ? `<div style="font-size:13px;font-weight:600;color:#1e293b;margin-bottom:2px">${label}</div>` : ''}
+                    ${district ? `<div style="font-size:11px;color:#64748b;margin-bottom:8px">${district}</div>` : ''}
+                    <div style="display:inline-block;padding:4px 12px;border-radius:16px;background:${morphColor}22;border:1px solid ${morphColor}88;color:${morphColor};font-size:13px;font-weight:600;margin-bottom:12px">
+                        <span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${morphColor};margin-right:5px;vertical-align:middle"></span>
+                        ${morphLabel}
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:5px;font-size:11px;color:#475569">
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#06d6a0;margin-right:5px;vertical-align:middle"></span>Вилна зона</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#f77f00;margin-right:5px;vertical-align:middle"></span>Компактна градска среда</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#118ab2;margin-right:5px;vertical-align:middle"></span>Панелни масиви</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#9b2226;margin-right:5px;vertical-align:middle"></span>Индустриална зона</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#c77dff;margin-right:5px;vertical-align:middle"></span>Смесена среда</span>
+                        <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#adb5bd;margin-right:5px;vertical-align:middle"></span>Неопределена</span>
+                    </div>
+                `))
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'sofiaplan-urban-morphology-ge-fill', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'sofiaplan-urban-morphology-ge-fill', () => { map.getCanvas().style.cursor = ''; });
+    }
+
+    function setUrbanMorphologyGeVisibility(map: MapLibreMap, visible: boolean) {
+        const v = visible ? 'visible' : 'none';
+        ['sofiaplan-urban-morphology-ge-fill', 'sofiaplan-urban-morphology-ge-outline'].forEach(id => {
+            if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v);
+        });
+    }
+
+    const toggleUrbanMorphologyGe = (map: MapLibreMap | null, forceState?: boolean) => {
+        if (!map) return;
+        showUrbanMorphologyGe.value = forceState ?? !showUrbanMorphologyGe.value;
+        ensureUrbanMorphologyGe(map);
+        setUrbanMorphologyGeVisibility(map, showUrbanMorphologyGe.value);
+    };
+
+    // ═════════════════════════════════════════════════════════════════════════
     // MASTER TOGGLE
     // ═════════════════════════════════════════════════════════════════════════
     function toggleAllSofiaPlan(map: MapLibreMap | null, forceState?: boolean) {
@@ -1574,6 +1994,10 @@ export function useSofiaPlanLayers() {
         toggleResidentialLoad(map, target);
         toggleHealthServiceConcentration(map, target);
         toggleHealthInfrastructureConcentration(map, target);
+        toggleBuildingDensityGe(map, target);
+        toggleBuildingFootprintGe(map, target);
+        toggleResidentialTypologyGe(map, target);
+        toggleUrbanMorphologyGe(map, target);
     }
 
     return {
@@ -1602,6 +2026,10 @@ export function useSofiaPlanLayers() {
         showResidentialLoad, toggleResidentialLoad,
         showHealthServiceConcentration, toggleHealthServiceConcentration,
         showHealthInfrastructureConcentration, toggleHealthInfrastructureConcentration,
+        showBuildingDensityGe, toggleBuildingDensityGe,
+        showBuildingFootprintGe, toggleBuildingFootprintGe,
+        showResidentialTypologyGe, toggleResidentialTypologyGe,
+        showUrbanMorphologyGe, toggleUrbanMorphologyGe,
         showAnySofiaPlan,
         toggleAllSofiaPlan,
     };

@@ -202,6 +202,21 @@
         <ToggleRow label="Health Infrastructure Concentration" variant="sidebar" :model-value="showSofiaPlanHealthInfrastructureConcentration" @toggle="$emit('toggleSofiaPlanHealthInfrastructureConcentration')">
           <template #icon><span class="material-symbols-outlined">local_hospital</span></template>
         </ToggleRow>
+        <div style="margin:10px 0 6px 0;padding:6px 0 4px 0;border-top:1px solid rgba(245,240,232,0.08);font-size:10px;font-weight:600;color:#8a7e72;text-transform:uppercase;letter-spacing:0.08em">
+          Сгради и морфология по ГЕ
+        </div>
+        <ToggleRow label="Плътност на застрояване" variant="sidebar" :model-value="showSofiaPlanBuildingDensityGe" @toggle="$emit('toggleSofiaPlanBuildingDensityGe')">
+          <template #icon><span class="material-symbols-outlined">density_medium</span></template>
+        </ToggleRow>
+        <ToggleRow label="Застроена площ (РЗП/ЗП)" variant="sidebar" :model-value="showSofiaPlanBuildingFootprintGe" @toggle="$emit('toggleSofiaPlanBuildingFootprintGe')">
+          <template #icon><span class="material-symbols-outlined">square_foot</span></template>
+        </ToggleRow>
+        <ToggleRow label="Жилищна типология" variant="sidebar" :model-value="showSofiaPlanResidentialTypologyGe" @toggle="$emit('toggleSofiaPlanResidentialTypologyGe')">
+          <template #icon><span class="material-symbols-outlined">holiday_village</span></template>
+        </ToggleRow>
+        <ToggleRow label="Градска морфология" variant="sidebar" :model-value="showSofiaPlanUrbanMorphologyGe" @toggle="$emit('toggleSofiaPlanUrbanMorphologyGe')">
+          <template #icon><span class="material-symbols-outlined">map</span></template>
+        </ToggleRow>
       </div>
     </SidebarSection>
 
@@ -453,6 +468,10 @@ const props = defineProps<{
   showSofiaPlanResidentialLoad: boolean;
   showSofiaPlanHealthServiceConcentration: boolean;
   showSofiaPlanHealthInfrastructureConcentration: boolean;
+  showSofiaPlanBuildingDensityGe: boolean;
+  showSofiaPlanBuildingFootprintGe: boolean;
+  showSofiaPlanResidentialTypologyGe: boolean;
+  showSofiaPlanUrbanMorphologyGe: boolean;
   showAnySofiaPlan: boolean;
   // Transport & Accessibility
   showTransitAccessGe: boolean;
@@ -517,6 +536,10 @@ defineEmits<{
   (e: 'toggleSofiaPlanResidentialLoad'): void;
   (e: 'toggleSofiaPlanHealthServiceConcentration'): void;
   (e: 'toggleSofiaPlanHealthInfrastructureConcentration'): void;
+  (e: 'toggleSofiaPlanBuildingDensityGe'): void;
+  (e: 'toggleSofiaPlanBuildingFootprintGe'): void;
+  (e: 'toggleSofiaPlanResidentialTypologyGe'): void;
+  (e: 'toggleSofiaPlanUrbanMorphologyGe'): void;
   (e: 'toggleAllSofiaPlan'): void;
   // Transport & Accessibility
   (e: 'toggleTransitAccessGe'): void;
