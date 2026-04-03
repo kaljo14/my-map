@@ -84,7 +84,9 @@
             "edit": "Редактиране",
             "editInfo": "Редактирай инфо",
             "reviews": "отзива",
-            "moreDays": "още дни"
+            "moreDays": "още дни",
+            "estimatedVisitors": "Прогн. посетители/мес.",
+            "perMonth": "/месец"
         },
         "opportunity": {
             "title": "Зона на възможност",

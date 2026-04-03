@@ -59,6 +59,9 @@
       <InfoRow v-if="shop.services?.length" icon="label" :label="`${$t('map.popup.services')}:`">
         {{ shop.services.slice(0, 3).join(', ') }}
       </InfoRow>
+      <InfoRow v-if="shop.estimated_monthly_visitors" icon="group" :label="`${$t('map.popup.estimatedVisitors')}:`">
+        <span class="visitor-estimate">{{ shop.estimated_monthly_visitors.toLocaleString() }}</span>
+      </InfoRow>
     </div>
 
     <!-- Action Buttons -->
@@ -198,6 +201,11 @@ const getStarData = (rating: number) => {
   color: #9d9080;
   font-style: italic;
   margin-top: 2px;
+}
+
+.visitor-estimate {
+  font-weight: 700;
+  color: #2d7d52;
 }
 
 .popup-actions {

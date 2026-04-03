@@ -84,7 +84,9 @@
       "edit": "Edit",
       "editInfo": "Edit Info",
       "reviews": "reviews",
-      "moreDays": "more days"
+      "moreDays": "more days",
+      "estimatedVisitors": "Est. Visitors/mo",
+      "perMonth": "/month"
     },
     "opportunity": {
       "title": "Opportunity Zone",
