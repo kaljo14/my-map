@@ -1,0 +1,713 @@
+import { ref, computed } from 'vue'
+
+export interface FeatureTag {
+  icon: string
+  label: string
+}
+
+export interface FeatureCapability {
+  icon: string
+  title: string
+  desc: string
+}
+
+export interface FeatureSectionData {
+  icon: string
+  navLabel: string
+  label: string
+  hue: number
+  title: string
+  description: string
+  tags: FeatureTag[]
+  capabilities: FeatureCapability[]
+}
+
+export interface FeaturesTranslations {
+  nav: { home: string; cta: string }
+  hero: {
+    badge: string
+    titleLine1: string
+    titleLine2: string
+    sub: string
+  }
+  sections: FeatureSectionData[]
+  cta: {
+    title: string
+    sub: string
+    primary: string
+    secondary: string
+  }
+  footer: {
+    copy: string
+    openMap: string
+  }
+}
+
+const translations: Record<'en' | 'bg', FeaturesTranslations> = {
+  en: {
+    nav: { home: 'Home', cta: 'Open Map' },
+    hero: {
+      badge: 'Platform Features',
+      titleLine1: 'Every tool you need to',
+      titleLine2: 'pick the perfect location.',
+      sub: 'Lonctus combines competitor data, urban planning layers, transit networks, and demographic intelligence into one interactive map. Here is everything it can do.',
+    },
+    sections: [
+      {
+        icon: 'storefront',
+        navLabel: 'Competitors',
+        label: 'Data Layers',
+        hue: 25,
+        title: 'Competitor Mapping',
+        description:
+          'See every business in your category plotted on a live, interactive map. Instantly identify saturated zones and underserved neighborhoods where your business could thrive.',
+        tags: [
+          { icon: 'content_cut', label: 'Barbershops' },
+          { icon: 'fitness_center', label: 'Gyms' },
+          { icon: 'local_car_wash', label: 'Car Washes' },
+          { icon: 'shopping_cart', label: 'Grocery' },
+        ],
+        capabilities: [
+          {
+            icon: 'category',
+            title: 'Multiple business categories',
+            desc: 'Track barbershops, gyms, car washes, and grocery stores. Toggle each category independently to see the competitive landscape for your specific industry.',
+          },
+          {
+            icon: 'hub',
+            title: 'Smart clustering',
+            desc: 'When zoomed out, nearby businesses group into clusters with counts. Zoom in to see individual locations with detailed popups including ratings, reviews, prices, and opening hours.',
+          },
+          {
+            icon: 'filter_alt',
+            title: 'Advanced filtering',
+            desc: 'Filter by minimum rating, review count, price range, and specific services offered. For grocery stores, filter by chain to focus on big-chain vs. independent competition.',
+          },
+          {
+            icon: 'info',
+            title: 'Rich business details',
+            desc: 'Click any business to see its full profile: address, phone, website, opening hours, services, Google rating, and directions link.',
+          },
+        ],
+      },
+      {
+        icon: 'group',
+        navLabel: 'Population',
+        label: 'Demographics',
+        hue: 200,
+        title: 'Population & Demographics',
+        description:
+          'Understand where your potential customers actually live. Census-derived population grids and demographic forecasts help you match locations to demand, not just real estate prices.',
+        tags: [
+          { icon: 'grid_on', label: 'Density Grid' },
+          { icon: 'trending_up', label: 'Forecasts' },
+          { icon: 'people', label: 'Census Data' },
+        ],
+        capabilities: [
+          {
+            icon: 'layers',
+            title: 'Population density grid',
+            desc: 'A color-coded grid overlays the city showing population density per cell. Six threshold filters (1K to 24K+ residents) let you focus on the density level that matters for your business.',
+          },
+          {
+            icon: 'analytics',
+            title: 'Demographic forecast',
+            desc: "SofiaPlan's demographic forecast layers project population changes by planning unit, helping you choose locations with growing — not shrinking — customer bases.",
+          },
+          {
+            icon: 'home',
+            title: 'Census addresses',
+            desc: 'View address-level census data to understand residential density at a granular level, going beyond neighborhood averages to see building-by-building patterns.',
+          },
+          {
+            icon: 'apartment',
+            title: 'Residential load & typology',
+            desc: 'Distinguish between high-rise residential blocks and low-density housing areas. Residential typology helps predict foot traffic patterns and customer profiles.',
+          },
+        ],
+      },
+      {
+        icon: 'eco',
+        navLabel: 'Opportunities',
+        label: 'Analysis',
+        hue: 140,
+        title: 'Opportunity Zones',
+        description:
+          'The analysis engine cross-references competitor density against population data to surface zones where demand outstrips supply. Stop guessing — let data show you where the gaps are.',
+        tags: [
+          { icon: 'local_fire_department', label: 'Heatmap' },
+          { icon: 'grid_view', label: 'Analysis Grid' },
+          { icon: 'score', label: 'Scoring' },
+        ],
+        capabilities: [
+          {
+            icon: 'thermostat',
+            title: 'Opportunity heatmap',
+            desc: 'A heat-gradient overlay highlights areas with the best ratio of population to existing businesses. Switch between barbershop and gym categories to see different opportunity landscapes.',
+          },
+          {
+            icon: 'grid_4x4',
+            title: 'Analysis grid',
+            desc: 'A men-per-shop metric grid shows exactly how many potential customers each existing business serves. High ratios mean underserved areas — prime opportunities for new entrants.',
+          },
+          {
+            icon: 'palette',
+            title: 'Color-coded scoring',
+            desc: 'Continuous color interpolation from cool (oversaturated) to warm (high opportunity) makes it instant to visually scan the city for the best zones.',
+          },
+          {
+            icon: 'compare',
+            title: 'Category switching',
+            desc: 'Toggle between business categories to compare opportunity landscapes. An area saturated with barbershops might be completely underserved for gyms.',
+          },
+        ],
+      },
+      {
+        icon: 'apartment',
+        navLabel: 'Urban Data',
+        label: 'SofiaPlan',
+        hue: 270,
+        title: 'Urban Planning Data',
+        description:
+          "Access 20+ urban planning layers from SofiaPlan, Sofia's official urban development platform. Zoning, income levels, property prices, building morphology, and development potential — all on one map.",
+        tags: [
+          { icon: 'location_city', label: 'Zoning' },
+          { icon: 'payments', label: 'Income' },
+          { icon: 'real_estate_agent', label: 'Prices' },
+          { icon: 'architecture', label: 'Buildings' },
+        ],
+        capabilities: [
+          {
+            icon: 'map',
+            title: 'Urban zoning',
+            desc: 'View zoning categories with checkbox filters to see which areas are designated residential, commercial, industrial, or mixed-use. Essential for checking whether your business type is permitted.',
+          },
+          {
+            icon: 'attach_money',
+            title: 'Income & property prices',
+            desc: 'Overlay income levels and property price layers to understand the economic profile of each neighborhood. Match your price point to the local purchasing power.',
+          },
+          {
+            icon: 'domain',
+            title: 'Building density & morphology',
+            desc: 'Four building/morphology layers show building density, footprint ratios, residential typology, and urban morphology. Understand the physical character of each area.',
+          },
+          {
+            icon: 'trending_up',
+            title: 'Development potential',
+            desc: 'See which zones have high development potential, business turnover rates, and zoning parameters. Spot areas about to transform before rents spike.',
+          },
+          {
+            icon: 'directions_walk',
+            title: 'Pedestrian syntax',
+            desc: 'A unique layer showing pedestrian flow patterns by neighborhood with adjustable thresholds. Higher pedestrian syntax scores mean more natural foot traffic for walk-in businesses.',
+          },
+          {
+            icon: 'medical_services',
+            title: 'Health infrastructure',
+            desc: 'Health service and infrastructure concentration layers — useful for wellness businesses, pharmacies, or any venture that benefits from proximity to medical facilities.',
+          },
+        ],
+      },
+      {
+        icon: 'directions_transit',
+        navLabel: 'Transport',
+        label: 'Accessibility',
+        hue: 200,
+        title: 'Transport & Accessibility',
+        description:
+          'Visualize every transit network in Sofia. Metro, bus, tram, trolleybus, rail, and cycling infrastructure — plus access scoring by planning zone and district.',
+        tags: [
+          { icon: 'train', label: 'Metro' },
+          { icon: 'directions_bus', label: 'Bus' },
+          { icon: 'tram', label: 'Tram' },
+          { icon: 'pedal_bike', label: 'Cycling' },
+        ],
+        capabilities: [
+          {
+            icon: 'blur_on',
+            title: 'Transit access scoring',
+            desc: 'Two layers score transit accessibility — by planning zone and by district. See at a glance which areas have the best public transport connectivity for your customers.',
+          },
+          {
+            icon: 'train',
+            title: 'Metro catchment zones',
+            desc: 'Two radius overlays (800m and 1200m+) show the walkable catchment area around every metro station. Being inside a metro catchment zone is a major foot-traffic advantage.',
+          },
+          {
+            icon: 'route',
+            title: 'Complete line networks',
+            desc: 'Toggle individual bus, trolleybus, and tram line overlays. See exactly which routes pass near your candidate locations and how connected they are.',
+          },
+          {
+            icon: 'pedal_bike',
+            title: 'Cycling infrastructure',
+            desc: 'Current and planned cycling network layers show bike lanes and paths. Important for businesses targeting young, urban, cycling-commuter demographics.',
+          },
+          {
+            icon: 'railway_alert',
+            title: 'Railway stations',
+            desc: 'Railway station locations mark high-traffic intermodal hubs. Being near a rail station adds an extra layer of accessibility beyond metro and bus.',
+          },
+        ],
+      },
+      {
+        icon: 'compare_arrows',
+        navLabel: 'Compare',
+        label: 'Spatial Tools',
+        hue: 40,
+        title: 'Location Comparison',
+        description:
+          'Drop candidate locations on the map and compare them side-by-side across multiple data dimensions. Make your final decision with confidence, backed by quantified metrics.',
+        tags: [
+          { icon: 'push_pin', label: 'Pin Mode' },
+          { icon: 'leaderboard', label: 'Scoring' },
+          { icon: 'table_chart', label: 'Metrics' },
+        ],
+        capabilities: [
+          {
+            icon: 'add_location',
+            title: 'Pin candidate locations',
+            desc: 'Enter comparison mode and click anywhere on the map to drop pins at your candidate locations. Each pin is numbered and labeled for easy reference.',
+          },
+          {
+            icon: 'bar_chart',
+            title: 'Multi-dimensional scoring',
+            desc: 'Each pinned location is scored across foot traffic potential, competition density, transit accessibility, demographics, rent value, and overall composite score.',
+          },
+          {
+            icon: 'view_column',
+            title: 'Side-by-side comparison',
+            desc: 'The comparison panel displays all pinned locations in parallel columns with metric bars. Instantly see which location wins on each dimension.',
+          },
+          {
+            icon: 'delete',
+            title: 'Flexible management',
+            desc: 'Add, remove, and re-pin locations freely. The comparison updates in real time as you adjust your candidate list.',
+          },
+        ],
+      },
+      {
+        icon: 'draw',
+        navLabel: 'Area Tool',
+        label: 'Spatial Tools',
+        hue: 160,
+        title: 'Area Analysis Tool',
+        description:
+          'Draw a custom polygon on the map to define your area of interest. Lonctus calculates detailed metrics for everything inside your selection — competitor count, population, opportunity score, and more.',
+        tags: [
+          { icon: 'pentagon', label: 'Polygon Draw' },
+          { icon: 'calculate', label: 'Metrics' },
+          { icon: 'crop_free', label: 'Custom Area' },
+        ],
+        capabilities: [
+          {
+            icon: 'gesture',
+            title: 'Freeform polygon drawing',
+            desc: 'Click to place vertices and define any shape. The tool supports complex polygons to match real neighborhoods, commercial zones, or your personal search radius.',
+          },
+          {
+            icon: 'summarize',
+            title: 'Instant area metrics',
+            desc: 'Once drawn, the analysis panel shows competitor count by category, estimated population, population density, and an opportunity score for the selected area.',
+          },
+          {
+            icon: 'filter_alt',
+            title: 'Filtered results',
+            desc: 'Businesses inside your polygon are automatically filtered and displayed. See exactly which competitors operate within your defined zone.',
+          },
+          {
+            icon: 'refresh',
+            title: 'Redraw anytime',
+            desc: 'Clear and redraw as many times as you need. Quickly test different neighborhood boundaries to find the optimal catchment area for your business.',
+          },
+        ],
+      },
+      {
+        icon: 'layers',
+        navLabel: 'Infrastructure',
+        label: 'Map Layers',
+        hue: 190,
+        title: 'Infrastructure Layers',
+        description:
+          'Additional infrastructure overlays give you the full picture. Parking zones, pedestrian walkability networks, and OpenStreetMap points of interest round out your location intelligence.',
+        tags: [
+          { icon: 'local_parking', label: 'Parking' },
+          { icon: 'directions_walk', label: 'Walk Score' },
+          { icon: 'place', label: 'POIs' },
+        ],
+        capabilities: [
+          {
+            icon: 'local_parking',
+            title: 'Parking zones',
+            desc: 'Blue Zone and Green Zone parking overlays show where paid parking is enforced. Important for businesses that depend on drive-in customers — you need to know parking availability and cost.',
+          },
+          {
+            icon: 'directions_walk',
+            title: 'Pedestrian walkability network',
+            desc: 'The Walk Score network layer visualizes pedestrian-friendly streets and paths. High walkability correlates with foot traffic — the lifeblood of retail and service businesses.',
+          },
+          {
+            icon: 'travel_explore',
+            title: 'OpenStreetMap POIs',
+            desc: 'Community-curated points of interest from OpenStreetMap, including shops, restaurants, schools, hospitals, and landmarks. Understand the commercial ecosystem around your candidate location.',
+          },
+          {
+            icon: 'subway',
+            title: 'Metro lines & stops',
+            desc: 'Dedicated metro line layers with per-line filtering (M1, M2, M3, M4) and individual stop markers. Toggle each line independently to see your specific transit connections.',
+          },
+        ],
+      },
+    ],
+    cta: {
+      title: 'Ready to find your perfect location?',
+      sub: 'All these features are live and interactive. Open the map and start exploring.',
+      primary: 'Open Map',
+      secondary: '\u2190 Back to Home',
+    },
+    footer: {
+      copy: '\u00a9 2026 \u00b7 Business Location Intelligence',
+      openMap: 'Open Map \u2192',
+    },
+  },
+
+  bg: {
+    nav: { home: '\u041d\u0430\u0447\u0430\u043b\u043e', cta: '\u041e\u0442\u0432\u043e\u0440\u0438 \u043a\u0430\u0440\u0442\u0430\u0442\u0430' },
+    hero: {
+      badge: '\u0424\u0443\u043d\u043a\u0446\u0438\u0438 \u043d\u0430 \u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u0430\u0442\u0430',
+      titleLine1: '\u0412\u0441\u0435\u043a\u0438 \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442, \u0437\u0430 \u0434\u0430',
+      titleLine2: '\u0438\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u043f\u0435\u0440\u0444\u0435\u043a\u0442\u043d\u0430\u0442\u0430 \u043b\u043e\u043a\u0430\u0446\u0438\u044f.',
+      sub: 'Lonctus \u0441\u044a\u0447\u0435\u0442\u0430\u0432\u0430 \u0434\u0430\u043d\u043d\u0438 \u0437\u0430 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u0438, \u0433\u0440\u0430\u0434\u043e\u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0435\u043d\u0438 \u0441\u043b\u043e\u0435\u0432\u0435, \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u043d\u0438 \u043c\u0440\u0435\u0436\u0438 \u0438 \u0434\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0441\u043a\u0430 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f \u0432 \u0435\u0434\u043d\u0430 \u0438\u043d\u0442\u0435\u0440\u0430\u043a\u0442\u0438\u0432\u043d\u0430 \u043a\u0430\u0440\u0442\u0430. \u0415\u0442\u043e \u043a\u0430\u043a\u0432\u043e \u043c\u043e\u0436\u0435.',
+    },
+    sections: [
+      {
+        icon: 'storefront',
+        navLabel: '\u041a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u0438',
+        label: '\u0421\u043b\u043e\u0435\u0432\u0435 \u0441 \u0434\u0430\u043d\u043d\u0438',
+        hue: 25,
+        title: '\u041a\u0430\u0440\u0442\u043e\u0433\u0440\u0430\u0444\u0438\u0440\u0430\u043d\u0435 \u043d\u0430 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u0438',
+        description:
+          '\u0412\u0438\u0436\u0442\u0435 \u0432\u0441\u0435\u043a\u0438 \u0431\u0438\u0437\u043d\u0435\u0441 \u043e\u0442 \u0432\u0430\u0448\u0430\u0442\u0430 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f \u043d\u0430 \u0436\u0438\u0432\u0430 \u0438\u043d\u0442\u0435\u0440\u0430\u043a\u0442\u0438\u0432\u043d\u0430 \u043a\u0430\u0440\u0442\u0430. \u041d\u0435\u0437\u0430\u0431\u0430\u0432\u043d\u043e \u0438\u0434\u0435\u043d\u0442\u0438\u0444\u0438\u0446\u0438\u0440\u0430\u0439\u0442\u0435 \u043d\u0430\u0441\u0438\u0442\u0435\u043d\u0438 \u0437\u043e\u043d\u0438 \u0438 \u043d\u0435\u043e\u0431\u0441\u043b\u0443\u0436\u0435\u043d\u0438 \u043a\u0432\u0430\u0440\u0442\u0430\u043b\u0438, \u043a\u044a\u0434\u0435\u0442\u043e \u0431\u0438\u0437\u043d\u0435\u0441\u044a\u0442 \u0432\u0438 \u043c\u043e\u0436\u0435 \u0434\u0430 \u043f\u0440\u043e\u0446\u044a\u0444\u0442\u0438.',
+        tags: [
+          { icon: 'content_cut', label: '\u0411\u0440\u044a\u0441\u043d\u0430\u0440\u043d\u0438\u0446\u0438' },
+          { icon: 'fitness_center', label: '\u0424\u0438\u0442\u043d\u0435\u0441\u0438' },
+          { icon: 'local_car_wash', label: '\u0410\u0432\u0442\u043e\u043c\u0438\u0432\u043a\u0438' },
+          { icon: 'shopping_cart', label: '\u0425\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u043d\u0438' },
+        ],
+        capabilities: [
+          {
+            icon: 'category',
+            title: '\u041c\u043d\u043e\u0436\u0435\u0441\u0442\u0432\u043e \u0431\u0438\u0437\u043d\u0435\u0441 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438',
+            desc: '\u041f\u0440\u043e\u0441\u043b\u0435\u0434\u044f\u0432\u0430\u0439\u0442\u0435 \u0431\u0440\u044a\u0441\u043d\u0430\u0440\u043d\u0438\u0446\u0438, \u0444\u0438\u0442\u043d\u0435\u0441\u0438, \u0430\u0432\u0442\u043e\u043c\u0438\u0432\u043a\u0438 \u0438 \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u043d\u0438 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0438. \u041f\u0440\u0435\u0432\u043a\u043b\u044e\u0447\u0432\u0430\u0439\u0442\u0435 \u0432\u0441\u044f\u043a\u0430 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f, \u0437\u0430 \u0434\u0430 \u0432\u0438\u0434\u0438\u0442\u0435 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u043d\u0438\u044f \u043f\u0435\u0439\u0437\u0430\u0436 \u0437\u0430 \u0432\u0430\u0448\u0430\u0442\u0430 \u0438\u043d\u0434\u0443\u0441\u0442\u0440\u0438\u044f.',
+          },
+          {
+            icon: 'hub',
+            title: '\u0418\u043d\u0442\u0435\u043b\u0438\u0433\u0435\u043d\u0442\u043d\u043e \u0433\u0440\u0443\u043f\u0438\u0440\u0430\u043d\u0435',
+            desc: '\u041f\u0440\u0438 \u043e\u0442\u0434\u0430\u043b\u0435\u0447\u0430\u0432\u0430\u043d\u0435 \u0431\u043b\u0438\u0437\u043a\u0438\u0442\u0435 \u0431\u0438\u0437\u043d\u0435\u0441\u0438 \u0441\u0435 \u0433\u0440\u0443\u043f\u0438\u0440\u0430\u0442 \u0432 \u043a\u043b\u044a\u0441\u0442\u0435\u0440\u0438 \u0441 \u0431\u0440\u043e\u0439\u043a\u0438. \u041f\u0440\u0438\u0431\u043b\u0438\u0436\u0435\u0442\u0435, \u0437\u0430 \u0434\u0430 \u0432\u0438\u0434\u0438\u0442\u0435 \u043e\u0442\u0434\u0435\u043b\u043d\u0438\u0442\u0435 \u043e\u0431\u0435\u043a\u0442\u0438 \u0441 \u043f\u043e\u0434\u0440\u043e\u0431\u043d\u0438 \u0438\u0437\u0441\u043a\u0430\u0447\u0430\u0449\u0438 \u043f\u0440\u043e\u0437\u043e\u0440\u0446\u0438 \u0441 \u043e\u0446\u0435\u043d\u043a\u0438, \u0440\u0435\u0432\u044e\u0442\u0430, \u0446\u0435\u043d\u0438 \u0438 \u0440\u0430\u0431\u043e\u0442\u043d\u043e \u0432\u0440\u0435\u043c\u0435.',
+          },
+          {
+            icon: 'filter_alt',
+            title: '\u0420\u0430\u0437\u0448\u0438\u0440\u0435\u043d\u043e \u0444\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u043d\u0435',
+            desc: '\u0424\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u0439\u0442\u0435 \u043f\u043e \u043c\u0438\u043d\u0438\u043c\u0430\u043b\u043d\u0430 \u043e\u0446\u0435\u043d\u043a\u0430, \u0431\u0440\u043e\u0439 \u0440\u0435\u0432\u044e\u0442\u0430, \u0446\u0435\u043d\u043e\u0432\u0438 \u0434\u0438\u0430\u043f\u0430\u0437\u043e\u043d \u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u043d\u0438 \u0443\u0441\u043b\u0443\u0433\u0438. \u0417\u0430 \u0445\u0440\u0430\u043d\u0438\u0442\u0435\u043b\u043d\u0438 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0438 \u2014 \u0444\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u0439\u0442\u0435 \u043f\u043e \u0432\u0435\u0440\u0438\u0433\u0430.',
+          },
+          {
+            icon: 'info',
+            title: '\u041f\u043e\u0434\u0440\u043e\u0431\u043d\u0430 \u0431\u0438\u0437\u043d\u0435\u0441 \u0438\u043d\u0444\u043e\u0440\u043c\u0430\u0446\u0438\u044f',
+            desc: '\u041a\u043b\u0438\u043a\u043d\u0435\u0442\u0435 \u0432\u044a\u0440\u0445\u0443 \u0431\u0438\u0437\u043d\u0435\u0441, \u0437\u0430 \u0434\u0430 \u0432\u0438\u0434\u0438\u0442\u0435 \u043f\u044a\u043b\u043d\u0438\u044f \u043c\u0443 \u043f\u0440\u043e\u0444\u0438\u043b: \u0430\u0434\u0440\u0435\u0441, \u0442\u0435\u043b\u0435\u0444\u043e\u043d, \u0441\u0430\u0439\u0442, \u0440\u0430\u0431\u043e\u0442\u043d\u043e \u0432\u0440\u0435\u043c\u0435, \u0443\u0441\u043b\u0443\u0433\u0438, Google \u0440\u0435\u0439\u0442\u0438\u043d\u0433 \u0438 \u043b\u0438\u043d\u043a \u0437\u0430 \u043d\u0430\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u044f.',
+          },
+        ],
+      },
+      {
+        icon: 'group',
+        navLabel: '\u041d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435',
+        label: '\u0414\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0438\u044f',
+        hue: 200,
+        title: '\u041d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435 \u0438 \u0434\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0438\u044f',
+        description:
+          '\u0420\u0430\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u043a\u044a\u0434\u0435 \u0436\u0438\u0432\u0435\u044f\u0442 \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b\u043d\u0438\u0442\u0435 \u0432\u0438 \u043a\u043b\u0438\u0435\u043d\u0442\u0438. \u0414\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0441\u043a\u0438 \u043c\u0440\u0435\u0436\u0438 \u043e\u0442 \u043f\u0440\u0435\u0431\u0440\u043e\u044f\u0432\u0430\u043d\u0435\u0442\u043e \u0438 \u043f\u0440\u043e\u0433\u043d\u043e\u0437\u0438 \u043f\u043e\u043c\u0430\u0433\u0430\u0442 \u0434\u0430 \u0441\u044a\u0447\u0435\u0442\u0430\u0435\u0442\u0435 \u043b\u043e\u043a\u0430\u0446\u0438\u0438 \u0441 \u0442\u044a\u0440\u0441\u0435\u043d\u0435, \u0430 \u043d\u0435 \u0441\u0430\u043c\u043e \u0441 \u0446\u0435\u043d\u0438 \u043d\u0430 \u0438\u043c\u043e\u0442\u0438.',
+        tags: [
+          { icon: 'grid_on', label: '\u041c\u0440\u0435\u0436\u0430 \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442' },
+          { icon: 'trending_up', label: '\u041f\u0440\u043e\u0433\u043d\u043e\u0437\u0438' },
+          { icon: 'people', label: '\u041f\u0440\u0435\u0431\u0440\u043e\u044f\u0432\u0430\u043d\u0435' },
+        ],
+        capabilities: [
+          {
+            icon: 'layers',
+            title: '\u041c\u0440\u0435\u0436\u0430 \u0437\u0430 \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442 \u043d\u0430 \u043d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435',
+            desc: '\u0426\u0432\u0435\u0442\u043d\u043e \u043a\u043e\u0434\u0438\u0440\u0430\u043d\u0430 \u043c\u0440\u0435\u0436\u0430 \u043f\u043e\u043a\u0430\u0437\u0432\u0430 \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442\u0442\u0430 \u043d\u0430 \u043d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435 \u043d\u0430 \u043a\u043b\u0435\u0442\u043a\u0430. \u0428\u0435\u0441\u0442 \u0444\u0438\u043b\u0442\u044a\u0440\u0430 \u0437\u0430 \u043f\u0440\u0430\u0433 (1\u041a \u0434\u043e 24\u041a+ \u0436\u0438\u0442\u0435\u043b\u0438) \u0432\u0438 \u043f\u043e\u0437\u0432\u043e\u043b\u044f\u0432\u0430\u0442 \u0434\u0430 \u0441\u0435 \u0444\u043e\u043a\u0443\u0441\u0438\u0440\u0430\u0442\u0435 \u0432\u044a\u0440\u0445\u0443 \u043d\u0443\u0436\u043d\u043e\u0442\u043e \u043d\u0438\u0432\u043e.',
+          },
+          {
+            icon: 'analytics',
+            title: '\u0414\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0441\u043a\u0430 \u043f\u0440\u043e\u0433\u043d\u043e\u0437\u0430',
+            desc: '\u041f\u0440\u043e\u0433\u043d\u043e\u0437\u043d\u0438\u0442\u0435 \u0441\u043b\u043e\u0435\u0432\u0435 \u043d\u0430 SofiaPlan \u043f\u0440\u043e\u0435\u043a\u0442\u0438\u0440\u0430\u0442 \u043f\u0440\u043e\u043c\u0435\u043d\u0438\u0442\u0435 \u0432 \u043d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435\u0442\u043e \u043f\u043e \u043f\u043b\u0430\u043d\u043e\u0432\u043e \u0437\u0432\u0435\u043d\u043e, \u0437\u0430 \u0434\u0430 \u0438\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u043b\u043e\u043a\u0430\u0446\u0438\u0438 \u0441 \u0440\u0430\u0441\u0442\u044f\u0449\u0430 \u043a\u043b\u0438\u0435\u043d\u0442\u0441\u043a\u0430 \u0431\u0430\u0437\u0430.',
+          },
+          {
+            icon: 'home',
+            title: '\u0410\u0434\u0440\u0435\u0441\u0438 \u043e\u0442 \u043f\u0440\u0435\u0431\u0440\u043e\u044f\u0432\u0430\u043d\u0435',
+            desc: '\u0412\u0438\u0436\u0442\u0435 \u0434\u0430\u043d\u043d\u0438 \u043d\u0430 \u043d\u0438\u0432\u043e \u0430\u0434\u0440\u0435\u0441, \u0437\u0430 \u0434\u0430 \u0440\u0430\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u0436\u0438\u043b\u0438\u0449\u043d\u0430\u0442\u0430 \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442 \u043f\u043e-\u0434\u0435\u0442\u0430\u0439\u043b\u043d\u043e, \u043e\u0442\u0432\u044a\u0434 \u0441\u0440\u0435\u0434\u043d\u0438\u0442\u0435 \u0441\u0442\u043e\u0439\u043d\u043e\u0441\u0442\u0438 \u0437\u0430 \u043a\u0432\u0430\u0440\u0442\u0430\u043b\u0430.',
+          },
+          {
+            icon: 'apartment',
+            title: '\u0416\u0438\u043b\u0438\u0449\u043d\u0430 \u043d\u0430\u0442\u043e\u0432\u0430\u0440\u0435\u043d\u043e\u0441\u0442 \u0438 \u0442\u0438\u043f\u043e\u043b\u043e\u0433\u0438\u044f',
+            desc: '\u0420\u0430\u0437\u0433\u0440\u0430\u043d\u0438\u0447\u0435\u0442\u0435 \u0432\u0438\u0441\u043e\u043a\u043e\u0435\u0442\u0430\u0436\u043d\u0438 \u0436\u0438\u043b\u0438\u0449\u043d\u0438 \u0431\u043b\u043e\u043a\u043e\u0432\u0435 \u043e\u0442 \u043d\u0438\u0441\u043a\u043e\u043f\u043b\u044a\u0442\u043d\u0430 \u0437\u0430\u0441\u0442\u0440\u043e\u0439\u043a\u0430. \u0416\u0438\u043b\u0438\u0449\u043d\u0430\u0442\u0430 \u0442\u0438\u043f\u043e\u043b\u043e\u0433\u0438\u044f \u043f\u043e\u043c\u0430\u0433\u0430 \u0434\u0430 \u043f\u0440\u0435\u0434\u0432\u0438\u0434\u0438\u0442\u0435 \u043c\u043e\u0434\u0435\u043b\u0438 \u043d\u0430 \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u0435\u043d \u0442\u0440\u0430\u0444\u0438\u043a.',
+          },
+        ],
+      },
+      {
+        icon: 'eco',
+        navLabel: '\u0412\u044a\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438',
+        label: '\u0410\u043d\u0430\u043b\u0438\u0437',
+        hue: 140,
+        title: '\u0417\u043e\u043d\u0438 \u0441 \u0432\u044a\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438',
+        description:
+          '\u0410\u043d\u0430\u043b\u0438\u0442\u0438\u0447\u043d\u0438\u044f\u0442 \u0434\u0432\u0438\u0433\u0430\u0442\u0435\u043b \u043a\u0440\u044a\u0441\u0442\u043e\u0441\u0432\u0430 \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442\u0442\u0430 \u043d\u0430 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u0438\u0442\u0435 \u0441 \u0434\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0441\u043a\u0438 \u0434\u0430\u043d\u043d\u0438, \u0437\u0430 \u0434\u0430 \u043f\u043e\u043a\u0430\u0436\u0435 \u0437\u043e\u043d\u0438\u0442\u0435, \u043a\u044a\u0434\u0435\u0442\u043e \u0442\u044a\u0440\u0441\u0435\u043d\u0435\u0442\u043e \u043d\u0430\u0434\u0432\u0438\u0448\u0430\u0432\u0430 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u043d\u0435\u0442\u043e.',
+        tags: [
+          { icon: 'local_fire_department', label: '\u0422\u043e\u043f\u043b\u0438\u043d\u043d\u0430 \u043a\u0430\u0440\u0442\u0430' },
+          { icon: 'grid_view', label: '\u0410\u043d\u0430\u043b\u0438\u0442\u0438\u0447\u043d\u0430 \u043c\u0440\u0435\u0436\u0430' },
+          { icon: 'score', label: '\u041e\u0446\u0435\u043d\u044f\u0432\u0430\u043d\u0435' },
+        ],
+        capabilities: [
+          {
+            icon: 'thermostat',
+            title: '\u0422\u043e\u043f\u043b\u0438\u043d\u043d\u0430 \u043a\u0430\u0440\u0442\u0430 \u043d\u0430 \u0432\u044a\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438',
+            desc: '\u0413\u0440\u0430\u0434\u0438\u0435\u043d\u0442\u043d\u043e \u043f\u043e\u043a\u0440\u0438\u0442\u0438\u0435 \u043f\u043e\u0434\u0447\u0435\u0440\u0442\u0430\u0432\u0430 \u0437\u043e\u043d\u0438\u0442\u0435 \u0441 \u043d\u0430\u0439-\u0434\u043e\u0431\u0440\u043e \u0441\u044a\u043e\u0442\u043d\u043e\u0448\u0435\u043d\u0438\u0435 \u043d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435/\u0431\u0438\u0437\u043d\u0435\u0441\u0438. \u041f\u0440\u0435\u0432\u043a\u043b\u044e\u0447\u0432\u0430\u0439\u0442\u0435 \u043c\u0435\u0436\u0434\u0443 \u0431\u0440\u044a\u0441\u043d\u0430\u0440\u043d\u0438\u0446\u0438 \u0438 \u0444\u0438\u0442\u043d\u0435\u0441\u0438 \u0437\u0430 \u0440\u0430\u0437\u043b\u0438\u0447\u043d\u0438 \u043f\u0435\u0439\u0437\u0430\u0436\u0438.',
+          },
+          {
+            icon: 'grid_4x4',
+            title: '\u0410\u043d\u0430\u043b\u0438\u0442\u0438\u0447\u043d\u0430 \u043c\u0440\u0435\u0436\u0430',
+            desc: '\u041c\u0440\u0435\u0436\u0430 \u043c\u044a\u0436\u0435-\u043d\u0430-\u043e\u0431\u0435\u043a\u0442 \u043f\u043e\u043a\u0430\u0437\u0432\u0430 \u043a\u043e\u043b\u043a\u043e \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b\u043d\u0438 \u043a\u043b\u0438\u0435\u043d\u0442\u0438 \u043e\u0431\u0441\u043b\u0443\u0436\u0432\u0430 \u0432\u0441\u0435\u043a\u0438 \u0441\u044a\u0449\u0435\u0441\u0442\u0432\u0443\u0432\u0430\u0449 \u0431\u0438\u0437\u043d\u0435\u0441. \u0412\u0438\u0441\u043e\u043a\u0438\u0442\u0435 \u0441\u044a\u043e\u0442\u043d\u043e\u0448\u0435\u043d\u0438\u044f \u043e\u0437\u043d\u0430\u0447\u0430\u0432\u0430\u0442 \u043d\u0435\u043e\u0431\u0441\u043b\u0443\u0436\u0435\u043d\u0438 \u0437\u043e\u043d\u0438.',
+          },
+          {
+            icon: 'palette',
+            title: '\u0426\u0432\u0435\u0442\u043d\u043e \u043a\u043e\u0434\u0438\u0440\u0430\u043d\u043e \u043e\u0446\u0435\u043d\u044f\u0432\u0430\u043d\u0435',
+            desc: '\u041d\u0435\u043f\u0440\u0435\u043a\u044a\u0441\u043d\u0430\u0442\u0430 \u0446\u0432\u0435\u0442\u043e\u0432\u0430 \u0438\u043d\u0442\u0435\u0440\u043f\u043e\u043b\u0430\u0446\u0438\u044f \u043e\u0442 \u0445\u043b\u0430\u0434\u043d\u043e (\u043f\u0440\u0435\u043d\u0430\u0441\u0438\u0442\u0435\u043d\u043e) \u0434\u043e \u0442\u043e\u043f\u043b\u043e (\u0432\u0438\u0441\u043e\u043a\u0430 \u0432\u044a\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442) \u0437\u0430 \u043c\u0438\u0433\u043d\u043e\u0432\u0435\u043d\u043e \u0432\u0438\u0437\u0443\u0430\u043b\u043d\u043e \u0441\u043a\u0430\u043d\u0438\u0440\u0430\u043d\u0435 \u043d\u0430 \u0433\u0440\u0430\u0434\u0430.',
+          },
+          {
+            icon: 'compare',
+            title: '\u041f\u0440\u0435\u0432\u043a\u043b\u044e\u0447\u0432\u0430\u043d\u0435 \u043f\u043e \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f',
+            desc: '\u0421\u0440\u0430\u0432\u043d\u0435\u0442\u0435 \u0440\u0430\u0437\u043b\u0438\u0447\u043d\u0438 \u043f\u0435\u0439\u0437\u0430\u0436\u0438 \u043d\u0430 \u0432\u044a\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438. \u0417\u043e\u043d\u0430 \u043d\u0430\u0441\u0438\u0442\u0435\u043d\u0430 \u0441 \u0431\u0440\u044a\u0441\u043d\u0430\u0440\u043d\u0438\u0446\u0438 \u043c\u043e\u0436\u0435 \u0434\u0430 \u0435 \u043d\u0430\u043f\u044a\u043b\u043d\u043e \u043d\u0435\u043e\u0431\u0441\u043b\u0443\u0436\u0435\u043d\u0430 \u0437\u0430 \u0444\u0438\u0442\u043d\u0435\u0441\u0438.',
+          },
+        ],
+      },
+      {
+        icon: 'apartment',
+        navLabel: '\u0413\u0440\u0430\u0434\u0441\u043a\u0438 \u0434\u0430\u043d\u043d\u0438',
+        label: 'SofiaPlan',
+        hue: 270,
+        title: '\u0413\u0440\u0430\u0434\u043e\u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0435\u043d\u0438 \u0434\u0430\u043d\u043d\u0438',
+        description:
+          '\u0414\u043e\u0441\u0442\u044a\u043f \u0434\u043e 20+ \u0433\u0440\u0430\u0434\u043e\u0443\u0441\u0442\u0440\u043e\u0439\u0441\u0442\u0432\u0435\u043d\u0438 \u0441\u043b\u043e\u044f \u043e\u0442 SofiaPlan \u2014 \u0437\u043e\u043d\u0438\u0440\u0430\u043d\u0435, \u043d\u0438\u0432\u0430 \u043d\u0430 \u0434\u043e\u0445\u043e\u0434\u0438, \u0446\u0435\u043d\u0438 \u043d\u0430 \u0438\u043c\u043e\u0442\u0438, \u043c\u043e\u0440\u0444\u043e\u043b\u043e\u0433\u0438\u044f \u043d\u0430 \u0441\u0433\u0440\u0430\u0434\u0438 \u0438 \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b \u0437\u0430 \u0440\u0430\u0437\u0432\u0438\u0442\u0438\u0435.',
+        tags: [
+          { icon: 'location_city', label: '\u0417\u043e\u043d\u0438\u0440\u0430\u043d\u0435' },
+          { icon: 'payments', label: '\u0414\u043e\u0445\u043e\u0434\u0438' },
+          { icon: 'real_estate_agent', label: '\u0426\u0435\u043d\u0438' },
+          { icon: 'architecture', label: '\u0421\u0433\u0440\u0430\u0434\u0438' },
+        ],
+        capabilities: [
+          {
+            icon: 'map',
+            title: '\u0413\u0440\u0430\u0434\u0441\u043a\u043e \u0437\u043e\u043d\u0438\u0440\u0430\u043d\u0435',
+            desc: '\u0412\u0438\u0436\u0442\u0435 \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u0438\u0442\u0435 \u043d\u0430 \u0437\u043e\u043d\u0438\u0440\u0430\u043d\u0435 \u0441 \u0447\u0435\u043a\u0431\u043e\u043a\u0441 \u0444\u0438\u043b\u0442\u0440\u0438 \u2014 \u0436\u0438\u043b\u0438\u0449\u043d\u0438, \u0442\u044a\u0440\u0433\u043e\u0432\u0441\u043a\u0438, \u043f\u0440\u043e\u043c\u0438\u0448\u043b\u0435\u043d\u0438 \u0438\u043b\u0438 \u0441\u043c\u0435\u0441\u0435\u043d\u0438 \u0437\u043e\u043d\u0438. \u041f\u0440\u043e\u0432\u0435\u0440\u0435\u0442\u0435 \u0434\u0430\u043b\u0438 \u0432\u0430\u0448\u0438\u044f\u0442 \u0442\u0438\u043f \u0431\u0438\u0437\u043d\u0435\u0441 \u0435 \u0440\u0430\u0437\u0440\u0435\u0448\u0435\u043d.',
+          },
+          {
+            icon: 'attach_money',
+            title: '\u0414\u043e\u0445\u043e\u0434\u0438 \u0438 \u0446\u0435\u043d\u0438 \u043d\u0430 \u0438\u043c\u043e\u0442\u0438',
+            desc: '\u041d\u0430\u043b\u043e\u0436\u0435\u0442\u0435 \u043d\u0438\u0432\u0430 \u043d\u0430 \u0434\u043e\u0445\u043e\u0434\u0438 \u0438 \u0446\u0435\u043d\u0438 \u043d\u0430 \u0438\u043c\u043e\u0442\u0438, \u0437\u0430 \u0434\u0430 \u0440\u0430\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u0438\u043a\u043e\u043d\u043e\u043c\u0438\u0447\u0435\u0441\u043a\u0438\u044f \u043f\u0440\u043e\u0444\u0438\u043b \u043d\u0430 \u0432\u0441\u0435\u043a\u0438 \u043a\u0432\u0430\u0440\u0442\u0430\u043b.',
+          },
+          {
+            icon: 'domain',
+            title: '\u041f\u043b\u044a\u0442\u043d\u043e\u0441\u0442 \u0438 \u043c\u043e\u0440\u0444\u043e\u043b\u043e\u0433\u0438\u044f \u043d\u0430 \u0441\u0433\u0440\u0430\u0434\u0438',
+            desc: '\u0427\u0435\u0442\u0438\u0440\u0438 \u0441\u043b\u043e\u044f \u043f\u043e\u043a\u0430\u0437\u0432\u0430\u0442 \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442 \u043d\u0430 \u0437\u0430\u0441\u0442\u0440\u043e\u044f\u0432\u0430\u043d\u0435, \u0441\u044a\u043e\u0442\u043d\u043e\u0448\u0435\u043d\u0438\u044f \u043d\u0430 \u0437\u0430\u0441\u0442\u0440\u043e\u0435\u043d\u0438 \u043f\u043b\u043e\u0449\u0438, \u0436\u0438\u043b\u0438\u0449\u043d\u0430 \u0442\u0438\u043f\u043e\u043b\u043e\u0433\u0438\u044f \u0438 \u0433\u0440\u0430\u0434\u0441\u043a\u0430 \u043c\u043e\u0440\u0444\u043e\u043b\u043e\u0433\u0438\u044f.',
+          },
+          {
+            icon: 'trending_up',
+            title: '\u041f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b \u0437\u0430 \u0440\u0430\u0437\u0432\u0438\u0442\u0438\u0435',
+            desc: '\u0412\u0438\u0436\u0442\u0435 \u043a\u043e\u0438 \u0437\u043e\u043d\u0438 \u0438\u043c\u0430\u0442 \u0432\u0438\u0441\u043e\u043a \u043f\u043e\u0442\u0435\u043d\u0446\u0438\u0430\u043b \u0437\u0430 \u0440\u0430\u0437\u0432\u0438\u0442\u0438\u0435, \u0442\u0435\u043c\u043f\u043e\u0432\u0435 \u043d\u0430 \u0431\u0438\u0437\u043d\u0435\u0441 \u043e\u0431\u043e\u0440\u043e\u0442 \u0438 \u043f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u0438 \u043d\u0430 \u0437\u043e\u043d\u0438\u0440\u0430\u043d\u0435.',
+          },
+          {
+            icon: 'directions_walk',
+            title: '\u041f\u0435\u0448\u0435\u0445\u043e\u0434\u0435\u043d \u0441\u0438\u043d\u0442\u0430\u043a\u0441\u0438\u0441',
+            desc: '\u0423\u043d\u0438\u043a\u0430\u043b\u0435\u043d \u0441\u043b\u043e\u0439 \u0437\u0430 \u043c\u043e\u0434\u0435\u043b\u0438 \u043d\u0430 \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u0435\u043d \u043f\u043e\u0442\u043e\u043a \u043f\u043e \u043a\u0432\u0430\u0440\u0442\u0430\u043b \u0441 \u0440\u0435\u0433\u0443\u043b\u0438\u0440\u0443\u0435\u043c\u0438 \u043f\u0440\u0430\u0433\u043e\u0432\u0435. \u041f\u043e-\u0432\u0438\u0441\u043e\u043a \u0440\u0435\u0437\u0443\u043b\u0442\u0430\u0442 \u043e\u0437\u043d\u0430\u0447\u0430\u0432\u0430 \u043f\u043e\u0432\u0435\u0447\u0435 \u0435\u0441\u0442\u0435\u0441\u0442\u0432\u0435\u043d \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u0435\u043d \u0442\u0440\u0430\u0444\u0438\u043a.',
+          },
+          {
+            icon: 'medical_services',
+            title: '\u0417\u0434\u0440\u0430\u0432\u043d\u0430 \u0438\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430',
+            desc: '\u0421\u043b\u043e\u0435\u0432\u0435 \u0437\u0430 \u043a\u043e\u043d\u0446\u0435\u043d\u0442\u0440\u0430\u0446\u0438\u044f \u043d\u0430 \u0437\u0434\u0440\u0430\u0432\u043d\u0438 \u0443\u0441\u043b\u0443\u0433\u0438 \u0438 \u0438\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430 \u2014 \u043f\u043e\u043b\u0435\u0437\u043d\u0438 \u0437\u0430 \u0443\u0435\u043b\u043d\u0435\u0441 \u0431\u0438\u0437\u043d\u0435\u0441\u0438, \u0430\u043f\u0442\u0435\u043a\u0438 \u0438\u043b\u0438 \u0432\u0441\u0435\u043a\u0438 \u0431\u0438\u0437\u043d\u0435\u0441 \u0431\u043b\u0438\u0437\u043e \u0434\u043e \u043c\u0435\u0434\u0438\u0446\u0438\u043d\u0441\u043a\u0438 \u0437\u0430\u0432\u0435\u0434\u0435\u043d\u0438\u044f.',
+          },
+        ],
+      },
+      {
+        icon: 'directions_transit',
+        navLabel: '\u0422\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442',
+        label: '\u0414\u043e\u0441\u0442\u044a\u043f\u043d\u043e\u0441\u0442',
+        hue: 200,
+        title: '\u0422\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442 \u0438 \u0434\u043e\u0441\u0442\u044a\u043f\u043d\u043e\u0441\u0442',
+        description:
+          '\u0412\u0438\u0437\u0443\u0430\u043b\u0438\u0437\u0438\u0440\u0430\u0439\u0442\u0435 \u0432\u0441\u044f\u043a\u0430 \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u043d\u0430 \u043c\u0440\u0435\u0436\u0430 \u0432 \u0421\u043e\u0444\u0438\u044f \u2014 \u043c\u0435\u0442\u0440\u043e, \u0430\u0432\u0442\u043e\u0431\u0443\u0441\u0438, \u0442\u0440\u0430\u043c\u0432\u0430\u0438, \u0442\u0440\u043e\u043b\u0435\u0439\u0431\u0443\u0441\u0438, \u0436\u0435\u043b\u0435\u0437\u043d\u0438\u0446\u0430 \u0438 \u0432\u0435\u043b\u043e\u0441\u0438\u043f\u0435\u0434\u043d\u0430 \u0438\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430.',
+        tags: [
+          { icon: 'train', label: '\u041c\u0435\u0442\u0440\u043e' },
+          { icon: 'directions_bus', label: '\u0410\u0432\u0442\u043e\u0431\u0443\u0441' },
+          { icon: 'tram', label: '\u0422\u0440\u0430\u043c\u0432\u0430\u0439' },
+          { icon: 'pedal_bike', label: '\u0412\u0435\u043b\u043e\u0441\u0438\u043f\u0435\u0434' },
+        ],
+        capabilities: [
+          {
+            icon: 'blur_on',
+            title: '\u041e\u0446\u0435\u043d\u043a\u0430 \u043d\u0430 \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u0435\u043d \u0434\u043e\u0441\u0442\u044a\u043f',
+            desc: '\u0414\u0432\u0430 \u0441\u043b\u043e\u044f \u043e\u0446\u0435\u043d\u044f\u0432\u0430\u0442 \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u043d\u0430\u0442\u0430 \u0434\u043e\u0441\u0442\u044a\u043f\u043d\u043e\u0441\u0442 \u2014 \u043f\u043e \u043f\u043b\u0430\u043d\u043e\u0432\u0430 \u0437\u043e\u043d\u0430 \u0438 \u043f\u043e \u0440\u0430\u0439\u043e\u043d. \u0412\u0438\u0436\u0442\u0435 \u043a\u043e\u0438 \u0437\u043e\u043d\u0438 \u0438\u043c\u0430\u0442 \u043d\u0430\u0439-\u0434\u043e\u0431\u0440\u0430 \u0441\u0432\u044a\u0440\u0437\u0430\u043d\u043e\u0441\u0442.',
+          },
+          {
+            icon: 'train',
+            title: '\u0417\u043e\u043d\u0438 \u043d\u0430 \u043c\u0435\u0442\u0440\u043e \u043e\u0431\u0445\u0432\u0430\u0442',
+            desc: '\u0414\u0432\u0430 \u0440\u0430\u0434\u0438\u0443\u0441\u0430 (800\u043c \u0438 1200\u043c+) \u043f\u043e\u043a\u0430\u0437\u0432\u0430\u0442 \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u043d\u0430\u0442\u0430 \u0437\u043e\u043d\u0430 \u043e\u043a\u043e\u043b\u043e \u0432\u0441\u044f\u043a\u0430 \u043c\u0435\u0442\u0440\u043e \u0441\u0442\u0430\u043d\u0446\u0438\u044f.',
+          },
+          {
+            icon: 'route',
+            title: '\u041f\u044a\u043b\u043d\u0438 \u043b\u0438\u043d\u0435\u0439\u043d\u0438 \u043c\u0440\u0435\u0436\u0438',
+            desc: '\u041f\u0440\u0435\u0432\u043a\u043b\u044e\u0447\u0432\u0430\u0439\u0442\u0435 \u043e\u0442\u0434\u0435\u043b\u043d\u0438 \u0430\u0432\u0442\u043e\u0431\u0443\u0441\u043d\u0438, \u0442\u0440\u043e\u043b\u0435\u0439\u0431\u0443\u0441\u043d\u0438 \u0438 \u0442\u0440\u0430\u043c\u0432\u0430\u0439\u043d\u0438 \u043b\u0438\u043d\u0438\u0438. \u0412\u0438\u0436\u0442\u0435 \u043a\u043e\u0438 \u043c\u0430\u0440\u0448\u0440\u0443\u0442\u0438 \u043c\u0438\u043d\u0430\u0432\u0430\u0442 \u0431\u043b\u0438\u0437\u043e \u0434\u043e \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442-\u043b\u043e\u043a\u0430\u0446\u0438\u0438\u0442\u0435 \u0432\u0438.',
+          },
+          {
+            icon: 'pedal_bike',
+            title: '\u0412\u0435\u043b\u043e\u0441\u0438\u043f\u0435\u0434\u043d\u0430 \u0438\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430',
+            desc: '\u0422\u0435\u043a\u0443\u0449\u0438 \u0438 \u043f\u043b\u0430\u043d\u0438\u0440\u0430\u043d\u0438 \u0432\u0435\u043b\u043e\u0441\u0438\u043f\u0435\u0434\u043d\u0438 \u043c\u0440\u0435\u0436\u0438. \u0412\u0430\u0436\u043d\u043e \u0437\u0430 \u0431\u0438\u0437\u043d\u0435\u0441\u0438, \u043d\u0430\u0441\u043e\u0447\u0435\u043d\u0438 \u043a\u044a\u043c \u043c\u043b\u0430\u0434\u0438 \u0433\u0440\u0430\u0434\u0441\u043a\u0438 \u0432\u0435\u043b\u043e\u0441\u0438\u043f\u0435\u0434\u0438\u0441\u0442\u0438.',
+          },
+          {
+            icon: 'railway_alert',
+            title: '\u0416\u041f \u0433\u0430\u0440\u0438',
+            desc: '\u041c\u0435\u0441\u0442\u043e\u043f\u043e\u043b\u043e\u0436\u0435\u043d\u0438\u044f\u0442\u0430 \u043d\u0430 \u0416\u041f \u0433\u0430\u0440\u0438 \u043c\u0430\u0440\u043a\u0438\u0440\u0430\u0442 \u0432\u044a\u0437\u043b\u0438 \u0441 \u0432\u0438\u0441\u043e\u043a \u0442\u0440\u0430\u0444\u0438\u043a, \u0434\u043e\u0431\u0430\u0432\u044f\u0449\u0438 \u0434\u043e\u043f\u044a\u043b\u043d\u0438\u0442\u0435\u043b\u043d\u043e \u043d\u0438\u0432\u043e \u043d\u0430 \u0434\u043e\u0441\u0442\u044a\u043f\u043d\u043e\u0441\u0442.',
+          },
+        ],
+      },
+      {
+        icon: 'compare_arrows',
+        navLabel: '\u0421\u0440\u0430\u0432\u043d\u0438',
+        label: '\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u0438',
+        hue: 40,
+        title: '\u0421\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 \u043d\u0430 \u043b\u043e\u043a\u0430\u0446\u0438\u0438',
+        description:
+          '\u041f\u043e\u0441\u0442\u0430\u0432\u0435\u0442\u0435 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442-\u043b\u043e\u043a\u0430\u0446\u0438\u0438 \u0438 \u0433\u0438 \u0441\u0440\u0430\u0432\u043d\u0435\u0442\u0435 \u0435\u0434\u043d\u0430 \u0434\u043e \u0434\u0440\u0443\u0433\u0430 \u043f\u043e \u043c\u043d\u043e\u0436\u0435\u0441\u0442\u0432\u043e \u0438\u0437\u043c\u0435\u0440\u0435\u043d\u0438\u044f. \u0412\u0437\u0435\u043c\u0435\u0442\u0435 \u0444\u0438\u043d\u0430\u043b\u043d\u043e\u0442\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u0435 \u0441 \u0443\u0432\u0435\u0440\u0435\u043d\u043e\u0441\u0442.',
+        tags: [
+          { icon: 'push_pin', label: '\u0420\u0435\u0436\u0438\u043c \u043c\u0430\u0440\u043a\u0435\u0440\u0438' },
+          { icon: 'leaderboard', label: '\u041e\u0446\u0435\u043d\u044f\u0432\u0430\u043d\u0435' },
+          { icon: 'table_chart', label: '\u041c\u0435\u0442\u0440\u0438\u043a\u0438' },
+        ],
+        capabilities: [
+          {
+            icon: 'add_location',
+            title: '\u041c\u0430\u0440\u043a\u0438\u0440\u0430\u043d\u0435 \u043d\u0430 \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442-\u043b\u043e\u043a\u0430\u0446\u0438\u0438',
+            desc: '\u0412\u043b\u0435\u0437\u0442\u0435 \u0432 \u0440\u0435\u0436\u0438\u043c \u0437\u0430 \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 \u0438 \u043a\u043b\u0438\u043a\u043d\u0435\u0442\u0435 \u043d\u0430\u0432\u0441\u044f\u043a\u044a\u0434\u0435 \u0432\u044a\u0440\u0445\u0443 \u043a\u0430\u0440\u0442\u0430\u0442\u0430, \u0437\u0430 \u0434\u0430 \u043f\u043e\u0441\u0442\u0430\u0432\u0438\u0442\u0435 \u043c\u0430\u0440\u043a\u0435\u0440\u0438. \u0412\u0441\u0435\u043a\u0438 \u0435 \u043d\u043e\u043c\u0435\u0440\u0438\u0440\u0430\u043d \u0438 \u0435\u0442\u0438\u043a\u0435\u0442\u0438\u0440\u0430\u043d.',
+          },
+          {
+            icon: 'bar_chart',
+            title: '\u041c\u043d\u043e\u0433\u043e\u0438\u0437\u043c\u0435\u0440\u043d\u043e \u043e\u0446\u0435\u043d\u044f\u0432\u0430\u043d\u0435',
+            desc: '\u0412\u0441\u044f\u043a\u0430 \u043c\u0430\u0440\u043a\u0438\u0440\u0430\u043d\u0430 \u043b\u043e\u043a\u0430\u0446\u0438\u044f \u043f\u043e\u043b\u0443\u0447\u0430\u0432\u0430 \u043e\u0446\u0435\u043d\u043a\u0438 \u043f\u043e \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u0435\u043d \u0442\u0440\u0430\u0444\u0438\u043a, \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442 \u043d\u0430 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0446\u0438\u044f, \u0442\u0440\u0430\u043d\u0441\u043f\u043e\u0440\u0442\u0435\u043d \u0434\u043e\u0441\u0442\u044a\u043f, \u0434\u0435\u043c\u043e\u0433\u0440\u0430\u0444\u0438\u044f, \u043d\u0430\u0435\u043c\u043d\u0430 \u0441\u0442\u043e\u0439\u043d\u043e\u0441\u0442 \u0438 \u043e\u0431\u0449\u0430 \u043e\u0446\u0435\u043d\u043a\u0430.',
+          },
+          {
+            icon: 'view_column',
+            title: '\u0421\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 \u0435\u0434\u043d\u0430 \u0434\u043e \u0434\u0440\u0443\u0433\u0430',
+            desc: '\u041f\u0430\u043d\u0435\u043b\u044a\u0442 \u0437\u0430 \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435 \u043f\u043e\u043a\u0430\u0437\u0432\u0430 \u0432\u0441\u0438\u0447\u043a\u0438 \u043c\u0430\u0440\u043a\u0438\u0440\u0430\u043d\u0438 \u043b\u043e\u043a\u0430\u0446\u0438\u0438 \u0432 \u043f\u0430\u0440\u0430\u043b\u0435\u043b\u043d\u0438 \u043a\u043e\u043b\u043e\u043d\u0438 \u0441 \u043b\u0435\u043d\u0442\u0438 \u0437\u0430 \u043c\u0435\u0442\u0440\u0438\u043a\u0438.',
+          },
+          {
+            icon: 'delete',
+            title: '\u0413\u044a\u0432\u043a\u0430\u0432\u043e \u0443\u043f\u0440\u0430\u0432\u043b\u0435\u043d\u0438\u0435',
+            desc: '\u0414\u043e\u0431\u0430\u0432\u044f\u0439\u0442\u0435, \u043f\u0440\u0435\u043c\u0430\u0445\u0432\u0430\u0439\u0442\u0435 \u0438 \u043f\u0440\u0435\u043d\u0430\u0440\u0435\u0436\u0434\u0430\u0439\u0442\u0435 \u043b\u043e\u043a\u0430\u0446\u0438\u0438 \u0441\u0432\u043e\u0431\u043e\u0434\u043d\u043e. \u0421\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435\u0442\u043e \u0441\u0435 \u043e\u0431\u043d\u043e\u0432\u044f\u0432\u0430 \u0432 \u0440\u0435\u0430\u043b\u043d\u043e \u0432\u0440\u0435\u043c\u0435.',
+          },
+        ],
+      },
+      {
+        icon: 'draw',
+        navLabel: '\u041f\u043b\u043e\u0449',
+        label: '\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u0438',
+        hue: 160,
+        title: '\u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442 \u0437\u0430 \u0430\u043d\u0430\u043b\u0438\u0437 \u043d\u0430 \u043f\u043b\u043e\u0449',
+        description:
+          '\u041d\u0430\u0447\u0435\u0440\u0442\u0430\u0439\u0442\u0435 \u043f\u043e\u043b\u0438\u0433\u043e\u043d \u0432\u044a\u0440\u0445\u0443 \u043a\u0430\u0440\u0442\u0430\u0442\u0430, \u0437\u0430 \u0434\u0430 \u0434\u0435\u0444\u0438\u043d\u0438\u0440\u0430\u0442\u0435 \u0437\u043e\u043d\u0430 \u043d\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441. Lonctus \u0438\u0437\u0447\u0438\u0441\u043b\u044f\u0432\u0430 \u0434\u0435\u0442\u0430\u0439\u043b\u043d\u0438 \u043c\u0435\u0442\u0440\u0438\u043a\u0438 \u0437\u0430 \u0432\u0441\u0438\u0447\u043a\u043e \u0432\u044a\u0442\u0440\u0435.',
+        tags: [
+          { icon: 'pentagon', label: '\u041f\u043e\u043b\u0438\u0433\u043e\u043d' },
+          { icon: 'calculate', label: '\u041c\u0435\u0442\u0440\u0438\u043a\u0438' },
+          { icon: 'crop_free', label: '\u0421\u0432\u043e\u0431\u043e\u0434\u043d\u0430 \u0437\u043e\u043d\u0430' },
+        ],
+        capabilities: [
+          {
+            icon: 'gesture',
+            title: '\u0421\u0432\u043e\u0431\u043e\u0434\u043d\u043e \u0447\u0435\u0440\u0442\u0430\u043d\u0435 \u043d\u0430 \u043f\u043e\u043b\u0438\u0433\u043e\u043d',
+            desc: '\u041a\u043b\u0438\u043a\u043d\u0435\u0442\u0435, \u0437\u0430 \u0434\u0430 \u043f\u043e\u0441\u0442\u0430\u0432\u044f\u0442\u0435 \u0432\u044a\u0440\u0445\u043e\u0432\u0435 \u0438 \u0434\u0430 \u0434\u0435\u0444\u0438\u043d\u0438\u0440\u0430\u0442\u0435 \u043f\u0440\u043e\u0438\u0437\u0432\u043e\u043b\u043d\u0430 \u0444\u043e\u0440\u043c\u0430. \u0418\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u044a\u0442 \u043f\u043e\u0434\u0434\u044a\u0440\u0436\u0430 \u0441\u043b\u043e\u0436\u043d\u0438 \u043f\u043e\u043b\u0438\u0433\u043e\u043d\u0438 \u0437\u0430 \u0440\u0435\u0430\u043b\u043d\u0438 \u043a\u0432\u0430\u0440\u0442\u0430\u043b\u0438 \u0438\u043b\u0438 \u0442\u044a\u0440\u0433\u043e\u0432\u0441\u043a\u0438 \u0437\u043e\u043d\u0438.',
+          },
+          {
+            icon: 'summarize',
+            title: '\u041c\u0438\u0433\u043d\u043e\u0432\u0435\u043d\u0438 \u043c\u0435\u0442\u0440\u0438\u043a\u0438 \u0437\u0430 \u0437\u043e\u043d\u0430\u0442\u0430',
+            desc: '\u0421\u043b\u0435\u0434 \u043d\u0430\u0447\u0435\u0440\u0442\u0430\u0432\u0430\u043d\u0435, \u043f\u0430\u043d\u0435\u043b\u044a\u0442 \u043f\u043e\u043a\u0430\u0437\u0432\u0430 \u0431\u0440\u043e\u0439 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u0438 \u043f\u043e \u043a\u0430\u0442\u0435\u0433\u043e\u0440\u0438\u044f, \u043f\u0440\u043e\u0433\u043d\u043e\u0437\u043d\u043e \u043d\u0430\u0441\u0435\u043b\u0435\u043d\u0438\u0435, \u043f\u043b\u044a\u0442\u043d\u043e\u0441\u0442 \u0438 \u043e\u0446\u0435\u043d\u043a\u0430 \u043d\u0430 \u0432\u044a\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0442\u0430.',
+          },
+          {
+            icon: 'filter_alt',
+            title: '\u0424\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u043d\u0438 \u0440\u0435\u0437\u0443\u043b\u0442\u0430\u0442\u0438',
+            desc: '\u0411\u0438\u0437\u043d\u0435\u0441\u0438\u0442\u0435 \u0432\u044a\u0442\u0440\u0435 \u0432 \u043f\u043e\u043b\u0438\u0433\u043e\u043d\u0430 \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0447\u043d\u043e \u0441\u0435 \u0444\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u0442 \u0438 \u043f\u043e\u043a\u0430\u0437\u0432\u0430\u0442. \u0412\u0438\u0436\u0442\u0435 \u0442\u043e\u0447\u043d\u043e \u043a\u043e\u0438 \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u0438 \u043e\u043f\u0435\u0440\u0438\u0440\u0430\u0442 \u0432 \u0437\u043e\u043d\u0430\u0442\u0430.',
+          },
+          {
+            icon: 'refresh',
+            title: '\u041f\u0440\u0435\u0447\u0435\u0440\u0442\u0430\u0439\u0442\u0435 \u043f\u043e \u0432\u0441\u044f\u043a\u043e \u0432\u0440\u0435\u043c\u0435',
+            desc: '\u0418\u0437\u0447\u0438\u0441\u0442\u0435\u0442\u0435 \u0438 \u043d\u0430\u0447\u0435\u0440\u0442\u0430\u0439\u0442\u0435 \u043e\u0442\u043d\u043e\u0432\u043e \u043a\u043e\u043b\u043a\u043e\u0442\u043e \u043f\u044a\u0442\u0438 \u0435 \u043d\u0443\u0436\u043d\u043e. \u0411\u044a\u0440\u0437\u043e \u0442\u0435\u0441\u0442\u0432\u0430\u0439\u0442\u0435 \u0440\u0430\u0437\u043b\u0438\u0447\u043d\u0438 \u0433\u0440\u0430\u043d\u0438\u0446\u0438.',
+          },
+        ],
+      },
+      {
+        icon: 'layers',
+        navLabel: '\u0418\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u0430',
+        label: '\u041a\u0430\u0440\u0442\u043e\u0432\u0438 \u0441\u043b\u043e\u0435\u0432\u0435',
+        hue: 190,
+        title: '\u0418\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u043d\u0438 \u0441\u043b\u043e\u0435\u0432\u0435',
+        description:
+          '\u0414\u043e\u043f\u044a\u043b\u043d\u0438\u0442\u0435\u043b\u043d\u0438 \u0438\u043d\u0444\u0440\u0430\u0441\u0442\u0440\u0443\u043a\u0442\u0443\u0440\u043d\u0438 \u0441\u043b\u043e\u0435\u0432\u0435 \u0437\u0430 \u043f\u044a\u043b\u043d\u0430 \u043a\u0430\u0440\u0442\u0438\u043d\u0430 \u2014 \u043f\u0430\u0440\u043a\u0438\u043d\u0433 \u0437\u043e\u043d\u0438, \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u043d\u0438 \u043c\u0440\u0435\u0436\u0438 \u0438 \u0442\u043e\u0447\u043a\u0438 \u043d\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441 \u043e\u0442 OpenStreetMap.',
+        tags: [
+          { icon: 'local_parking', label: '\u041f\u0430\u0440\u043a\u0438\u043d\u0433' },
+          { icon: 'directions_walk', label: 'Walk Score' },
+          { icon: 'place', label: 'POI' },
+        ],
+        capabilities: [
+          {
+            icon: 'local_parking',
+            title: '\u041f\u0430\u0440\u043a\u0438\u043d\u0433 \u0437\u043e\u043d\u0438',
+            desc: '\u041f\u043e\u043a\u0440\u0438\u0442\u0438\u044f \u043d\u0430 \u0421\u0438\u043d\u044f \u0438 \u0417\u0435\u043b\u0435\u043d\u0430 \u0437\u043e\u043d\u0430 \u043f\u043e\u043a\u0430\u0437\u0432\u0430\u0442 \u043a\u044a\u0434\u0435 \u0435 \u0432\u044a\u0432\u0435\u0434\u0435\u043d\u043e \u043f\u043b\u0430\u0442\u0435\u043d\u043e \u043f\u0430\u0440\u043a\u0438\u0440\u0430\u043d\u0435. \u0412\u0430\u0436\u043d\u043e \u0437\u0430 \u0431\u0438\u0437\u043d\u0435\u0441\u0438, \u0437\u0430\u0432\u0438\u0441\u0435\u0449\u0438 \u043e\u0442 \u043a\u043b\u0438\u0435\u043d\u0442\u0438 \u0441 \u0430\u0432\u0442\u043e\u043c\u043e\u0431\u0438\u043b\u0438.',
+          },
+          {
+            icon: 'directions_walk',
+            title: '\u041f\u0435\u0448\u0435\u0445\u043e\u0434\u043d\u0430 \u043c\u0440\u0435\u0436\u0430',
+            desc: 'Walk Score \u043c\u0440\u0435\u0436\u0430\u0442\u0430 \u0432\u0438\u0437\u0443\u0430\u043b\u0438\u0437\u0438\u0440\u0430 \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u043d\u043e \u0443\u0434\u043e\u0431\u043d\u0438\u0442\u0435 \u0443\u043b\u0438\u0446\u0438 \u0438 \u043f\u044a\u0442\u0438\u0449\u0430. \u0412\u0438\u0441\u043e\u043a\u0430 \u043f\u0440\u043e\u0445\u043e\u0434\u0438\u043c\u043e\u0441\u0442 \u043a\u043e\u0440\u0435\u043b\u0438\u0440\u0430 \u0441 \u043f\u0435\u0448\u0435\u0445\u043e\u0434\u0435\u043d \u0442\u0440\u0430\u0444\u0438\u043a.',
+          },
+          {
+            icon: 'travel_explore',
+            title: 'OpenStreetMap POI',
+            desc: '\u0422\u043e\u0447\u043a\u0438 \u043d\u0430 \u0438\u043d\u0442\u0435\u0440\u0435\u0441 \u043e\u0442 \u043e\u0431\u0449\u043d\u043e\u0441\u0442\u0442\u0430 \u2014 \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0438, \u0440\u0435\u0441\u0442\u043e\u0440\u0430\u043d\u0442\u0438, \u0443\u0447\u0438\u043b\u0438\u0449\u0430, \u0431\u043e\u043b\u043d\u0438\u0446\u0438 \u0438 \u0437\u0430\u0431\u0435\u043b\u0435\u0436\u0438\u0442\u0435\u043b\u043d\u043e\u0441\u0442\u0438. \u0420\u0430\u0437\u0431\u0435\u0440\u0435\u0442\u0435 \u0442\u044a\u0440\u0433\u043e\u0432\u0441\u043a\u0430\u0442\u0430 \u0435\u043a\u043e\u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u043e\u043a\u043e\u043b\u043e \u043a\u0430\u043d\u0434\u0438\u0434\u0430\u0442-\u043b\u043e\u043a\u0430\u0446\u0438\u044f\u0442\u0430.',
+          },
+          {
+            icon: 'subway',
+            title: '\u041c\u0435\u0442\u0440\u043e \u043b\u0438\u043d\u0438\u0438 \u0438 \u0441\u043f\u0438\u0440\u043a\u0438',
+            desc: '\u0421\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0437\u0438\u0440\u0430\u043d\u0438 \u0441\u043b\u043e\u0435\u0432\u0435 \u0441 \u0444\u0438\u043b\u0442\u0440\u0438\u0440\u0430\u043d\u0435 \u043f\u043e \u043b\u0438\u043d\u0438\u044f (\u04201, \u04202, \u04203, \u04204) \u0438 \u0438\u043d\u0434\u0438\u0432\u0438\u0434\u0443\u0430\u043b\u043d\u0438 \u0441\u043f\u0438\u0440\u043a\u0438. \u041f\u0440\u0435\u0432\u043a\u043b\u044e\u0447\u0432\u0430\u0439\u0442\u0435 \u0432\u0441\u044f\u043a\u0430 \u043b\u0438\u043d\u0438\u044f \u043d\u0435\u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e.',
+          },
+        ],
+      },
+    ],
+    cta: {
+      title: '\u0413\u043e\u0442\u043e\u0432\u0438 \u0434\u0430 \u043d\u0430\u043c\u0435\u0440\u0438\u0442\u0435 \u043f\u0435\u0440\u0444\u0435\u043a\u0442\u043d\u0430\u0442\u0430 \u043b\u043e\u043a\u0430\u0446\u0438\u044f?',
+      sub: '\u0412\u0441\u0438\u0447\u043a\u0438 \u0442\u0435\u0437\u0438 \u0444\u0443\u043d\u043a\u0446\u0438\u0438 \u0441\u0430 \u043d\u0430 \u0436\u0438\u0432\u043e \u0438 \u0438\u043d\u0442\u0435\u0440\u0430\u043a\u0442\u0438\u0432\u043d\u0438. \u041e\u0442\u0432\u043e\u0440\u0435\u0442\u0435 \u043a\u0430\u0440\u0442\u0430\u0442\u0430 \u0438 \u0437\u0430\u043f\u043e\u0447\u043d\u0435\u0442\u0435 \u0434\u0430 \u043f\u0440\u043e\u0443\u0447\u0432\u0430\u0442\u0435.',
+      primary: '\u041e\u0442\u0432\u043e\u0440\u0438 \u043a\u0430\u0440\u0442\u0430\u0442\u0430',
+      secondary: '\u2190 \u041a\u044a\u043c \u043d\u0430\u0447\u0430\u043b\u043e\u0442\u043e',
+    },
+    footer: {
+      copy: '\u00a9 2026 \u00b7 \u0418\u043d\u0442\u0435\u043b\u0438\u0433\u0435\u043d\u0442\u0435\u043d \u0438\u0437\u0431\u043e\u0440 \u043d\u0430 \u0431\u0438\u0437\u043d\u0435\u0441 \u043b\u043e\u043a\u0430\u0446\u0438\u044f',
+      openMap: '\u041e\u0442\u0432\u043e\u0440\u0438 \u043a\u0430\u0440\u0442\u0430\u0442\u0430 \u2192',
+    },
+  },
+}
+
+export function useFeaturesTranslations() {
+  const lang = ref<'en' | 'bg'>('en')
+  const t = computed(() => translations[lang.value])
+
+  function toggleLang() {
+    lang.value = lang.value === 'en' ? 'bg' : 'en'
+  }
+
+  return { lang, t, toggleLang }
+}

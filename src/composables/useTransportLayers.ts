@@ -1,125 +1,64 @@
 import { ref, computed } from 'vue';
 import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
 import TilesAPI from '@/api/tiles';
+import { popupWrap, gradientBar, popupHeader, createLayerToggle } from './mapLayerUtils';
+import { CHORO_LAYERS, LINE_LAYERS, type TransportChoroLayerDef, type TransportLineLayerDef } from './transportLayerDefs';
 
-// ── Mode colors ───────────────────────────────────────────────────────────────
+// ── Mode colors (used by custom layers only) ─────────────────────────────────
 const COLOR = {
-    bus:             '#1565C0',  // dark blue
-    busAlt:          '#42A5F5',  // mid blue
-    trolleybus:      '#00695C',  // dark teal
-    tram:            '#C62828',  // dark red
-    tramAlt:         '#EF5350',  // mid red
-    railway:         '#F57F17',  // amber
-    transit:         '#2E7D32',  // dark green (transit accessibility)
-    metro800:        '#6A1B9A',  // deep purple (800 m catchment)
-    metro1200:       '#1565C0',  // dark blue  (1200 m+ catchment)
-    cycling:         '#1B5E20',  // deep green (built cycling network)
-    cyclingAlt:      '#66BB6A',  // light green (built cycling alt)
-    cyclingPlanned:  '#FF8F00',  // amber (planned extensions)
+    railway:         '#F57F17',
+    metro800:        '#6A1B9A',
+    metro1200:       '#1565C0',
+    cycling:         '#1B5E20',
+    cyclingAlt:      '#66BB6A',
+    cyclingPlanned:  '#FF8F00',
 };
 
-// ── Shared helpers ────────────────────────────────────────────────────────────
-function gradientBar(css: string, labels: [string, string, string]): string {
-    return `
-        <div style="margin-top:10px;height:7px;border-radius:4px;background:${css}"></div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;margin-top:3px">
-            <span>${labels[0]}</span><span>${labels[1]}</span><span>${labels[2]}</span>
-        </div>`;
-}
-
-function popupWrap(content: string): string {
-    return `<div style="font-family:system-ui,sans-serif;min-width:200px;color:#0f172a">${content}</div>`;
-}
-
-function popupHeader(icon: string, title: string): string {
-    return `<h3 style="margin:0 0 12px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
-        <span class="material-symbols-outlined" style="font-size:15px;vertical-align:middle;margin-right:4px">${icon}</span>${title}
-    </h3>`;
-}
-
 export function useTransportLayers() {
-    // ── Visibility refs ───────────────────────────────────────────────────────
-    const showTransitAccessGe       = ref(false);
-    const showTransitAccessDistrict = ref(false);
-    const showMetroAccess800m       = ref(false);
-    const showMetroAccess1200m      = ref(false);
-    const showBusLines              = ref(false);
-    const showBusLinesAlt           = ref(false);
-    const showTrolleybusLines       = ref(false);
-    const showTramLines             = ref(false);
-    const showTramLinesAlt          = ref(false);
-    const showRailwayStations       = ref(false);
-    const showCyclingNetwork        = ref(false);
-    const showCyclingNetworkAlt     = ref(false);
-    const showCyclingPlanned        = ref(false);
-
-    const showAnyTransport = computed(() =>
-        showTransitAccessGe.value || showTransitAccessDistrict.value ||
-        showMetroAccess800m.value  || showMetroAccess1200m.value      ||
-        showBusLines.value         || showBusLinesAlt.value           ||
-        showTrolleybusLines.value  || showTramLines.value             ||
-        showTramLinesAlt.value     || showRailwayStations.value       ||
-        showCyclingNetwork.value   || showCyclingNetworkAlt.value     ||
-        showCyclingPlanned.value
-    );
-
     let activePopup: maplibregl.Popup | null = null;
 
     // =========================================================================
-    // HELPERS: generic polygon (choropleth) layer builder
+    // Generic helpers parameterised by layer definitions
     // =========================================================================
-    function addChoroLayer(
-        map: MapLibreMap,
-        sourceId: string,
-        tileUrl: string,
-        sourceLayer: string,
-        layerFill: string,
-        layerOutline: string,
-        colorStops: number[],     // [val0, val1, val2, val3, val4] — 5 stops
-        colors: string[],         // [col0, col1, col2, col3, col4] — 5 colors
-        popupTitle: string,
-        popupIcon: string,
-        unitLabel: string,
-        gradientCss: string,
-        gradientLabels: [string, string, string],
-    ) {
-        if (map.getSource(sourceId)) return;
 
-        map.addSource(sourceId, {
+    function addChoroLayer(map: MapLibreMap, def: TransportChoroLayerDef) {
+        if (map.getSource(def.sourceId)) return;
+
+        map.addSource(def.sourceId, {
             type: 'vector',
-            tiles: [tileUrl],
+            tiles: [def.tileUrl],
             maxzoom: 14,
         });
 
         map.addLayer({
-            id: layerFill,
+            id: def.fillLayerId,
             type: 'fill',
-            source: sourceId,
-            'source-layer': sourceLayer,
+            source: def.sourceId,
+            'source-layer': def.sourceLayer,
             layout: { visibility: 'none' },
             paint: {
                 'fill-color': [
-                    'interpolate', ['linear'], ['to-number', ['get', 'score'], colorStops[0]!],
-                    colorStops[0]!, colors[0]!,
-                    colorStops[1]!, colors[1]!,
-                    colorStops[2]!, colors[2]!,
-                    colorStops[3]!, colors[3]!,
-                    colorStops[4]!, colors[4]!,
+                    'interpolate', ['linear'], ['to-number', ['get', 'score'], def.colorStops[0]!],
+                    def.colorStops[0]!, def.colors[0]!,
+                    def.colorStops[1]!, def.colors[1]!,
+                    def.colorStops[2]!, def.colors[2]!,
+                    def.colorStops[3]!, def.colors[3]!,
+                    def.colorStops[4]!, def.colors[4]!,
                 ] as maplibregl.ExpressionSpecification,
-                'fill-opacity': 0.45,
+                'fill-opacity': def.fillOpacity ?? 0.45,
             },
         });
 
         map.addLayer({
-            id: layerOutline,
+            id: def.outlineLayerId,
             type: 'line',
-            source: sourceId,
-            'source-layer': sourceLayer,
+            source: def.sourceId,
+            'source-layer': def.sourceLayer,
             layout: { visibility: 'none' },
             paint: { 'line-color': '#ffffff', 'line-width': 0.5, 'line-opacity': 0.4 },
         });
 
-        map.on('click', layerFill, (e) => {
+        map.on('click', def.fillLayerId, (e) => {
             const props = e.features?.[0]?.properties ?? {};
             const score = Number(props.score ?? 0).toLocaleString();
             const label = props.label || '';
@@ -127,67 +66,49 @@ export function useTransportLayers() {
             activePopup = new maplibregl.Popup({ maxWidth: '260px' })
                 .setLngLat(e.lngLat)
                 .setHTML(popupWrap(`
-                    ${popupHeader(popupIcon, popupTitle)}
+                    ${popupHeader(def.popup.icon, def.popup.title)}
                     ${label ? `<div style="font-size:12px;color:#64748b;margin-bottom:6px">${label}</div>` : ''}
                     <div style="font-size:24px;font-weight:700;color:#1e293b">${score}
-                        <span style="font-size:13px;color:#64748b;font-weight:400">${unitLabel}</span>
+                        <span style="font-size:13px;color:#64748b;font-weight:400">${def.popup.unitLabel}</span>
                     </div>
-                    ${gradientBar(gradientCss, gradientLabels)}
+                    ${gradientBar(def.popup.gradientCss, def.popup.gradientLabels)}
                 `))
                 .addTo(map);
         });
 
-        map.on('mouseenter', layerFill, () => { map.getCanvas().style.cursor = 'pointer'; });
-        map.on('mouseleave', layerFill, () => { map.getCanvas().style.cursor = ''; });
+        map.on('mouseenter', def.fillLayerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', def.fillLayerId, () => { map.getCanvas().style.cursor = ''; });
     }
 
-    function setLayerPairVisibility(map: MapLibreMap, ids: string[], visible: boolean) {
-        const v = visible ? 'visible' : 'none';
-        ids.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v); });
-    }
+    function addLineLayer(map: MapLibreMap, def: TransportLineLayerDef) {
+        if (map.getSource(def.sourceId)) return;
 
-    // =========================================================================
-    // HELPERS: generic line layer builder
-    // =========================================================================
-    function addLineLayer(
-        map: MapLibreMap,
-        sourceId: string,
-        tileUrl: string,
-        sourceLayer: string,
-        layerId: string,
-        lineColor: string,
-        lineWidth: number,
-        popupTitle: string,
-        popupIcon: string,
-    ) {
-        if (map.getSource(sourceId)) return;
-
-        map.addSource(sourceId, {
+        map.addSource(def.sourceId, {
             type: 'vector',
-            tiles: [tileUrl],
+            tiles: [def.tileUrl],
             maxzoom: 16,
         });
 
         map.addLayer({
-            id: layerId,
+            id: def.layerId,
             type: 'line',
-            source: sourceId,
-            'source-layer': sourceLayer,
+            source: def.sourceId,
+            'source-layer': def.sourceLayer,
             layout: { visibility: 'none', 'line-join': 'round', 'line-cap': 'round' },
-            paint: { 'line-color': lineColor, 'line-width': lineWidth },
+            paint: { 'line-color': def.lineColor, 'line-width': def.lineWidth },
         });
 
-        map.on('click', layerId, (e) => {
+        map.on('click', def.layerId, (e) => {
             const props = e.features?.[0]?.properties ?? {};
             const routeLabel = props.label || props.route_id || '';
             activePopup?.remove();
             activePopup = new maplibregl.Popup({ maxWidth: '220px' })
                 .setLngLat(e.lngLat)
                 .setHTML(popupWrap(`
-                    ${popupHeader(popupIcon, popupTitle)}
+                    ${popupHeader(def.popup.icon, def.popup.title)}
                     ${routeLabel
-                        ? `<div style="display:inline-block;padding:4px 12px;border-radius:16px;background:${lineColor}22;border:1px solid ${lineColor}88;color:${lineColor};font-size:15px;font-weight:700">
-                               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${lineColor};margin-right:6px;vertical-align:middle"></span>
+                        ? `<div style="display:inline-block;padding:4px 12px;border-radius:16px;background:${def.lineColor}22;border:1px solid ${def.lineColor}88;color:${def.lineColor};font-size:15px;font-weight:700">
+                               <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${def.lineColor};margin-right:6px;vertical-align:middle"></span>
                                Route ${routeLabel}
                            </div>`
                         : '<div style="font-size:12px;color:#64748b">No route info</div>'
@@ -196,16 +117,35 @@ export function useTransportLayers() {
                 .addTo(map);
         });
 
-        map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-        map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+        map.on('mouseenter', def.layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', def.layerId, () => { map.getCanvas().style.cursor = ''; });
     }
 
     // =========================================================================
-    // 1. TRANSIT ACCESSIBILITY BY PLANNING ZONE (score = index 0–1.2, higher = better)
-    //    Data is heavily right-skewed: ~75 % of zones score 0; top 10 % exceed 0.9.
-    //    Use `step` so zero-score zones show as neutral gray and non-zero zones
-    //    are coloured with a blue sequential ramp.
+    // Factory: generate refs + toggles for data-driven layers
     // =========================================================================
+
+    const choroState = Object.fromEntries(CHORO_LAYERS.map(def => {
+        const show = ref(false);
+        const toggle = createLayerToggle(show, [def.fillLayerId, def.outlineLayerId],
+            (map) => addChoroLayer(map, def));
+        return [def.key, { show, toggle }];
+    }));
+
+    const lineState = Object.fromEntries(LINE_LAYERS.map(def => {
+        const show = ref(false);
+        const toggle = createLayerToggle(show, [def.layerId],
+            (map) => addLineLayer(map, def));
+        return [def.key, { show, toggle }];
+    }));
+
+    // =========================================================================
+    // Custom layers (unique rendering or popup logic)
+    // =========================================================================
+
+    // ── 1. Transit Access by Planning Zone (step expression, access level labels) ──
+    const showTransitAccessGe = ref(false);
+
     function ensureTransitAccessGe(map: MapLibreMap) {
         const sourceId    = 'transport-transit-access-ge';
         const sourceLayer = 'sofiaplan_transit_access_ge_tiles';
@@ -229,11 +169,11 @@ export function useTransportLayers() {
             paint: {
                 'fill-color': [
                     'step', ['to-number', ['get', 'score'], 0],
-                    '#cbd5e1',   // score = 0  → slate-300   (no access)
-                    0.05, '#bfdbfe',   // 0.05–0.35 → pale blue   (minimal)
-                    0.35, '#60a5fa',   // 0.35–0.65 → sky blue    (low)
-                    0.65, '#2563eb',   // 0.65–0.95 → medium blue (moderate)
-                    0.95, '#1d4ed8',   // > 0.95    → dark blue   (high)
+                    '#cbd5e1',
+                    0.05, '#bfdbfe',
+                    0.35, '#60a5fa',
+                    0.65, '#2563eb',
+                    0.95, '#1d4ed8',
                 ] as maplibregl.ExpressionSpecification,
                 'fill-opacity': 0.7,
             },
@@ -276,50 +216,15 @@ export function useTransportLayers() {
         map.on('mouseleave', layerFill, () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleTransitAccessGe = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showTransitAccessGe.value = forceState ?? !showTransitAccessGe.value;
-        ensureTransitAccessGe(map);
-        setLayerPairVisibility(map, [
-            'transport-transit-access-ge-fill',
-            'transport-transit-access-ge-outline',
-        ], showTransitAccessGe.value);
-    };
+    const toggleTransitAccessGe = createLayerToggle(
+        showTransitAccessGe,
+        ['transport-transit-access-ge-fill', 'transport-transit-access-ge-outline'],
+        ensureTransitAccessGe,
+    );
 
-    // =========================================================================
-    // 2. TRANSIT ACCESSIBILITY BY TRANSPORT DISTRICT
-    // =========================================================================
-    function ensureTransitAccessDistrict(map: MapLibreMap) {
-        addChoroLayer(
-            map,
-            'transport-transit-access-district',
-            TilesAPI.getSofiaPlanTransitAccessDistrictTileUrlTemplate(),
-            'sofiaplan_transit_access_district_tiles',
-            'transport-transit-access-district-fill',
-            'transport-transit-access-district-outline',
-            [0, 500, 1000, 1500, 2000],
-            ['#f7fcf5', '#74c476', '#238b45', '#006d2c', '#00441b'],
-            'PT Access (by District)',
-            'directions_transit',
-            'm',
-            'linear-gradient(to right,#f7fcf5,#74c476,#238b45,#00441b)',
-            ['0 m', '1000 m', '2000 m'],
-        );
-    }
+    // ── 2. Metro Access 800 m (solid fill, no score interpolation) ──────────
+    const showMetroAccess800m = ref(false);
 
-    const toggleTransitAccessDistrict = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showTransitAccessDistrict.value = forceState ?? !showTransitAccessDistrict.value;
-        ensureTransitAccessDistrict(map);
-        setLayerPairVisibility(map, [
-            'transport-transit-access-district-fill',
-            'transport-transit-access-district-outline',
-        ], showTransitAccessDistrict.value);
-    };
-
-    // =========================================================================
-    // 3. METRO ACCESSIBILITY 800 m CATCHMENT
-    // =========================================================================
     function ensureMetroAccess800m(map: MapLibreMap) {
         if (map.getSource('transport-metro-access-800m')) return;
 
@@ -365,19 +270,15 @@ export function useTransportLayers() {
         map.on('mouseleave', 'transport-metro-access-800m-fill', () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleMetroAccess800m = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showMetroAccess800m.value = forceState ?? !showMetroAccess800m.value;
-        ensureMetroAccess800m(map);
-        setLayerPairVisibility(map, [
-            'transport-metro-access-800m-fill',
-            'transport-metro-access-800m-outline',
-        ], showMetroAccess800m.value);
-    };
+    const toggleMetroAccess800m = createLayerToggle(
+        showMetroAccess800m,
+        ['transport-metro-access-800m-fill', 'transport-metro-access-800m-outline'],
+        ensureMetroAccess800m,
+    );
 
-    // =========================================================================
-    // 4. METRO ACCESSIBILITY 1200 m+ CATCHMENT
-    // =========================================================================
+    // ── 3. Metro Access 1200 m+ (solid fill, no score interpolation) ────────
+    const showMetroAccess1200m = ref(false);
+
     function ensureMetroAccess1200m(map: MapLibreMap) {
         if (map.getSource('transport-metro-access-1200m')) return;
 
@@ -423,139 +324,15 @@ export function useTransportLayers() {
         map.on('mouseleave', 'transport-metro-access-1200m-fill', () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleMetroAccess1200m = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showMetroAccess1200m.value = forceState ?? !showMetroAccess1200m.value;
-        ensureMetroAccess1200m(map);
-        setLayerPairVisibility(map, [
-            'transport-metro-access-1200m-fill',
-            'transport-metro-access-1200m-outline',
-        ], showMetroAccess1200m.value);
-    };
+    const toggleMetroAccess1200m = createLayerToggle(
+        showMetroAccess1200m,
+        ['transport-metro-access-1200m-fill', 'transport-metro-access-1200m-outline'],
+        ensureMetroAccess1200m,
+    );
 
-    // =========================================================================
-    // 5. BUS LINES (primary)
-    // =========================================================================
-    function ensureBusLines(map: MapLibreMap) {
-        addLineLayer(
-            map,
-            'transport-bus-lines',
-            TilesAPI.getSofiaPlanBusLinesTileUrlTemplate(),
-            'sofiaplan_bus_lines_tiles',
-            'transport-bus-lines-line',
-            COLOR.bus,
-            2,
-            'Bus Lines',
-            'directions_bus',
-        );
-    }
+    // ── 4. Railway Stations (circle layer, custom popup with annual passengers) ──
+    const showRailwayStations = ref(false);
 
-    const toggleBusLines = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showBusLines.value = forceState ?? !showBusLines.value;
-        ensureBusLines(map);
-        setLayerPairVisibility(map, ['transport-bus-lines-line'], showBusLines.value);
-    };
-
-    // =========================================================================
-    // 6. BUS LINES (alternate)
-    // =========================================================================
-    function ensureBusLinesAlt(map: MapLibreMap) {
-        addLineLayer(
-            map,
-            'transport-bus-lines-alt',
-            TilesAPI.getSofiaPlanBusLinesAltTileUrlTemplate(),
-            'sofiaplan_bus_lines_alt_tiles',
-            'transport-bus-lines-alt-line',
-            COLOR.busAlt,
-            2,
-            'Bus Lines (alt)',
-            'directions_bus',
-        );
-    }
-
-    const toggleBusLinesAlt = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showBusLinesAlt.value = forceState ?? !showBusLinesAlt.value;
-        ensureBusLinesAlt(map);
-        setLayerPairVisibility(map, ['transport-bus-lines-alt-line'], showBusLinesAlt.value);
-    };
-
-    // =========================================================================
-    // 7. TROLLEYBUS LINES
-    // =========================================================================
-    function ensureTrolleybusLines(map: MapLibreMap) {
-        addLineLayer(
-            map,
-            'transport-trolleybus-lines',
-            TilesAPI.getSofiaPlanTrolleybusLinesTileUrlTemplate(),
-            'sofiaplan_trolleybus_lines_tiles',
-            'transport-trolleybus-lines-line',
-            COLOR.trolleybus,
-            2,
-            'Trolleybus Lines',
-            'electric_bolt',
-        );
-    }
-
-    const toggleTrolleybusLines = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showTrolleybusLines.value = forceState ?? !showTrolleybusLines.value;
-        ensureTrolleybusLines(map);
-        setLayerPairVisibility(map, ['transport-trolleybus-lines-line'], showTrolleybusLines.value);
-    };
-
-    // =========================================================================
-    // 8. TRAM LINES (primary)
-    // =========================================================================
-    function ensureTramLines(map: MapLibreMap) {
-        addLineLayer(
-            map,
-            'transport-tram-lines',
-            TilesAPI.getSofiaPlanTramLinesTileUrlTemplate(),
-            'sofiaplan_tram_lines_tiles',
-            'transport-tram-lines-line',
-            COLOR.tram,
-            2.5,
-            'Tram Lines',
-            'tram',
-        );
-    }
-
-    const toggleTramLines = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showTramLines.value = forceState ?? !showTramLines.value;
-        ensureTramLines(map);
-        setLayerPairVisibility(map, ['transport-tram-lines-line'], showTramLines.value);
-    };
-
-    // =========================================================================
-    // 9. TRAM LINES (alternate)
-    // =========================================================================
-    function ensureTramLinesAlt(map: MapLibreMap) {
-        addLineLayer(
-            map,
-            'transport-tram-lines-alt',
-            TilesAPI.getSofiaPlanTramLinesAltTileUrlTemplate(),
-            'sofiaplan_tram_lines_alt_tiles',
-            'transport-tram-lines-alt-line',
-            COLOR.tramAlt,
-            2,
-            'Tram Lines (alt)',
-            'tram',
-        );
-    }
-
-    const toggleTramLinesAlt = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showTramLinesAlt.value = forceState ?? !showTramLinesAlt.value;
-        ensureTramLinesAlt(map);
-        setLayerPairVisibility(map, ['transport-tram-lines-alt-line'], showTramLinesAlt.value);
-    };
-
-    // =========================================================================
-    // 10. RAILWAY STATIONS (circle scaled by passenger load)
-    // =========================================================================
     function ensureRailwayStations(map: MapLibreMap) {
         if (map.getSource('transport-railway-stations')) return;
 
@@ -606,16 +383,15 @@ export function useTransportLayers() {
         map.on('mouseleave', 'transport-railway-stations-circle', () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleRailwayStations = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showRailwayStations.value = forceState ?? !showRailwayStations.value;
-        ensureRailwayStations(map);
-        setLayerPairVisibility(map, ['transport-railway-stations-circle'], showRailwayStations.value);
-    };
+    const toggleRailwayStations = createLayerToggle(
+        showRailwayStations,
+        ['transport-railway-stations-circle'],
+        ensureRailwayStations,
+    );
 
-    // =========================================================================
-    // 11. BUILT CYCLING NETWORK (primary) — ID 606
-    // =========================================================================
+    // ── 5. Built Cycling Network (custom popup with label, direction, length) ──
+    const showCyclingNetwork = ref(false);
+
     function ensureCyclingNetwork(map: MapLibreMap) {
         if (map.getSource('transport-cycling-network')) return;
 
@@ -652,16 +428,15 @@ export function useTransportLayers() {
         map.on('mouseleave', 'transport-cycling-network-line', () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleCyclingNetwork = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showCyclingNetwork.value = forceState ?? !showCyclingNetwork.value;
-        ensureCyclingNetwork(map);
-        setLayerPairVisibility(map, ['transport-cycling-network-line'], showCyclingNetwork.value);
-    };
+    const toggleCyclingNetwork = createLayerToggle(
+        showCyclingNetwork,
+        ['transport-cycling-network-line'],
+        ensureCyclingNetwork,
+    );
 
-    // =========================================================================
-    // 12. BUILT CYCLING NETWORK (alternate) — ID 290
-    // =========================================================================
+    // ── 6. Built Cycling Network Alt (custom popup with label, direction) ────
+    const showCyclingNetworkAlt = ref(false);
+
     function ensureCyclingNetworkAlt(map: MapLibreMap) {
         if (map.getSource('transport-cycling-network-alt')) return;
 
@@ -697,16 +472,15 @@ export function useTransportLayers() {
         map.on('mouseleave', 'transport-cycling-network-alt-line', () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleCyclingNetworkAlt = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showCyclingNetworkAlt.value = forceState ?? !showCyclingNetworkAlt.value;
-        ensureCyclingNetworkAlt(map);
-        setLayerPairVisibility(map, ['transport-cycling-network-alt-line'], showCyclingNetworkAlt.value);
-    };
+    const toggleCyclingNetworkAlt = createLayerToggle(
+        showCyclingNetworkAlt,
+        ['transport-cycling-network-alt-line'],
+        ensureCyclingNetworkAlt,
+    );
 
-    // =========================================================================
-    // 13. PLANNED CYCLING EXTENSIONS — ID 146
-    // =========================================================================
+    // ── 7. Planned Cycling Extensions (dashed line, custom popup) ────────────
+    const showCyclingPlanned = ref(false);
+
     function ensureCyclingPlanned(map: MapLibreMap) {
         if (map.getSource('transport-cycling-planned')) return;
 
@@ -748,45 +522,59 @@ export function useTransportLayers() {
         map.on('mouseleave', 'transport-cycling-planned-line', () => { map.getCanvas().style.cursor = ''; });
     }
 
-    const toggleCyclingPlanned = (map: MapLibreMap | null, forceState?: boolean) => {
-        if (!map) return;
-        showCyclingPlanned.value = forceState ?? !showCyclingPlanned.value;
-        ensureCyclingPlanned(map);
-        setLayerPairVisibility(map, ['transport-cycling-planned-line'], showCyclingPlanned.value);
-    };
+    const toggleCyclingPlanned = createLayerToggle(
+        showCyclingPlanned,
+        ['transport-cycling-planned-line'],
+        ensureCyclingPlanned,
+    );
 
     // =========================================================================
-    // Toggle all transport layers on/off
+    // Computed + toggle-all
     // =========================================================================
+
+    const showAnyTransport = computed(() =>
+        showTransitAccessGe.value || choroState.transitAccessDistrict!.show.value ||
+        showMetroAccess800m.value  || showMetroAccess1200m.value      ||
+        lineState.busLines!.show.value         || lineState.busLinesAlt!.show.value           ||
+        lineState.trolleybusLines!.show.value  || lineState.tramLines!.show.value             ||
+        lineState.tramLinesAlt!.show.value     || showRailwayStations.value       ||
+        showCyclingNetwork.value   || showCyclingNetworkAlt.value     ||
+        showCyclingPlanned.value
+    );
+
     const toggleAllTransport = (map: MapLibreMap | null) => {
         if (!map) return;
         const next = !showAnyTransport.value;
         toggleTransitAccessGe(map, next);
-        toggleTransitAccessDistrict(map, next);
+        choroState.transitAccessDistrict!.toggle(map, next);
         toggleMetroAccess800m(map, next);
         toggleMetroAccess1200m(map, next);
-        toggleBusLines(map, next);
-        toggleBusLinesAlt(map, next);
-        toggleTrolleybusLines(map, next);
-        toggleTramLines(map, next);
-        toggleTramLinesAlt(map, next);
+        lineState.busLines!.toggle(map, next);
+        lineState.busLinesAlt!.toggle(map, next);
+        lineState.trolleybusLines!.toggle(map, next);
+        lineState.tramLines!.toggle(map, next);
+        lineState.tramLinesAlt!.toggle(map, next);
         toggleRailwayStations(map, next);
         toggleCyclingNetwork(map, next);
         toggleCyclingNetworkAlt(map, next);
         toggleCyclingPlanned(map, next);
     };
 
+    // =========================================================================
+    // Return (backwards-compatible property names)
+    // =========================================================================
+
     return {
         // Visibility state
         showTransitAccessGe,
-        showTransitAccessDistrict,
+        showTransitAccessDistrict: choroState.transitAccessDistrict!.show,
         showMetroAccess800m,
         showMetroAccess1200m,
-        showBusLines,
-        showBusLinesAlt,
-        showTrolleybusLines,
-        showTramLines,
-        showTramLinesAlt,
+        showBusLines: lineState.busLines!.show,
+        showBusLinesAlt: lineState.busLinesAlt!.show,
+        showTrolleybusLines: lineState.trolleybusLines!.show,
+        showTramLines: lineState.tramLines!.show,
+        showTramLinesAlt: lineState.tramLinesAlt!.show,
         showRailwayStations,
         showCyclingNetwork,
         showCyclingNetworkAlt,
@@ -794,14 +582,14 @@ export function useTransportLayers() {
         showAnyTransport,
         // Toggle functions
         toggleTransitAccessGe,
-        toggleTransitAccessDistrict,
+        toggleTransitAccessDistrict: choroState.transitAccessDistrict!.toggle,
         toggleMetroAccess800m,
         toggleMetroAccess1200m,
-        toggleBusLines,
-        toggleBusLinesAlt,
-        toggleTrolleybusLines,
-        toggleTramLines,
-        toggleTramLinesAlt,
+        toggleBusLines: lineState.busLines!.toggle,
+        toggleBusLinesAlt: lineState.busLinesAlt!.toggle,
+        toggleTrolleybusLines: lineState.trolleybusLines!.toggle,
+        toggleTramLines: lineState.tramLines!.toggle,
+        toggleTramLinesAlt: lineState.tramLinesAlt!.toggle,
         toggleRailwayStations,
         toggleCyclingNetwork,
         toggleCyclingNetworkAlt,

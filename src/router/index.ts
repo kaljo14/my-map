@@ -1,9 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { watch } from 'vue'
 import LandingView from '../views/LandingView.vue'
-import MapView from '../views/MapView.vue'
-import SignInView from '../views/SignInView.vue'
 import auth from '../services/auth'
+
+const MapView = () => import('../views/MapView.vue')
+const SignInView = () => import('../views/SignInView.vue')
+const FeaturesView = () => import('../views/FeaturesView.vue')
 
 function waitForClerk(): Promise<void> {
   if (auth.isLoaded.value) return Promise.resolve()
@@ -21,6 +23,11 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: LandingView
+    },
+    {
+      path: '/features',
+      name: 'features',
+      component: FeaturesView
     },
     {
       path: '/sign-in',

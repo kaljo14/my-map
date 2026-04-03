@@ -354,6 +354,38 @@ class TilesAPI {
         return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_parking_blue/{z}/{x}/{y}`;
     }
 
+    // ── Pedestrian Network tile URL templates ──────────────────────────────────
+
+    /** Pedestrian network — Sofia city (ID 318). Line layer: score, choice, connectivity, segment_length. */
+    getPedestrianCityTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_city_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Pedestrian network — Sofia city alt (ID 309). Line layer: score, choice, connectivity, segment_length. */
+    getPedestrianCityAltTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_city_alt_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Pedestrian network — Sofia municipality (ID 332). Line layer: score, choice, connectivity, segment_length. */
+    getPedestrianMunicipalityTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_municipality_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Pedestrian network — Sofia municipality alt (ID 361). Line layer: score, choice, connectivity, segment_length. */
+    getPedestrianMunicipalityAltTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_municipality_alt_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Pedestrian network segmented (ID 284). Line layer: score, choice, connectivity, segment_length. */
+    getPedestrianSegmentedTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_segmented_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Pedestrian integration near infrastructure dividers (ID 603). Polygon layer: label, district, score, choice. */
+    getPedestrianIntegrationTileUrl(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_integration_tiles/{z}/{x}/{y}`;
+    }
+
     /**
      * Fetches grid labels for analysis
      */
