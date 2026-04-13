@@ -93,6 +93,18 @@
       <ToggleRow label="Health Infrastructure Concentration" variant="sidebar" :model-value="store.sofiaPlan.showHealthInfrastructureConcentration" @toggle="store.toggleHealthInfrastructureConcentration()">
         <template #icon><span class="material-symbols-outlined">local_hospital</span></template>
       </ToggleRow>
+      <div class="ge-subsection-header flood-risk-header">
+        Flood Risk
+      </div>
+      <ToggleRow label="Low Probability" variant="sidebar" :model-value="store.sofiaPlan.showFloodRiskLow" @toggle="store.toggleFloodRiskLow()">
+        <template #icon><span class="material-symbols-outlined" style="color:#93c4e8">water_drop</span></template>
+      </ToggleRow>
+      <ToggleRow label="Medium Probability" variant="sidebar" :model-value="store.sofiaPlan.showFloodRiskMedium" @toggle="store.toggleFloodRiskMedium()">
+        <template #icon><span class="material-symbols-outlined" style="color:#2e75b6">water</span></template>
+      </ToggleRow>
+      <ToggleRow label="High Probability" variant="sidebar" :model-value="store.sofiaPlan.showFloodRiskHigh" @toggle="store.toggleFloodRiskHigh()">
+        <template #icon><span class="material-symbols-outlined" style="color:#1f3864">flood</span></template>
+      </ToggleRow>
       <div class="ge-subsection-header">
         Buildings & Morphology (Planning Unit)
       </div>

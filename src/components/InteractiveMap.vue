@@ -27,6 +27,7 @@
           @compareLocations="openComparison"
           @closeComparison="closeComparison"
           @switchBaseLayer="onSwitchBaseLayer"
+          @startAddListing="startAddListing"
         />
 
         <button
@@ -49,13 +50,15 @@
       </div>
 
       <!-- Map -->
-      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode, 'pin-cursor': isPinMode }">
+      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode, 'pin-cursor': isPinMode, 'listing-cursor': isAddListingMode }">
         <MapStats
           :isMobile="isMobile"
           :filteredCount="totalFilteredCount"
           :averageRating="averageRating"
           :label="statsLabel"
         />
+
+        <GeocodingSearch :map-instance="mapInstance" />
 
         <PolygonControls
           :isDrawingMode="isDrawingMode"
@@ -98,6 +101,13 @@
       @save="saveShop"
     />
 
+    <!-- Add Retail Listing Modal -->
+    <RetailListingModal
+      :show="showListingModal"
+      @close="cancelAddListing"
+      @save="saveListing"
+    />
+
     <!-- Delete Confirmation Modal -->
     <DeleteConfirmModal
       :show="showDeleteConfirm"
@@ -121,6 +131,7 @@ import { useMapInstance } from '@/composables/useMapInstance';
 import { useMobileDetection } from '@/composables/useMobileDetection';
 import { usePlacesManager } from '@/composables/usePlacesManager';
 import { useShopManagement } from '@/composables/useShopManagement';
+import { useRetailListingManagement } from '@/composables/useRetailListingManagement';
 import { initDeckOverlay } from '@/composables/useDeckOverlay';
 import { usePlacesDeckLayer } from '@/composables/usePlacesDeckLayer';
 import { useLocationComparison } from '@/composables/useLocationComparison';
@@ -131,6 +142,7 @@ import { useLayerStore } from '@/stores/layerStore';
 // Components
 import AnalysisPanel from './map/AnalysisPanel.vue';
 import ShopModal from './map/ShopModal.vue';
+import RetailListingModal from './map/RetailListingModal.vue';
 import DeleteConfirmModal from './map/DeleteConfirmModal.vue';
 import AppHeader from './map/AppHeader.vue';
 import MapStats from './map/MapStats.vue';
@@ -138,6 +150,7 @@ import BottomNav from './map/BottomNav.vue';
 import LocationComparisonPanel from './map/LocationComparisonPanel.vue';
 import AreaAnalysisPanel from './map/AreaAnalysisPanel.vue';
 import PolygonControls from './map/PolygonControls.vue';
+import GeocodingSearch from './map/GeocodingSearch.vue';
 import { isDarkMap } from '@/stores/mapConfig';
 
 const { logout } = auth;
@@ -195,6 +208,25 @@ const {
   cancelDelete,
   deleteBarbershop,
 } = useShopManagement(placeInstances[0]!.fetchPlaces);
+
+const {
+  isAddListingMode,
+  showListingModal,
+  onMapClick: onListingMapClick,
+  cancelAddListing,
+  saveListing,
+  startAddListing: startAddListingMode,
+} = useRetailListingManagement(
+  layerStore.refreshRetailListings,
+  mapInstance,
+);
+
+function startAddListing() {
+  // Ensure only one "add" mode is active at a time
+  if (isDrawingMode.value) return;
+  if (isPinMode.value) togglePinMode();
+  startAddListingMode();
+}
 
 const {
   pins: comparisonPins,
@@ -300,6 +332,8 @@ onMounted(async () => {
         addComparisonMarker(pin, map, comparisonPins.value.length);
       }
       if (comparisonPins.value.length >= 5) togglePinMode();
+    } else if (isAddListingMode.value) {
+      onListingMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
     } else {
       onMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
     }
@@ -400,6 +434,10 @@ onMounted(async () => {
   cursor: cell !important;
 }
 
+.map-wrapper.listing-cursor :deep(.maplibregl-canvas) {
+  cursor: crosshair !important;
+}
+
 /* Shift area panel left when comparison panel is also open */
 :deep(.shifted-left) {
   right: 348px !important;
@@ -489,5 +527,23 @@ onMounted(async () => {
 
 :deep(.comparison-pin-dot > span) {
   transform: rotate(45deg);
+}
+
+:deep(.geocoding-marker) {
+  cursor: pointer;
+  transform: translate(-50%, -100%);
+}
+
+:deep(.geocoding-marker-dot) {
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #6366f1;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>

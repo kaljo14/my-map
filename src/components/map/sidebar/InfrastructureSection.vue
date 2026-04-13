@@ -15,7 +15,7 @@
 
       <ToggleRow label="Metro Stops" variant="sidebar" :model-value="store.metroStops.showMetroStops" @toggle="store.toggleMetroStops()">
         <template #icon>
-          <span class="material-symbols-outlined">directions_transit</span>
+          <span class="material-symbols-outlined">subway</span>
         </template>
       </ToggleRow>
       <CheckboxGroup
@@ -23,6 +23,18 @@
         :items="metroLineItems"
         :checked-items="store.metroStops.activeStopLines"
         @change="store.toggleStopLine($event)"
+      />
+
+      <ToggleRow label="Transit Stops" variant="sidebar" :model-value="store.transitStops.showTransitStops" @toggle="store.toggleTransitStops()">
+        <template #icon>
+          <span class="material-symbols-outlined">directions_bus</span>
+        </template>
+      </ToggleRow>
+      <CheckboxGroup
+        v-if="store.transitStops.showTransitStops"
+        :items="transitTypeItems"
+        :checked-items="store.transitStops.activeTypes"
+        @change="store.toggleTransitType($event)"
       />
 
       <ToggleRow label="Walk Score Network" variant="sidebar" :model-value="store.pedestrian.showPedestrianNetwork" @toggle="store.togglePedestrianNetwork()">
@@ -78,6 +90,14 @@ const metroLineItems = computed(() =>
     value: line,
     label: line,
     color: store.metro.METRO_COLORS[line],
+  }))
+);
+
+const transitTypeItems = computed(() =>
+  [...store.transitStops.TRANSIT_TYPES].map(type => ({
+    value: type,
+    label: store.transitStops.TRANSIT_STOP_LABELS[type] ?? type,
+    color: store.transitStops.TRANSIT_STOP_COLORS[type] ?? '#757575',
   }))
 );
 </script>

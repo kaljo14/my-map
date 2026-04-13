@@ -9,7 +9,8 @@
         @toggleClustering="$emit('toggleClustering')"
         @toggleGroceryTagFilter="$emit('toggleGroceryTagFilter', $event)"
       />
-      <MapLayersSection />
+      <MapLayersSection @startAddListing="$emit('startAddListing')" />
+      <FoodAccessSection />
       <SofiaPlanSection />
       <PedestrianNetworkSection />
       <TransportSection />
@@ -42,6 +43,7 @@ import LanguageSwitcher from '../LanguageSwitcher.vue';
 import MapStyleSwitcher from './MapStyleSwitcher.vue';
 import DataLayersSection from './sidebar/DataLayersSection.vue';
 import MapLayersSection from './sidebar/MapLayersSection.vue';
+import FoodAccessSection from './sidebar/FoodAccessSection.vue';
 import SofiaPlanSection from './sidebar/SofiaPlanSection.vue';
 import PedestrianNetworkSection from './sidebar/PedestrianNetworkSection.vue';
 import TransportSection from './sidebar/TransportSection.vue';
@@ -74,6 +76,7 @@ defineEmits<{
   (e: 'compareLocations'): void;
   (e: 'closeComparison'): void;
   (e: 'switchBaseLayer', name: string): void;
+  (e: 'startAddListing'): void;
 }>();
 </script>
 

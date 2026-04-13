@@ -38,6 +38,34 @@
       </ToggleRow>
 
       <ToggleRow
+        label="Retail Listings"
+        variant="sidebar"
+        :model-value="store.retailListings.showRetailListings"
+        @toggle="store.toggleRetailListings()"
+      >
+        <template #icon>
+          <span class="material-symbols-outlined">storefront</span>
+        </template>
+      </ToggleRow>
+
+      <ToggleRow
+        label="Address.bg Listings"
+        variant="sidebar"
+        :model-value="store.adresLocations.showAdresLocations"
+        @toggle="store.toggleAdresLocations()"
+      >
+        <template #icon>
+          <span class="material-symbols-outlined">real_estate_agent</span>
+        </template>
+      </ToggleRow>
+      <div v-if="store.retailListings.showRetailListings && isAuthenticated" class="layer-action-inline">
+        <button class="add-listing-btn" @click="$emit('startAddListing')">
+          <span class="material-symbols-outlined" style="font-size:14px;line-height:1">add</span>
+          Add Listing
+        </button>
+      </div>
+
+      <ToggleRow
         label="Opportunity Heatmap"
         variant="sidebar"
         :model-value="store.opportunityHeatmap.showOpportunityHeatmap"
@@ -70,6 +98,11 @@ import { useI18n } from 'vue-i18n';
 import SidebarSection from '../SidebarSection.vue';
 import ToggleRow from '../../ui/ToggleRow.vue';
 import { useLayerStore } from '@/stores/layerStore';
+import { isAuthenticated } from '@/services/auth';
+
+defineEmits<{
+  (e: 'startAddListing'): void;
+}>();
 
 const { t } = useI18n();
 const store = useLayerStore();
@@ -181,5 +214,29 @@ const densityOptions = computed(() => [
   background: rgba(217, 119, 87, 0.15);
   border-color: rgba(217, 119, 87, 0.4);
   color: #d97757;
+}
+
+.layer-action-inline {
+  padding: 4px 10px 6px;
+}
+
+.add-listing-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 7px;
+  border: 1px solid rgba(13, 148, 136, 0.35);
+  background: rgba(13, 148, 136, 0.1);
+  color: #0d9488;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.add-listing-btn:hover {
+  background: rgba(13, 148, 136, 0.2);
+  border-color: rgba(13, 148, 136, 0.5);
 }
 </style>

@@ -824,6 +824,9 @@ export function useSofiaPlanLayers() {
         showBuildingFootprintGe: layerState.buildingFootprintGe.show, toggleBuildingFootprintGe: layerState.buildingFootprintGe.toggle,
         showResidentialTypologyGe, toggleResidentialTypologyGe,
         showUrbanMorphologyGe, toggleUrbanMorphologyGe,
+        showFloodRiskLow: layerState.floodRiskLow.show, toggleFloodRiskLow: layerState.floodRiskLow.toggle,
+        showFloodRiskMedium: layerState.floodRiskMedium.show, toggleFloodRiskMedium: layerState.floodRiskMedium.toggle,
+        showFloodRiskHigh: layerState.floodRiskHigh.show, toggleFloodRiskHigh: layerState.floodRiskHigh.toggle,
         showAnySofiaPlan,
         toggleAllSofiaPlan,
     };

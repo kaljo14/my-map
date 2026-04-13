@@ -7,7 +7,8 @@ export type ChoroplethLayerKey =
     | 'businessTurnover' | 'developmentPotential' | 'zoningParams'
     | 'demographicForecast' | 'demographicForecastGe' | 'populationPotential'
     | 'residentialLoad' | 'healthServiceConcentration' | 'healthInfrastructureConcentration'
-    | 'buildingDensityGe' | 'buildingFootprintGe';
+    | 'buildingDensityGe' | 'buildingFootprintGe'
+    | 'floodRiskLow' | 'floodRiskMedium' | 'floodRiskHigh';
 
 export interface SofiaPlanChoroplethDef {
     key: ChoroplethLayerKey;
@@ -453,7 +454,94 @@ export const CHOROPLETH_LAYERS: SofiaPlanChoroplethDef[] = [
             },
         },
     },
-    // ── 15. BUILDING FOOTPRINT BY GE ───────────────────────────────────────
+    // ── 15. FLOOD RISK — LOW PROBABILITY ──────────────────────────────────
+    {
+        key: 'floodRiskLow',
+        sourceId: 'sofiaplan-flood-risk-low',
+        tileUrl: TilesAPI.getSofiaPlanFloodRiskLowTileUrlTemplate(),
+        sourceLayer: 'sofiaplan_flood_risk_low_tiles',
+        fillLayerId: 'sofiaplan-flood-risk-low-fill',
+        outlineLayerId: 'sofiaplan-flood-risk-low-outline',
+        colorExpr: ['match', ['to-number', ['get', 'risk_level'], 1], 1, '#93c4e8', '#93c4e8'],
+        fillOpacity: 0.55,
+        outlinePaint: { color: '#2e75b6', width: 1.2, opacity: 0.7 },
+        popupMaxWidth: '260px',
+        popup: {
+            icon: '',
+            title: '',
+            scoreHtml: (_score, label, _props) => `
+                <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                    \uD83D\uDCA7 Flood Risk Zone
+                </h3>
+                <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:16px;background:#dbeafe;border:1px solid #93c4e8;color:#1d4ed8;font-size:13px;font-weight:600;margin-bottom:10px">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#93c4e8;border:2px solid #2e75b6"></span>
+                    Low Probability
+                </div>
+                ${label ? `<div style="font-size:12px;color:#64748b;margin-top:4px">Zone: <span style="font-weight:600;color:#1e293b">${label}</span></div>` : ''}
+                <div style="margin-top:10px;padding:8px 10px;background:#f0f9ff;border-radius:8px;border-left:3px solid #93c4e8">
+                    <div style="font-size:11px;color:#475569;line-height:1.5">Area with low flood probability — risk exists but less frequent flood events expected.</div>
+                </div>`,
+        },
+    },
+    // ── 16. FLOOD RISK — MEDIUM PROBABILITY ───────────────────────────────
+    {
+        key: 'floodRiskMedium',
+        sourceId: 'sofiaplan-flood-risk-medium',
+        tileUrl: TilesAPI.getSofiaPlanFloodRiskMediumTileUrlTemplate(),
+        sourceLayer: 'sofiaplan_flood_risk_medium_tiles',
+        fillLayerId: 'sofiaplan-flood-risk-medium-fill',
+        outlineLayerId: 'sofiaplan-flood-risk-medium-outline',
+        colorExpr: ['match', ['to-number', ['get', 'risk_level'], 2], 2, '#2e75b6', '#2e75b6'],
+        fillOpacity: 0.60,
+        outlinePaint: { color: '#1f4e79', width: 1.2, opacity: 0.75 },
+        popupMaxWidth: '260px',
+        popup: {
+            icon: '',
+            title: '',
+            scoreHtml: (_score, label, _props) => `
+                <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                    \uD83C\uDF0A Flood Risk Zone
+                </h3>
+                <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:16px;background:#bfdbfe;border:1px solid #2e75b6;color:#1e40af;font-size:13px;font-weight:600;margin-bottom:10px">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#2e75b6;border:2px solid #1f4e79"></span>
+                    Medium Probability
+                </div>
+                ${label ? `<div style="font-size:12px;color:#64748b;margin-top:4px">Zone: <span style="font-weight:600;color:#1e293b">${label}</span></div>` : ''}
+                <div style="margin-top:10px;padding:8px 10px;background:#eff6ff;border-radius:8px;border-left:3px solid #2e75b6">
+                    <div style="font-size:11px;color:#475569;line-height:1.5">Area with medium flood probability — significant flood events expected at moderate recurrence intervals.</div>
+                </div>`,
+        },
+    },
+    // ── 17. FLOOD RISK — HIGH PROBABILITY ─────────────────────────────────
+    {
+        key: 'floodRiskHigh',
+        sourceId: 'sofiaplan-flood-risk-high',
+        tileUrl: TilesAPI.getSofiaPlanFloodRiskHighTileUrlTemplate(),
+        sourceLayer: 'sofiaplan_flood_risk_high_tiles',
+        fillLayerId: 'sofiaplan-flood-risk-high-fill',
+        outlineLayerId: 'sofiaplan-flood-risk-high-outline',
+        colorExpr: ['match', ['to-number', ['get', 'risk_level'], 3], 3, '#1f3864', '#1f3864'],
+        fillOpacity: 0.70,
+        outlinePaint: { color: '#0d1b3e', width: 1.5, opacity: 0.85 },
+        popupMaxWidth: '260px',
+        popup: {
+            icon: '',
+            title: '',
+            scoreHtml: (_score, label, _props) => `
+                <h3 style="margin:0 0 10px 0;border-bottom:1px solid #e2e8f0;padding-bottom:8px;font-size:15px;color:#1e293b">
+                    \u26A0\uFE0F Flood Risk Zone
+                </h3>
+                <div style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:16px;background:#1f3864;border:1px solid #0d1b3e;color:#dbeafe;font-size:13px;font-weight:600;margin-bottom:10px">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#dbeafe;border:2px solid #93c4e8"></span>
+                    High Probability
+                </div>
+                ${label ? `<div style="font-size:12px;color:#64748b;margin-top:4px">Zone: <span style="font-weight:600;color:#1e293b">${label}</span></div>` : ''}
+                <div style="margin-top:10px;padding:8px 10px;background:#fff1f2;border-radius:8px;border-left:3px solid #e11d48">
+                    <div style="font-size:11px;color:#9f1239;font-weight:500;line-height:1.5">\u26A0\uFE0F High-frequency flood area. Frequent flood events expected. Exercise caution for planning decisions.</div>
+                </div>`,
+        },
+    },
+    // ── 18. BUILDING FOOTPRINT BY GE ───────────────────────────────────────
     {
         key: 'buildingFootprintGe',
         sourceId: 'sofiaplan-building-footprint-ge',

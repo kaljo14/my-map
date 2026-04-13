@@ -66,7 +66,7 @@ const groceryTags = computed(() => [
   { value: 'lidl',       label: 'Lidl' },
   { value: 'kaufland',   label: 'Kaufland' },
   { value: 'billa',      label: 'Billa' },
-  { value: 'fantastico', label: 'Fantastico' },
+  { value: 'fantastiko', label: 'Fantastico' },
 ]);
 </script>
 

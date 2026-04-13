@@ -12,6 +12,9 @@
         "map": "Карта",
         "list": "Списък"
     },
+    "search": {
+        "placeholder": "Търси адрес..."
+    },
     "stats": {
         "totalBarbershops": "Общо бръснарници:",
         "total": "Общо:",

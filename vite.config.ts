@@ -46,6 +46,14 @@ export default defineConfig(({ mode }) => {
           target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },
+        '/api/retail-listings': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/adres-locations': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
         '/api/martin': {
           target: process.env.MARTIN_API_URL || env.MARTIN_API_URL || 'http://localhost:3000',
           changeOrigin: true,

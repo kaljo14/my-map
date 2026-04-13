@@ -35,7 +35,8 @@ const CHAIN_ICONS: Record<string, IconDescriptor> = {
   lidl:       { url: '/Lidl-Logo.svg',            width: 60,  height: 60,  anchorY: 30,  size: 28 },
   kaufland:   { url: '/Kaufland_201x_logo.svg',   width: 500, height: 500, anchorY: 250, size: 28 },
   billa:      { url: '/Billa_Logo_2012.svg',       width: 483, height: 196, anchorY: 98,  size: 20 },
-  fantastico: { url: '/Fantastico.png',             width: 300, height: 150, anchorY: 75,  size: 28 },
+  fantastico: { url: '/Fantastico.png',             width: 118, height: 122, anchorY: 61,  size: 28 },
+  fantastiko: { url: '/Fantastico.png',             width: 118, height: 122, anchorY: 61,  size: 28 },
 };
 
 function hexToRgb(hex: string): [number, number, number] {

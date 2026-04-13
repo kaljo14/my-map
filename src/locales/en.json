@@ -12,6 +12,9 @@
     "map": "Map",
     "list": "List"
   },
+  "search": {
+    "placeholder": "Search address..."
+  },
   "stats": {
     "totalBarbershops": "Total Barbershops:",
     "total": "Total:",

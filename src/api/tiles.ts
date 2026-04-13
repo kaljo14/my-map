@@ -386,6 +386,30 @@ class TilesAPI {
         return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_pedestrian_integration_tiles/{z}/{x}/{y}`;
     }
 
+    // ── Flood Risk tile URL templates ─────────────────────────────────────
+
+    /** Flood risk — low probability (dataset 465). Polygon layer: label, zone_id, score=1, risk_level=1. */
+    getSofiaPlanFloodRiskLowTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_flood_risk_low_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Flood risk — medium probability (dataset 412). Polygon layer: label, zone_id, score=2, risk_level=2. */
+    getSofiaPlanFloodRiskMediumTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_flood_risk_medium_tiles/{z}/{x}/{y}`;
+    }
+
+    /** Flood risk — high probability (dataset 446). Polygon layer: label, zone_id, score=3, risk_level=3. */
+    getSofiaPlanFloodRiskHighTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/sofiaplan_flood_risk_high_tiles/{z}/{x}/{y}`;
+    }
+
+    // ── Food Access (Desert) tile URL templates ──────────────────────────────
+
+    /** Grocery desert H3 hexagons — big-chain supermarkets only. Feature properties: score (0–100), population, nearest_m, poi_count. */
+    getGroceryDesertTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/grocery_desert_tiles/{z}/{x}/{y}`;
+    }
+
     /**
      * Fetches grid labels for analysis
      */

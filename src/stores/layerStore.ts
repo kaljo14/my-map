@@ -11,8 +11,12 @@ import { useOpportunityHeatmap } from '@/composables/useOpportunityHeatmap';
 import type { HeatmapCategory } from '@/composables/useOpportunityHeatmap';
 import { useMetroLines } from '@/composables/useMetroLines';
 import { useMetroStops } from '@/composables/useMetroStops';
+import { useTransitStops } from '@/composables/useTransitStops';
 import { usePedestrianNetwork } from '@/composables/usePedestrianNetwork';
 import { useOsmPois } from '@/composables/useOsmPois';
+import { useFoodDesertLayers } from '@/composables/useFoodDesertLayers';
+import { useRetailListingsLayer } from '@/composables/useRetailListingsLayer';
+import { useAdresLocationsLayer } from '@/composables/useAdresLocationsLayer';
 
 export const useLayerStore = defineStore('layers', () => {
     const mapInstance = shallowRef<MapLibreMap | null>(null);
@@ -31,8 +35,12 @@ export const useLayerStore = defineStore('layers', () => {
     const opportunityHeatmap = useOpportunityHeatmap();
     const metro = useMetroLines();
     const metroStops = useMetroStops();
+    const transitStops = useTransitStops();
     const pedestrian = usePedestrianNetwork();
     const osmPois = useOsmPois();
+    const foodDesert = useFoodDesertLayers();
+    const retailListings = useRetailListingsLayer();
+    const adresLocations = useAdresLocationsLayer();
 
     // ── Convenience toggles that auto-inject mapInstance ────────────
 
@@ -61,6 +69,9 @@ export const useLayerStore = defineStore('layers', () => {
     const toggleBuildingFootprintGe = () => sofiaPlan.toggleBuildingFootprintGe(mapInstance.value);
     const toggleResidentialTypologyGe = () => sofiaPlan.toggleResidentialTypologyGe(mapInstance.value);
     const toggleUrbanMorphologyGe = () => sofiaPlan.toggleUrbanMorphologyGe(mapInstance.value);
+    const toggleFloodRiskLow = () => sofiaPlan.toggleFloodRiskLow(mapInstance.value);
+    const toggleFloodRiskMedium = () => sofiaPlan.toggleFloodRiskMedium(mapInstance.value);
+    const toggleFloodRiskHigh = () => sofiaPlan.toggleFloodRiskHigh(mapInstance.value);
     const toggleAllSofiaPlan = () => sofiaPlan.toggleAllSofiaPlan(mapInstance.value);
 
     // Pedestrian Network
@@ -99,11 +110,25 @@ export const useLayerStore = defineStore('layers', () => {
     const toggleMetroStopsToggle = () => metroStops.toggleMetroStops(mapInstance.value);
     const toggleStopLine = (line: string) => metroStops.toggleStopLine(line, mapInstance.value);
 
+    // Transit Stops
+    const toggleTransitStopsToggle = () => transitStops.toggleTransitStops(mapInstance.value);
+    const toggleTransitType = (type: string) => transitStops.toggleTransitType(type, mapInstance.value);
+
     // Pedestrian (Walk Score)
     const togglePedestrianNet = () => pedestrian.togglePedestrianNetwork(mapInstance.value);
 
     // OSM POIs
     const toggleOsmPoisToggle = () => osmPois.toggleOsmPois(mapInstance.value);
+
+    // Food Access (Desert layers)
+    const toggleGroceryDesert = () => foodDesert.toggleGroceryDesert(mapInstance.value);
+
+    // Retail Listings
+    const toggleRetailListings = () => retailListings.toggleRetailListings(mapInstance.value);
+    const refreshRetailListings = () => retailListings.refresh(mapInstance.value);
+
+    // Adres Locations (address.bg)
+    const toggleAdresLocations = () => adresLocations.toggleAdresLocations(mapInstance.value);
 
     // Population Grid (mutual exclusion with analysis grid)
     const togglePopulationGrid = () => {
@@ -137,8 +162,12 @@ export const useLayerStore = defineStore('layers', () => {
         opportunityHeatmap,
         metro,
         metroStops,
+        transitStops,
         pedestrian,
         osmPois,
+        foodDesert,
+        retailListings,
+        adresLocations,
 
         // Convenience toggles (auto-inject mapInstance)
         toggleZoning, toggleZoningCategory,
@@ -151,6 +180,7 @@ export const useLayerStore = defineStore('layers', () => {
         toggleHealthServiceConcentration, toggleHealthInfrastructureConcentration,
         toggleBuildingDensityGe, toggleBuildingFootprintGe,
         toggleResidentialTypologyGe, toggleUrbanMorphologyGe,
+        toggleFloodRiskLow, toggleFloodRiskMedium, toggleFloodRiskHigh,
         toggleAllSofiaPlan,
 
         togglePedestrianCity, togglePedestrianCityAlt,
@@ -171,14 +201,23 @@ export const useLayerStore = defineStore('layers', () => {
         toggleMetroVector, toggleMetroLine,
         toggleMetroStops: toggleMetroStopsToggle,
         toggleStopLine,
+        toggleTransitStops: toggleTransitStopsToggle,
+        toggleTransitType,
 
         togglePedestrianNetwork: togglePedestrianNet,
         toggleOsmPois: toggleOsmPoisToggle,
+
+        toggleGroceryDesert,
 
         togglePopulationGrid, toggleAnalysisGrid: toggleAnalysisGridToggle,
         updateThreshold,
 
         toggleOpportunityHeatmap: toggleOpportunityHeatmapToggle,
         setHeatmapCategory,
+
+        toggleRetailListings,
+        refreshRetailListings,
+
+        toggleAdresLocations,
     };
 });
