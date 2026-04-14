@@ -1,3 +1,5 @@
+proxy_cache_path /tmp/tile_cache levels=1:2 keys_zone=tiles:10m max_size=500m inactive=24h;
+
 server {
     listen 80;
     server_name localhost;
@@ -7,9 +9,9 @@ server {
 
     # Gzip compression
     gzip on;
-    gzip_min_length 1000;
-    gzip_proxied expired no-cache no-store private auth;
-    gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 256;
+    gzip_proxied any;
+    gzip_types text/plain text/css application/json application/javascript application/x-javascript text/xml application/xml application/xml+rss text/javascript application/x-protobuf application/vnd.mapbox-vector-tile;
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -42,6 +44,38 @@ server {
         proxy_set_header Authorization $http_authorization;
     }
 
+    location /api/parking-zones {
+        proxy_pass ${PLACES_API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    location /api/sofiaplan {
+        proxy_pass ${PLACES_API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    location /api/retail-listings {
+        proxy_pass ${PLACES_API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header Authorization $http_authorization;
+    }
+
+    location /api/adres-locations {
+        proxy_pass ${PLACES_API_URL};
+        proxy_http_version 1.1;
+        proxy_set_header Connection "";
+        proxy_set_header Host $host;
+        proxy_set_header Authorization $http_authorization;
+    }
+
     # Proxy for Tile Server
     location /api/tiles {
         proxy_pass ${TILES_API_URL};
@@ -51,6 +85,7 @@ server {
         proxy_set_header Authorization $http_authorization;
     }
 
+    # Proxy for Martin — cached tiles
     location /api/martin {
         rewrite ^/api/martin(/.*)$ $1 break;
         proxy_pass ${MARTIN_API_URL};
@@ -58,9 +93,14 @@ server {
         proxy_set_header Connection "";
         proxy_set_header Host $host;
         proxy_set_header Authorization $http_authorization;
+
+        # Cache tiles for 1 hour — huge win on Raspberry Pi
+        proxy_cache tiles;
+        proxy_cache_valid 200 1h;
+        proxy_cache_use_stale error timeout updating;
+        proxy_cache_key $uri;
+        add_header X-Cache-Status $upstream_cache_status;
     }
-
-
 
     # Cache static assets
     location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {

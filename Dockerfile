@@ -8,6 +8,9 @@ RUN npm ci
 
 COPY . .
 
+ARG VITE_CLERK_PUBLISHABLE_KEY
+RUN echo "VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY" > .env.production
+
 RUN npm run build
 
 # Production Stage
