@@ -17,6 +17,7 @@ RUN npm run build
 FROM nginx:stable-alpine as production-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+RUN chmod -R a+r /usr/share/nginx/html
 
 # Copy the template to the templates directory
 # Nginx will automatically run envsubst on files in this directory and output to /etc/nginx/conf.d/
