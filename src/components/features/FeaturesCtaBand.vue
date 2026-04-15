@@ -114,7 +114,7 @@ defineProps<{
   transform: translateY(40px);
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
-.reveal-section:global(.revealed) {
+.reveal-section.revealed {
   opacity: 1;
   transform: none;
 }

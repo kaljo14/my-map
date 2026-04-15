@@ -1,6 +1,6 @@
 <template>
   <section class="hero">
-    <div class="hero-inner">
+    <div class="hero-inner" :class="{ ready }">
       <div class="hero-badge">
         <span class="badge-pulse"></span>
         {{ t.hero.badge }}
@@ -19,6 +19,7 @@ import type { FeaturesTranslations } from '@/composables/useFeaturesTranslations
 
 defineProps<{
   t: FeaturesTranslations
+  ready: boolean
 }>()
 </script>
 
@@ -36,7 +37,7 @@ defineProps<{
   transform: translateY(24px);
   transition: opacity 0.8s ease, transform 0.8s ease;
 }
-:global(.ready) .hero-inner {
+.hero-inner.ready {
   opacity: 1;
   transform: none;
 }

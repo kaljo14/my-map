@@ -1,4 +1,4 @@
-proxy_cache_path /tmp/tile_cache levels=1:2 keys_zone=tiles:10m max_size=500m inactive=24h;
+proxy_cache_path /tmp/tile_cache levels=1:2 keys_zone=tiles:20m max_size=2g inactive=30d;
 
 server {
     listen 80;
@@ -94,10 +94,13 @@ server {
         proxy_set_header Host $host;
         proxy_set_header Authorization $http_authorization;
 
-        # Cache tiles for 1 hour — huge win on Raspberry Pi
+        # Cache tiles aggressively — data changes infrequently
         proxy_cache tiles;
-        proxy_cache_valid 200 1h;
-        proxy_cache_use_stale error timeout updating;
+        proxy_cache_valid 200 7d;
+        proxy_cache_valid 204 404 1m;
+        proxy_cache_lock on;
+        proxy_cache_background_update on;
+        proxy_cache_use_stale error timeout updating http_500 http_502 http_503;
         proxy_cache_key $uri;
         add_header X-Cache-Status $upstream_cache_status;
     }

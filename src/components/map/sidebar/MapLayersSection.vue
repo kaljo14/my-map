@@ -66,6 +66,39 @@
       </div>
 
       <ToggleRow
+        label="Pedestrian Sensors"
+        variant="sidebar"
+        :model-value="store.pedestrianSensors.showPedestrianSensors"
+        @toggle="store.togglePedestrianSensors()"
+      >
+        <template #icon>
+          <span class="material-symbols-outlined">directions_walk</span>
+        </template>
+      </ToggleRow>
+
+      <ToggleRow
+        label="Predicted Foot Traffic"
+        variant="sidebar"
+        :model-value="store.footTraffic.showFootTraffic"
+        @toggle="store.toggleFootTraffic()"
+      >
+        <template #icon>
+          <span class="material-symbols-outlined">transfer_within_a_station</span>
+        </template>
+      </ToggleRow>
+
+      <ToggleRow
+        label="Ultimate Foot Traffic"
+        variant="sidebar"
+        :model-value="store.ultimateFootTraffic.showUltimateFootTraffic"
+        @toggle="store.toggleUltimateFootTraffic()"
+      >
+        <template #icon>
+          <span class="material-symbols-outlined">footprint</span>
+        </template>
+      </ToggleRow>
+
+      <ToggleRow
         label="Opportunity Heatmap"
         variant="sidebar"
         :model-value="store.opportunityHeatmap.showOpportunityHeatmap"

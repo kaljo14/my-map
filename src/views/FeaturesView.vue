@@ -10,7 +10,7 @@
       @toggle-lang="toggleLang"
     />
 
-    <FeaturesHero :t="t" />
+    <FeaturesHero :t="t" :ready="isReady" />
 
     <FeatureNavPills
       :sections="t.sections"

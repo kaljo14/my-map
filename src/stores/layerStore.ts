@@ -17,6 +17,9 @@ import { useOsmPois } from '@/composables/useOsmPois';
 import { useFoodDesertLayers } from '@/composables/useFoodDesertLayers';
 import { useRetailListingsLayer } from '@/composables/useRetailListingsLayer';
 import { useAdresLocationsLayer } from '@/composables/useAdresLocationsLayer';
+import { usePedestrianSensors } from '@/composables/usePedestrianSensors';
+import { useFootTrafficLayer } from '@/composables/useFootTrafficLayer';
+import { useUltimateFootTrafficLayer } from '@/composables/useUltimateFootTrafficLayer';
 
 export const useLayerStore = defineStore('layers', () => {
     const mapInstance = shallowRef<MapLibreMap | null>(null);
@@ -41,6 +44,9 @@ export const useLayerStore = defineStore('layers', () => {
     const foodDesert = useFoodDesertLayers();
     const retailListings = useRetailListingsLayer();
     const adresLocations = useAdresLocationsLayer();
+    const pedestrianSensors = usePedestrianSensors();
+    const footTraffic = useFootTrafficLayer();
+    const ultimateFootTraffic = useUltimateFootTrafficLayer();
 
     // ── Convenience toggles that auto-inject mapInstance ────────────
 
@@ -130,6 +136,13 @@ export const useLayerStore = defineStore('layers', () => {
     // Adres Locations (address.bg)
     const toggleAdresLocations = () => adresLocations.toggleAdresLocations(mapInstance.value);
 
+    // Pedestrian Sensors
+    const togglePedestrianSensorsToggle = () => pedestrianSensors.togglePedestrianSensors(mapInstance.value);
+
+    // Foot Traffic
+    const toggleFootTraffic = () => footTraffic.toggleFootTraffic(mapInstance.value);
+    const toggleUltimateFootTraffic = () => ultimateFootTraffic.toggleUltimateFootTraffic(mapInstance.value);
+
     // Population Grid (mutual exclusion with analysis grid)
     const togglePopulationGrid = () => {
         if (analysisGrid.showAnalysisGrid.value) analysisGrid.toggleAnalysisGrid(mapInstance.value);
@@ -168,6 +181,9 @@ export const useLayerStore = defineStore('layers', () => {
         foodDesert,
         retailListings,
         adresLocations,
+        pedestrianSensors,
+        footTraffic,
+        ultimateFootTraffic,
 
         // Convenience toggles (auto-inject mapInstance)
         toggleZoning, toggleZoningCategory,
@@ -219,5 +235,10 @@ export const useLayerStore = defineStore('layers', () => {
         refreshRetailListings,
 
         toggleAdresLocations,
+
+        togglePedestrianSensors: togglePedestrianSensorsToggle,
+
+        toggleFootTraffic,
+        toggleUltimateFootTraffic,
     };
 });

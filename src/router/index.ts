@@ -44,9 +44,11 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to) => {
+  if (!to.meta.requiresAuth) return
+
   await waitForClerk()
 
-  if (to.meta.requiresAuth && !auth.isAuthenticated.value) {
+  if (!auth.isAuthenticated.value) {
     return { name: 'sign-in' }
   }
 })

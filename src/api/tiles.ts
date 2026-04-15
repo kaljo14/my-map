@@ -420,6 +420,31 @@ class TilesAPI {
         }
         return await response.json();
     }
+
+    /**
+     * Gets the URL template for pedestrian sensor tiles served by Martin.
+     * Tile layer name: pedestrian_sensors_tiles; feature properties: device_id, total_pedestrians, total_left, total_right, reading_count.
+     */
+    getPedestrianSensorsTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/pedestrian_sensors_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for calibrated foot traffic vector tiles served by Martin.
+     * Tile layer name: calibrated_foot_traffic_tiles; feature properties: predicted_hourly (int), integration, choice, neighborhood, segment_length.
+     */
+    getCalibratedFootTrafficTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/calibrated_foot_traffic_tiles/{z}/{x}/{y}`;
+    }
+
+    /**
+     * Gets the URL template for ultimate foot traffic vector tiles served by Martin.
+     * Tile layer name: ultimate_foot_traffic_tiles; feature properties:
+     * predicted_hourly (int), integration, syntax_pctl, pop_pctl, poi_pctl, transit_pctl, neighborhood, segment_length.
+     */
+    getUltimateFootTrafficTileUrlTemplate(): string {
+        return `${API_CONFIG.MARTIN_BASE_URL}/ultimate_foot_traffic_tiles/{z}/{x}/{y}`;
+    }
 }
 
 export default new TilesAPI();
