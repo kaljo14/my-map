@@ -1,6 +1,6 @@
 import { shallowRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import maplibregl, { type Map as MapLibreMap } from 'maplibre-gl';
+import maplibregl, { type Map as MapLibreMap, type StyleSpecification } from 'maplibre-gl';
 import { useMapView } from '@/stores/mapViewStore';
 import auth from '@/services/auth';
 import { baseLayers } from '@/stores/mapConfig';
@@ -80,14 +80,19 @@ async function checkMartinCatalog() {
     }
 }
 
-// Convert Leaflet-style URL (with {s}, {r}) to array of MapLibre tile URLs
-function toMaplibreTileUrls(url: string): string[] {
-    const clean = url.replace('{r}', '');
-    if (clean.includes('{s}')) {
-        const subs = clean.includes('carto') ? ['a', 'b', 'c', 'd'] : ['a', 'b', 'c'];
-        return subs.map(s => clean.replace('{s}', s));
-    }
-    return [clean];
+// Namespace base-map resources so theme changes preserve application overlays.
+function prepareBaseStyle(style: StyleSpecification): StyleSpecification {
+    return {
+        ...style,
+        sources: Object.fromEntries(Object.entries(style.sources).map(([id, source]) =>
+            [`basemap-${id}`, source]
+        )),
+        layers: style.layers.map(layer => ({
+            ...layer,
+            id: `basemap-${layer.id}`,
+            ...('source' in layer ? { source: `basemap-${layer.source}` } : {}),
+        })),
+    };
 }
 
 export function useMapInstance() {
@@ -100,17 +105,16 @@ export function useMapInstance() {
 
     const mapInstance = shallowRef<MapLibreMap | null>(null);
 
-    const initMap = (container: HTMLElement): Promise<MapLibreMap> => {
+    const initMap = async (container: HTMLElement): Promise<MapLibreMap> => {
+        const activeLayer = baseLayers.value.find(l => l.visible) ?? baseLayers.value[0]!;
+        const response = await fetch(activeLayer.url);
+        if (!response.ok) throw new Error(`Base map style failed: ${response.status}`);
+        const baseStyle = prepareBaseStyle(await response.json() as StyleSpecification);
         const center = mapCenter.value; // [lat, lng]
 
         const map = new maplibregl.Map({
             container,
-            style: {
-                version: 8,
-                glyphs: 'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
-                sources: {},
-                layers: [],
-            },
+            style: baseStyle,
             center: [center[1], center[0]], // MapLibre uses [lng, lat]
             zoom: mapZoom.value,
             attributionControl: false,
@@ -145,16 +149,6 @@ export function useMapInstance() {
                     checkMartinCatalog();
                 }
 
-                // Add base tile layer from mapConfig
-                const activeLayer = baseLayers.value.find(l => l.visible) ?? baseLayers.value[0]!;
-                map.addSource('base-tiles', {
-                    type: 'raster',
-                    tiles: toMaplibreTileUrls(activeLayer.url),
-                    tileSize: 256,
-                    attribution: activeLayer.attribution,
-                });
-                map.addLayer({ id: 'base-tiles', type: 'raster', source: 'base-tiles' });
-
                 // URL sync
                 let updateTimeout: ReturnType<typeof setTimeout>;
                 map.on('moveend', () => {
@@ -177,10 +171,20 @@ export function useMapInstance() {
         const layer = baseLayers.value.find(l => l.name === layerName);
         if (!layer) return;
         baseLayers.value.forEach(l => { l.visible = l.name === layerName; });
-        const source = map.getSource('base-tiles') as maplibregl.RasterTileSource;
-        if (source) {
-            (source as any).setTiles(toMaplibreTileUrls(layer.url));
-        }
+        map.setStyle(layer.url, {
+            transformStyle: (previous, next) => {
+                const base = prepareBaseStyle(next);
+                const overlaySources = Object.fromEntries(
+                    Object.entries(previous?.sources ?? {}).filter(([id]) => !id.startsWith('basemap-'))
+                );
+                const overlayLayers = (previous?.layers ?? []).filter(l => !l.id.startsWith('basemap-'));
+                return {
+                    ...base,
+                    sources: { ...base.sources, ...overlaySources },
+                    layers: [...base.layers, ...overlayLayers],
+                };
+            },
+        });
     };
 
     return {

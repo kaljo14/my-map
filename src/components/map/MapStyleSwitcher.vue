@@ -15,7 +15,7 @@ import { baseLayers, isDarkMap } from '@/stores/mapConfig';
 const emit = defineEmits<{ switch: [name: string] }>();
 
 function toggle() {
-  const next = isDarkMap.value ? 'CARTO Light' : 'CARTO Dark';
+  const next = isDarkMap.value ? 'Minimal Light' : 'Minimal Dark';
   baseLayers.value.forEach(l => { l.visible = l.name === next; });
   emit('switch', next);
 }
