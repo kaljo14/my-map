@@ -1,19 +1,27 @@
 <template>
-  <div v-if="show" class="shop-modal-overlay">
-    <div class="shop-modal">
-      <h3>⚠️ Confirm Deletion</h3>
+  <BaseModal
+    :show="show"
+    title="Confirm Deletion"
+    stripe-gradient="linear-gradient(to right, #c05e3a, #a84e2e)"
+    @cancel="$emit('cancel')"
+  >
+    <template #icon>
+      <span class="material-symbols-outlined warning-icon" aria-hidden="true">warning</span>
+    </template>
+
+    <div class="danger-block">
       <p class="confirm-message">Are you sure you want to delete <strong>{{ shopName }}</strong>?</p>
       <p class="confirm-warning">This action cannot be undone.</p>
-      <div class="modal-actions">
-        <button @click="$emit('cancel')" class="cancel-btn">Cancel</button>
-        <button @click="$emit('confirm')" class="delete-btn">Delete</button>
-      </div>
     </div>
-  </div>
+
+    <template #confirm>
+      <button class="delete-btn" @click="$emit('confirm')">Delete</button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup lang="ts">
-
+import BaseModal from '../ui/BaseModal.vue';
 
 defineProps<{
   show: boolean;
@@ -27,67 +35,31 @@ defineEmits<{
 </script>
 
 <style scoped>
-.shop-modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(19, 19, 20, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  backdrop-filter: blur(6px);
+.warning-icon {
+  font-size: 22px;
+  line-height: 1;
+  color: #c05e3a;
+  flex-shrink: 0;
 }
 
-.shop-modal {
-  background: #f5f0e8;
-  padding: 28px;
-  border-radius: 16px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 24px 48px rgba(19, 19, 20, 0.2);
-  border: 1px solid #e0d8cc;
-}
-
-.shop-modal h3 {
-  margin: 0 0 16px;
-  color: #131314;
-  font-size: 1.25rem;
-  font-weight: 700;
+.danger-block {
+  border-left: 3px solid #c05e3a;
+  padding: 10px 12px;
+  background: rgba(192, 94, 58, 0.06);
+  border-radius: 0 6px 6px 0;
 }
 
 .confirm-message {
   color: #4a4030;
-  margin-bottom: 8px;
+  margin: 0 0 6px;
   font-size: 1rem;
 }
 
 .confirm-warning {
   color: #c05e3a;
   font-size: 0.875rem;
-  margin-bottom: 24px;
+  margin: 0;
   font-weight: 500;
-}
-
-.modal-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: flex-end;
-}
-
-.cancel-btn {
-  padding: 10px 20px;
-  border-radius: 8px;
-  border: 1px solid #d5ccc0;
-  background: transparent;
-  color: #6b6057;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.cancel-btn:hover {
-  background: #ede7dc;
-  color: #131314;
 }
 
 .delete-btn {

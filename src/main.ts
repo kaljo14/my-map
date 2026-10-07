@@ -3,23 +3,18 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import router from './router'
 import './style.css'
-
-import 'leaflet/dist/leaflet.css'
-import 'leaflet.markercluster/dist/MarkerCluster.css'
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css'
-import 'leaflet.markercluster'
-import 'leaflet.vectorgrid'
-
-import auth from './services/auth'
+import 'maplibre-gl/dist/maplibre-gl.css'
+import { clerkPlugin } from '@clerk/vue'
 import i18n from './i18n'
+
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY
+if (!PUBLISHABLE_KEY) throw new Error('Add VITE_CLERK_PUBLISHABLE_KEY to .env')
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
 app.use(i18n)
+app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY, signInUrl: '/sign-in' })
 
-// Initialize Keycloak before mounting
-auth.initKeycloak().then(() => {
-    app.mount('#app')
-})
+app.mount('#app')

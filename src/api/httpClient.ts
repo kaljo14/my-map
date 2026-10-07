@@ -1,11 +1,9 @@
-import auth from '@/services/auth';
-
 /**
  * HTTP client that automatically attaches authentication token to requests
  */
 class HttpClient {
     private async getAuthHeaders(): Promise<HeadersInit> {
-        const token = await auth.getToken();
+        const token = (await window.Clerk?.session?.getToken()) ?? null;
 
         if (token) {
             return {

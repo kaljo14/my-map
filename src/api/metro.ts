@@ -43,6 +43,26 @@ export interface MetroStopFeatureCollection {
     features: MetroStopFeature[];
 }
 
+export interface TransitStopProperties {
+    stop_id: string;
+    stop_name: string;
+    stop_type: string; // "bus" | "tram" | "trolleybus" | "other"
+}
+
+export interface TransitStopFeature {
+    type: "Feature";
+    properties: TransitStopProperties;
+    geometry: {
+        type: "Point";
+        coordinates: [number, number];
+    };
+}
+
+export interface TransitStopFeatureCollection {
+    type: "FeatureCollection";
+    features: TransitStopFeature[];
+}
+
 class MetroAPI {
     /**
      * Fetches metro line shapes
@@ -72,6 +92,19 @@ class MetroAPI {
      */
     async getMetroStops(): Promise<MetroStopFeatureCollection> {
         const response = await httpClient.get('/api/metro/stops');
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    /**
+     * Fetches transit stops (bus, tram, trolleybus)
+     */
+    async getTransitStops(): Promise<TransitStopFeatureCollection> {
+        const response = await httpClient.get('/api/metro/transit-stops');
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);

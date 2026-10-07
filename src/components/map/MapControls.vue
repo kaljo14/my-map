@@ -1,5 +1,5 @@
 <template>
-  <l-control position="topright" class="custom-control">
+  <div class="custom-control">
     <div class="control-container" v-click-outside="closeMenu">
       <!-- Main Toggle Button -->
       <button 
@@ -8,43 +8,16 @@
         :class="{ active: menuOpen || showPopulationGrid }"
         title="Population Grid Settings"
       >
-        <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M3 3h18v18H3V3z" fill="none" stroke="currentColor" stroke-width="2"/>
-          <path d="M5 5h6v6H5V5z" fill="currentColor" fill-opacity="0.2"/>
-          <path d="M13 5h6v6h-6V5z" fill="currentColor" fill-opacity="0.6"/>
-          <path d="M5 13h6v6H5v-6z" fill="currentColor" fill-opacity="0.8"/>
-          <path d="M13 13h6v6h-6v-6z" fill="currentColor" fill-opacity="0.4"/>
-        </svg>
+        <span class="material-symbols-outlined icon" aria-hidden="true">grid_view</span>
       </button>
 
       <!-- Popover Menu -->
       <div v-if="menuOpen" class="popover-menu">
         <div class="menu-header">
-           <div class="header-row">
-            <span class="menu-title">{{ $t('map.controls.title') }}</span>
-           </div>
-          <div class="header-row" style="margin-top: 12px;">
-            <span class="menu-title">{{ $t('map.controls.populationGrid') }}</span>
-            <label class="switch">
-              <input type="checkbox" :checked="showPopulationGrid" @change="$emit('togglePopulationGrid')">
-              <span class="slider round"></span>
-            </label>
-          </div>
-          <div class="header-row" style="margin-top: 12px;">
-            <span class="menu-title">{{ $t('map.controls.analysisGrid') }}</span>
-            <label class="switch">
-              <input type="checkbox" :checked="showAnalysisGrid" @change="$emit('toggleAnalysisGrid')">
-              <span class="slider round"></span>
-            </label>
-          </div>
-          <div class="header-row" style="margin-top: 12px;">
-            <span class="menu-title">{{ $t('map.controls.opportunityHeatmap') }}</span>
-            <label class="switch">
-              <input type="checkbox" :checked="showOpportunityHeatmap" @change="$emit('toggleOpportunityHeatmap')">
-              <span class="slider round"></span>
-            </label>
-          </div>
-
+          <span class="menu-title menu-title--heading">{{ $t('map.controls.title') }}</span>
+          <ToggleRow :label="$t('map.controls.populationGrid')" :model-value="showPopulationGrid" variant="control" @toggle="$emit('togglePopulationGrid')" />
+          <ToggleRow :label="$t('map.controls.analysisGrid')" :model-value="showAnalysisGrid" variant="control" @toggle="$emit('toggleAnalysisGrid')" />
+          <ToggleRow :label="$t('map.controls.opportunityHeatmap')" :model-value="showOpportunityHeatmap" variant="control" @toggle="$emit('toggleOpportunityHeatmap')" />
         </div>
 
         <!-- Heatmap category picker (shown when heatmap is active) -->
@@ -56,14 +29,14 @@
               :class="{ active: activeCategoryHeatmap === 'barbershop' }"
               @click="$emit('setHeatmapCategory', 'barbershop')"
             >
-              ✂️ {{ $t('map.controls.heatmapBarbershop') }}
+              <span class="material-symbols-outlined" style="font-size:14px;line-height:1">content_cut</span> {{ $t('map.controls.heatmapBarbershop') }}
             </button>
             <button
               class="category-pill"
               :class="{ active: activeCategoryHeatmap === 'gym' }"
               @click="$emit('setHeatmapCategory', 'gym')"
             >
-              🏋️ {{ $t('map.controls.heatmapGym') }}
+              <span class="material-symbols-outlined" style="font-size:14px;line-height:1">fitness_center</span> {{ $t('map.controls.heatmapGym') }}
             </button>
           </div>
         </div>
@@ -81,7 +54,7 @@
               >
                 <span class="color-dot" :style="{ backgroundColor: option.color }"></span>
                 <span class="option-text">{{ option.label }}</span>
-                <span v-if="selectedThreshold === option.value" class="check-icon">✓</span>
+                <span v-if="selectedThreshold === option.value" class="material-symbols-outlined check-icon">check</span>
               </button>
             </div>
           </div>
@@ -92,13 +65,13 @@
         </div>
       </div>
     </div>
-  </l-control>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { LControl } from "@vue-leaflet/vue-leaflet";
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
+import ToggleRow from '../ui/ToggleRow.vue';
 
 defineProps<{
   showPopulationGrid: boolean;
@@ -160,6 +133,10 @@ const vClickOutside = {
 
 <style scoped>
 .custom-control {
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  z-index: 1000;
   pointer-events: auto;
 }
 
@@ -197,8 +174,8 @@ const vClickOutside = {
 }
 
 .icon {
-  width: 42px;
-  height: 42px;
+  font-size: 28px;
+  line-height: 1;
   color: #8a7e72;
   transition: all 0.2s;
 }
@@ -217,8 +194,8 @@ const vClickOutside = {
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(10px); }
-  to   { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; transform: translateX(10px) scale(0.97); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
 }
 
 .menu-header {
@@ -227,61 +204,16 @@ const vClickOutside = {
   border-bottom: 1px solid #e0d8cc;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
-.header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-.menu-title {
+.menu-title--heading {
+  display: block;
   font-weight: 600;
   color: #131314;
   font-size: 14px;
 }
 
-/* Toggle Switch */
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 40px;
-  height: 22px;
-}
-
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #c9bfb4;
-  transition: .4s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 18px;
-  width: 18px;
-  left: 2px;
-  bottom: 2px;
-  background-color: #f5f0e8;
-  transition: .4s;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
-}
-
-input:checked + .slider { background-color: #d97757; }
-input:checked + .slider:before { transform: translateX(18px); }
-
-.slider.round { border-radius: 34px; }
-.slider.round:before { border-radius: 50%; }
 
 .menu-content {
   padding: 8px 0;
@@ -344,8 +276,8 @@ input:checked + .slider:before { transform: translateX(18px); }
 
 .check-icon {
   color: #d97757;
-  font-weight: bold;
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .category-pills {
@@ -366,6 +298,10 @@ input:checked + .slider:before { transform: translateX(18px); }
   cursor: pointer;
   transition: all 0.15s;
   text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .category-pill:hover {

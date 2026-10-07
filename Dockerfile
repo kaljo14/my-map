@@ -8,12 +8,16 @@ RUN npm ci
 
 COPY . .
 
+ARG VITE_CLERK_PUBLISHABLE_KEY
+RUN echo "VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY" > .env.production
+
 RUN npm run build
 
 # Production Stage
 FROM nginx:stable-alpine as production-stage
 
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+RUN chmod -R a+r /usr/share/nginx/html
 
 # Copy the template to the templates directory
 # Nginx will automatically run envsubst on files in this directory and output to /etc/nginx/conf.d/

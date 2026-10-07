@@ -16,35 +16,46 @@ export default defineConfig(({ mode }) => {
       },
     },
     optimizeDeps: {
-      include: [
-        'leaflet',
-        'leaflet.markercluster',
-        'leaflet.vectorgrid',
-        '@vue-leaflet/vue-leaflet',
-      ]
+      include: ['maplibre-gl', '@deck.gl/core', '@deck.gl/layers', '@deck.gl/mapbox', 'supercluster'],
     },
     server: {
       port: 8888,
       proxy: {
         '/api/places': {
-          target: env.PLACES_API_URL || 'http://localhost:8080',
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },
         '/api/tiles': {
-          target: env.TILES_API_URL || 'http://localhost:4000',
+          target: process.env.TILES_API_URL || env.TILES_API_URL || 'http://localhost:4000',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/tiles/, ''),
         },
         '/api/metro': {
-          target: env.PLACES_API_URL || 'http://localhost:8080',
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },
         '/api/heatmap': {
-          target: env.PLACES_API_URL || 'http://localhost:8080',
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/parking-zones': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/sofiaplan': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/retail-listings': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
+          changeOrigin: true,
+        },
+        '/api/adres-locations': {
+          target: process.env.PLACES_API_URL || env.PLACES_API_URL || 'http://localhost:8080',
           changeOrigin: true,
         },
         '/api/martin': {
-          target: 'http://localhost:3001',
+          target: process.env.MARTIN_API_URL || env.MARTIN_API_URL || 'http://localhost:3000',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api\/martin/, ''),
         }

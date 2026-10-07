@@ -1,230 +1,95 @@
 <template>
   <div class="map-container">
-    <AppHeader
-      v-if="!isMobile"
-      :isAuthenticated="isAuthenticated"
-      :userProfile="userProfile"
-      @login="login"
-      @logout="logout"
-    />
-    
+    <AppHeader v-if="!isMobile" />
+
     <div class="content-wrapper">
       <!-- Sidebar Wrapper -->
-      <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }">
+      <div class="sidebar-wrapper" :class="{ closed: !isSidebarOpen }" style="z-index:2000">
         <AnalysisPanel
           :isMobile="isMobile"
           :placeTypes="placeTypesForPanel"
           :enableClustering="enableClustering"
-          :showMetroVector="showMetroVector"
-          :activeMetroLines="activeMetroLines"
-          :showMetroStops="showMetroStops"
-          :activeStopLines="activeStopLines"
-          :metroLinesList="metroLinesList"
-          :metroColors="metroColors"
           :groceryTagFilters="groceryTagFilters"
+          :isDrawingMode="isDrawingMode"
+          :hasActivePolygon="!!activePolygon"
+          :pins="comparisonPins"
+          :pinCount="comparisonPinCount"
+          :isPinMode="isPinMode"
+          :isComparisonOpen="isComparisonOpen"
           @togglePlaceType="toggleVisible"
           @toggleClustering="enableClustering = !enableClustering"
-          @toggleMetroVector="handleToggleMetroVector"
-          @toggleMetroLine="handleToggleMetroLine"
-          @toggleMetroStops="handleToggleMetroStops"
-          @toggleStopLine="handleToggleStopLine"
           @toggleGroceryTagFilter="toggleGroceryTagFilter"
+          @startDrawing="startDrawing"
+          @clearPolygon="clearPolygon"
+          @togglePinMode="togglePinMode"
+          @clearComparison="clearComparison"
+          @removePin="removeComparisonPin"
+          @compareLocations="openComparison"
+          @closeComparison="closeComparison"
+          @switchBaseLayer="onSwitchBaseLayer"
+          @startAddListing="startAddListing"
         />
-        
-        <!-- Sidebar Toggle Handle -->
-        <button 
-          class="sidebar-toggle" 
+
+        <button
+          class="sidebar-toggle"
           @click="isSidebarOpen = !isSidebarOpen"
+          :aria-label="isSidebarOpen ? 'Close sidebar' : 'Open sidebar'"
           title="Toggle Sidebar"
         >
-          <span class="toggle-icon">{{ isSidebarOpen ? '◀' : '▶' }}</span>
+          <svg
+            class="toggle-icon"
+            :class="{ rotated: isSidebarOpen }"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            aria-hidden="true"
+          >
+            <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
         </button>
       </div>
 
       <!-- Map -->
-      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode }">
+      <div class="map-wrapper" :class="{ 'drawing-cursor': isDrawingMode, 'pin-cursor': isPinMode, 'listing-cursor': isAddListingMode }">
         <MapStats
           :isMobile="isMobile"
-          :filteredCount="placeInstances[0]?.filteredPlaces.length ?? 0"
+          :filteredCount="totalFilteredCount"
           :averageRating="averageRating"
+          :label="statsLabel"
         />
 
-        <!-- Polygon Draw Controls -->
-        <div class="polygon-controls">
-          <template v-if="!isDrawingMode && !activePolygon">
-            <button class="polygon-btn" @click="startDrawing" title="Draw area to filter points">
-              ⬡ Draw Area
-            </button>
-          </template>
-          <template v-else-if="isDrawingMode">
-            <span class="drawing-hint">{{ drawingVertices.length }} point{{ drawingVertices.length !== 1 ? 's' : '' }} — click map to add</span>
-            <button
-              class="polygon-btn finish"
-              :disabled="drawingVertices.length < 3"
-              @click="finishDrawing"
-            >✓ Finish</button>
-            <button class="polygon-btn cancel" @click="clearPolygon">✕ Cancel</button>
-          </template>
-          <template v-else-if="activePolygon">
-            <span class="polygon-count">⬡ {{ totalFilteredCount }} in area</span>
-            <button class="polygon-btn clear" @click="clearPolygon">✕ Clear</button>
-          </template>
-        </div>
-        <l-map
-          :zoom="zoom"
-          :center="center"
-          :use-global-leaflet="true"
-          :options="{ zoomControl: false }"
-          @click="handleMapClick"
-          @ready="onMapReady"
-        >
-          <l-control-layers />
-          <MapControls
-            :showPopulationGrid="showPopulationGrid"
-            :showAnalysisGrid="showAnalysisGrid"
-            :selectedThreshold="selectedThreshold"
-            :showOpportunityHeatmap="showOpportunityHeatmap"
-            :activeCategoryHeatmap="heatmapCategory"
-            @togglePopulationGrid="handleTogglePopulationGrid"
-            @toggleAnalysisGrid="handleToggleAnalysisGrid"
-            @updateThreshold="updateThreshold"
-            @toggleOpportunityHeatmap="handleToggleOpportunityHeatmap"
-            @setHeatmapCategory="handleSetHeatmapCategory"
-          />
-          <l-tile-layer
-            v-for="layer in baseLayers"
-            :key="layer.name"
-            :name="layer.name"
-            :url="layer.url"
-            :visible="layer.visible"
-            layer-type="base"
-            :attribution="layer.attribution"
-          ></l-tile-layer>
+        <GeocodingSearch :map-instance="mapInstance" />
 
-          <!-- Analysis Grid Layer is now handled by the composable using vector tiles -->
+        <PolygonControls
+          :isDrawingMode="isDrawingMode"
+          :hasActivePolygon="!!activePolygon"
+          :vertexCount="drawingVertices.length"
+          :filteredCount="totalFilteredCount"
+          @finish="finishDrawing"
+          @clear="clearPolygon"
+        />
 
-          <!-- Metro Lines Layer -->
-          <!-- Metro Lines Layer (Deprecated: Removed) -->
+        <!-- Drawing mode overlay -->
+        <div v-if="isDrawingMode" class="drawing-overlay"></div>
 
-          <!-- Place Layers (all types rendered generically) -->
-          <template v-for="inst in placeInstances" :key="inst.config.category">
-            <l-marker-cluster-group
-              v-if="inst.visible && enableClustering"
-              :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }"
-            >
-              <l-marker
-                v-for="place in inst.filteredPlaces"
-                :key="place.id"
-                :lat-lng="[place.lat, place.lng]"
-              >
-                <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
-                  <div class="shop-marker-content saved">
-                    <img v-if="place.tags?.includes('lidl')" src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl" />
-                    <img v-else-if="place.tags?.includes('kaufland')" src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland" />
-                    <img v-else-if="place.tags?.includes('billa')" src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa" />
-                    <img v-else-if="place.tags?.includes('fantastico')" src="/Fantastico.png" class="chain-logo" alt="Fantastico" />
-                    <template v-else>{{ inst.config.emoji }}</template>
-                  </div>
-                </l-icon>
-                <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                  <ShopPopup
-                    :shop="place"
-                    :isAuthenticated="isAuthenticated"
-                    @edit="(s) => inst.config.category === 'barbershop' ? editBarbershop(s) : null"
-                    @delete="(s) => inst.config.category === 'barbershop' ? confirmDelete(s) : null"
-                  />
-                </l-popup>
-              </l-marker>
-            </l-marker-cluster-group>
+        <!-- MapLibre container -->
+        <div ref="mapContainer" class="map-div" :class="{ 'map-dark': isDarkMap }"></div>
 
-            <l-layer-group v-if="inst.visible && !enableClustering">
-              <l-marker
-                v-for="place in inst.filteredPlaces"
-                :key="place.id"
-                :lat-lng="[place.lat, place.lng]"
-              >
-                <l-icon :icon-anchor="[20, 40]" :class-name="inst.config.markerClass">
-                  <div class="shop-marker-content saved">
-                    <img v-if="place.tags?.includes('lidl')" src="/Lidl-Logo.svg" class="chain-logo" alt="Lidl" />
-                    <img v-else-if="place.tags?.includes('kaufland')" src="/Kaufland_201x_logo.svg" class="chain-logo" alt="Kaufland" />
-                    <img v-else-if="place.tags?.includes('billa')" src="/Billa_Logo_2012.svg" class="chain-logo" alt="Billa" />
-                    <img v-else-if="place.tags?.includes('fantastico')" src="/Fantastico.png" class="chain-logo" alt="Fantastico" />
-                    <template v-else>{{ inst.config.emoji }}</template>
-                  </div>
-                </l-icon>
-                <l-popup :options="{ maxWidth: 400, minWidth: 300 }">
-                  <ShopPopup
-                    :shop="place"
-                    :isAuthenticated="isAuthenticated"
-                    @edit="(s) => inst.config.category === 'barbershop' ? editBarbershop(s) : null"
-                    @delete="(s) => inst.config.category === 'barbershop' ? confirmDelete(s) : null"
-                  />
-                </l-popup>
-              </l-marker>
-            </l-layer-group>
-          </template>
+        <!-- Area Analysis Panel — floats over map when polygon is active -->
+        <AreaAnalysisPanel
+          v-if="activePolygon && !isDrawingMode"
+          :stats="areaStats"
+          :class="{ 'shifted-left': isComparisonOpen }"
+          @clear="clearPolygon"
+        />
 
-          <!-- Polygon Drawing Preview -->
-          <template v-if="isDrawingMode && drawingVertices.length >= 2">
-            <l-polygon
-              :lat-lngs="drawingVertices"
-              :options="{ color: '#f59e0b', weight: 2, fillOpacity: 0.08, dashArray: '6 6' }"
-            />
-          </template>
-          <template v-if="isDrawingMode">
-            <l-circle-marker
-              v-for="(v, i) in drawingVertices"
-              :key="i"
-              :lat-lng="v"
-              :radius="5"
-              :options="{ color: '#f59e0b', fillColor: '#f59e0b', fillOpacity: 1, weight: 2 }"
-            />
-          </template>
-
-          <!-- Active Filter Polygon -->
-          <l-polygon
-            v-if="activePolygon"
-            :lat-lngs="activePolygon"
-            :options="{ color: '#10b981', weight: 2, fillOpacity: 0.12 }"
-          />
-
-          <!-- Temporary Pin for New Shop -->
-          <l-marker
-            v-if="newShopPin"
-            :lat-lng="[newShopPin.lat, newShopPin.lng]"
-          >
-            <l-icon :icon-anchor="[20, 40]" class-name="new-shop-marker">
-              <div class="shop-marker-content new">
-                📍
-              </div>
-            </l-icon>
-          </l-marker>
-
-          <!-- User Added Shops -->
-          <l-marker-cluster-group :options="{ spiderfyOnMaxZoom: true, maxClusterRadius: 12 }">
-            <l-marker
-              v-for="(shop, index) in userAddedShops"
-              :key="`shop-${index}`"
-              :lat-lng="[shop.lat, shop.lng]"
-            >
-              <l-icon :icon-anchor="[20, 40]" class-name="saved-shop-marker">
-                <div class="shop-marker-content saved">
-                  💈
-                </div>
-              </l-icon>
-              <l-popup>
-                <div class="popup-content">
-                  <h3 class="popup-title">{{ shop.name }}</h3>
-                  <div class="popup-info">
-                    <div class="info-row">
-                      <strong>Added:</strong> {{ new Date(shop.timestamp).toLocaleDateString() }}
-                    </div>
-                  </div>
-                </div>
-              </l-popup>
-            </l-marker>
-          </l-marker-cluster-group>
-        </l-map>
+        <!-- Location Comparison Panel — floats over map -->
+        <LocationComparisonPanel
+          v-if="isComparisonOpen"
+          :pins="comparisonPins"
+          @close="closeComparison"
+          @export="() => {}"
+        />
       </div>
     </div>
 
@@ -234,6 +99,13 @@
       v-model="newShopName"
       @cancel="cancelAddShop"
       @save="saveShop"
+    />
+
+    <!-- Add Retail Listing Modal -->
+    <RetailListingModal
+      :show="showListingModal"
+      @close="cancelAddListing"
+      @save="saveListing"
     />
 
     <!-- Delete Confirmation Modal -->
@@ -249,49 +121,48 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-import {
-  LMap,
-  LTileLayer,
-  LMarker,
-  LIcon,
-  LPopup,
-  LControlLayers,
-  LLayerGroup,
-  LPolygon,
-  LCircleMarker,
-} from "@vue-leaflet/vue-leaflet";
+import { ref, computed, onMounted } from 'vue';
 
-import { LMarkerClusterGroup } from "vue-leaflet-markercluster";
-
-import { baseLayers } from "@/stores/mapConfig";
-import auth from "@/services/auth";
+import auth from '@/services/auth';
+import i18n from '@/i18n';
 
 // Composables
-import { useMapInstance } from "@/composables/useMapInstance";
-import { useMobileDetection } from "@/composables/useMobileDetection";
-import { usePlacesManager } from "@/composables/usePlacesManager";
-import { usePopulationLayers } from "@/composables/usePopulationLayers";
-import { useAnalysisGrid } from "@/composables/useAnalysisGrid";
-import { useOpportunityHeatmap } from "@/composables/useOpportunityHeatmap";
-import { useMetroLines } from "@/composables/useMetroLines";
-import { useMetroStops } from "@/composables/useMetroStops";
-import { useShopManagement } from "@/composables/useShopManagement";
+import { useMapInstance } from '@/composables/useMapInstance';
+import { useMobileDetection } from '@/composables/useMobileDetection';
+import { usePlacesManager } from '@/composables/usePlacesManager';
+import { useShopManagement } from '@/composables/useShopManagement';
+import { useRetailListingManagement } from '@/composables/useRetailListingManagement';
+import { initDeckOverlay } from '@/composables/useDeckOverlay';
+import { usePlacesDeckLayer } from '@/composables/usePlacesDeckLayer';
+import { useLocationComparison } from '@/composables/useLocationComparison';
+import { usePolygonDrawing } from '@/composables/usePolygonDrawing';
+import { useMapMarkers } from '@/composables/useMapMarkers';
+import { useLayerStore } from '@/stores/layerStore';
+
 // Components
-import AnalysisPanel from "./map/AnalysisPanel.vue";
-import ShopModal from "./map/ShopModal.vue";
-import DeleteConfirmModal from "./map/DeleteConfirmModal.vue";
-import MapControls from "./map/MapControls.vue";
-import AppHeader from "./map/AppHeader.vue";
-import MapStats from "./map/MapStats.vue";
-import BottomNav from "./map/BottomNav.vue";
-import ShopPopup from "./map/ShopPopup.vue";
+import AnalysisPanel from './map/AnalysisPanel.vue';
+import ShopModal from './map/ShopModal.vue';
+import RetailListingModal from './map/RetailListingModal.vue';
+import DeleteConfirmModal from './map/DeleteConfirmModal.vue';
+import AppHeader from './map/AppHeader.vue';
+import MapStats from './map/MapStats.vue';
+import BottomNav from './map/BottomNav.vue';
+import LocationComparisonPanel from './map/LocationComparisonPanel.vue';
+import AreaAnalysisPanel from './map/AreaAnalysisPanel.vue';
+import PolygonControls from './map/PolygonControls.vue';
+import GeocodingSearch from './map/GeocodingSearch.vue';
+import { isDarkMap } from '@/stores/mapConfig';
 
-const { isAuthenticated, userProfile, login, logout } = auth;
+const { logout } = auth;
 
-const { mapInstance, zoom, center, onMapReady } = useMapInstance();
+const mapContainer = ref<HTMLElement | null>(null);
+const { mapInstance, initMap, switchBaseLayer } = useMapInstance();
+
+function onSwitchBaseLayer(name: string) {
+  if (mapInstance.value) switchBaseLayer(mapInstance.value, name);
+}
+
 const { isMobile } = useMobileDetection();
-
 const isSidebarOpen = ref(true);
 const enableClustering = ref(true);
 
@@ -320,87 +191,7 @@ const placeTypesForPanel = computed(() =>
   }))
 );
 
-onMounted(() => {
-  isSidebarOpen.value = false;
-  fetchAll();
-});
-
-const {
-  showPopulationGrid,
-  selectedThreshold,
-  togglePopulationGrid,
-  updateThreshold,
-} = usePopulationLayers();
-
-const {
-  showAnalysisGrid,
-  toggleAnalysisGrid: toggleAnalysisGridComposable
-} = useAnalysisGrid();
-
-const {
-  showOpportunityHeatmap,
-  activeCategory: heatmapCategory,
-  toggleOpportunityHeatmap,
-  setHeatmapCategory,
-} = useOpportunityHeatmap();
-
-const {
-  showMetroVector,
-  toggleMetroVector,
-  activeMetroLines,
-  toggleMetroLine,
-  METRO_LINES,
-  METRO_COLORS
-} = useMetroLines();
-
-const {
-  showMetroStops,
-  activeStopLines,
-  toggleMetroStops,
-  toggleStopLine
-} = useMetroStops();
-
-const handleToggleMetroVector = () => {
-    toggleMetroVector(mapInstance.value);
-};
-
-const handleToggleMetroLine = (line: string) => {
-    toggleMetroLine(line, mapInstance.value);
-};
-
-const handleToggleMetroStops = () => {
-    toggleMetroStops(mapInstance.value);
-};
-
-const handleToggleStopLine = (line: string) => {
-  toggleStopLine(line, mapInstance.value);
-};
-
-// Expose constants to template
-const metroLinesList = METRO_LINES;
-const metroColors = METRO_COLORS;
-
-const handleTogglePopulationGrid = () => {
-  if (showAnalysisGrid.value) {
-    toggleAnalysisGridComposable(mapInstance.value);
-  }
-  togglePopulationGrid(mapInstance.value);
-};
-
-const handleToggleAnalysisGrid = () => {
-  if (showPopulationGrid.value) {
-    togglePopulationGrid(mapInstance.value);
-  }
-  toggleAnalysisGridComposable(mapInstance.value);
-};
-
-const handleToggleOpportunityHeatmap = () => {
-  toggleOpportunityHeatmap(mapInstance.value);
-};
-
-const handleSetHeatmapCategory = (cat: string) => {
-  setHeatmapCategory(cat as any, mapInstance.value);
-};
+const layerStore = useLayerStore();
 
 const {
   showShopModal,
@@ -415,28 +206,142 @@ const {
   editBarbershop,
   confirmDelete,
   cancelDelete,
-  deleteBarbershop
+  deleteBarbershop,
 } = useShopManagement(placeInstances[0]!.fetchPlaces);
 
-const handleMapClick = (e: any) => {
-  if (isDrawingMode.value) {
-    addVertex(e.latlng.lat, e.latlng.lng);
-  } else {
-    onMapClick(e);
-  }
-};
+const {
+  isAddListingMode,
+  showListingModal,
+  onMapClick: onListingMapClick,
+  cancelAddListing,
+  saveListing,
+  startAddListing: startAddListingMode,
+} = useRetailListingManagement(
+  layerStore.refreshRetailListings,
+  mapInstance,
+);
+
+function startAddListing() {
+  // Ensure only one "add" mode is active at a time
+  if (isDrawingMode.value) return;
+  if (isPinMode.value) togglePinMode();
+  startAddListingMode();
+}
+
+const {
+  pins: comparisonPins,
+  isPinMode,
+  isComparisonOpen,
+  pinCount: comparisonPinCount,
+  addPin: addComparisonPin,
+  removePin: removeComparisonPin,
+  clearPins: clearComparison,
+  togglePinMode,
+  openComparison,
+  closeComparison,
+} = useLocationComparison();
+
+// Polygon drawing (watchers + keyboard handler registered automatically)
+const { initDrawingLayers } = usePolygonDrawing(
+  mapInstance,
+  drawingVertices,
+  activePolygon,
+  isDrawingMode,
+  clearPolygon,
+);
+
+// Map markers (comparison pin watcher registered automatically)
+const { openShopPopup, addComparisonMarker, syncMarkers } = useMapMarkers(
+  mapInstance,
+  {
+    userAddedShops,
+    newShopPin,
+    comparisonPins,
+    removeComparisonPin,
+    togglePinMode,
+    editBarbershop,
+    confirmDelete,
+  },
+);
 
 const totalFilteredCount = computed(() =>
   placeInstances.reduce((sum, inst) => sum + (inst.visible ? inst.filteredPlaces.length : 0), 0)
 );
 
-// Press Escape to cancel drawing
-const handleKeydown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && isDrawingMode.value) clearPolygon();
+const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
+  barbershop: 'Barbershops',
+  gym: 'Gyms',
+  carwash: 'Car Washes',
+  'grocery store': 'Grocery Stores',
 };
-onMounted(() => window.addEventListener('keydown', handleKeydown));
-onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 
+const statsLabel = computed(() => {
+  if (isMobile.value) return i18n.global.t('stats.shops');
+  const visible = placeInstances.filter(i => i.visible);
+  if (visible.length === 1) {
+    const name = CATEGORY_DISPLAY_NAMES[visible[0]!.config.category] ?? visible[0]!.config.category;
+    return `Total ${name}:`;
+  }
+  return i18n.global.t('stats.total');
+});
+
+const areaStats = computed(() =>
+  placeInstances
+    .filter(inst => inst.visible)
+    .map(inst => {
+      const places = inst.filteredPlaces;
+      const rated = places.filter((p: any) => p.rating);
+      const avgRating = rated.length
+        ? rated.reduce((s: number, p: any) => s + p.rating, 0) / rated.length
+        : 0;
+      return {
+        category: inst.config.category,
+        emoji: inst.config.emoji,
+        label: inst.config.category.charAt(0).toUpperCase() + inst.config.category.slice(1) + 's',
+        count: places.length,
+        avgRating,
+        topPlaces: [...places].sort((a: any, b: any) => (b.rating ?? 0) - (a.rating ?? 0)).slice(0, 4),
+      };
+    })
+);
+
+// ── Map init ─────────────────────────────────────────────────────────────
+
+onMounted(async () => {
+  isSidebarOpen.value = false;
+  fetchAll();
+
+  if (!mapContainer.value) return;
+  const map = await initMap(mapContainer.value);
+  layerStore.setMap(map);
+
+  initDrawingLayers(map);
+  initDeckOverlay(map);
+
+  for (const inst of placeInstances) {
+    usePlacesDeckLayer(inst, mapInstance, enableClustering, openShopPopup);
+  }
+
+  // Map click handler
+  map.on('click', (e) => {
+    if (isDrawingMode.value) {
+      addVertex(e.lngLat.lat, e.lngLat.lng);
+    } else if (isPinMode.value) {
+      if (comparisonPins.value.length < 5) {
+        const pin = addComparisonPin(e.lngLat.lat, e.lngLat.lng);
+        addComparisonMarker(pin, map, comparisonPins.value.length);
+      }
+      if (comparisonPins.value.length >= 5) togglePinMode();
+    } else if (isAddListingMode.value) {
+      onListingMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
+    } else {
+      onMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
+    }
+  });
+
+  // Render loop: sync low-count DOM markers (user-added shops, new shop pin)
+  map.on('render', () => syncMarkers(map));
+});
 </script>
 
 <style scoped>
@@ -476,7 +381,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   width: 32px;
   height: 64px;
   transform: translateY(-50%);
-  background: #161B16;
+  background: #08090C;
   border: 1px solid rgba(245, 240, 232, 0.12);
   border-left: none;
   border-radius: 0 12px 12px 0;
@@ -499,8 +404,13 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 }
 
 .toggle-icon {
-  font-size: 14px;
-  font-weight: bold;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
 }
 
 .map-wrapper {
@@ -508,209 +418,132 @@ onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
   position: relative;
 }
 
-.map-wrapper.drawing-cursor :deep(.leaflet-container) {
+.map-wrapper.drawing-cursor :deep(.maplibregl-canvas) {
   cursor: crosshair !important;
 }
 
-.polygon-controls {
+.drawing-overlay {
   position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(22, 27, 22, 0.92);
-  border: 1px solid rgba(245, 240, 232, 0.14);
-  border-radius: 12px;
-  padding: 8px 14px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  inset: 0;
+  z-index: 999;
+  background: rgba(245, 158, 11, 0.3);
+  pointer-events: none;
 }
 
-.polygon-btn {
-  background: rgba(245, 240, 232, 0.08);
-  border: 1px solid rgba(245, 240, 232, 0.16);
-  border-radius: 8px;
-  color: #d4cfc8;
-  font-size: 13px;
-  padding: 5px 12px;
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
+.map-wrapper.pin-cursor :deep(.maplibregl-canvas) {
+  cursor: cell !important;
 }
 
-.polygon-btn:hover:not(:disabled) {
-  background: rgba(245, 240, 232, 0.14);
-  color: #f5f0e8;
+.map-wrapper.listing-cursor :deep(.maplibregl-canvas) {
+  cursor: crosshair !important;
 }
 
-.polygon-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+/* Shift area panel left when comparison panel is also open */
+:deep(.shifted-left) {
+  right: 348px !important;
 }
 
-.polygon-btn.finish {
-  border-color: rgba(16, 185, 129, 0.5);
-  color: #10b981;
+.map-div {
+  position: absolute;
+  inset: 0;
 }
 
-.polygon-btn.finish:hover:not(:disabled) {
-  background: rgba(16, 185, 129, 0.15);
-}
+/* User-added & new shop marker styles (kept as DOM markers) */
+:deep(.shop-marker-wrapper.saved-shop-marker) { --pin-color: #d97757; }
+:deep(.shop-marker-wrapper.new-shop-marker) { --pin-color: #6366f1; }
 
-.polygon-btn.cancel,
-.polygon-btn.clear {
-  border-color: rgba(239, 68, 68, 0.4);
-  color: #f87171;
-}
-
-.polygon-btn.cancel:hover,
-.polygon-btn.clear:hover {
-  background: rgba(239, 68, 68, 0.12);
-}
-
-.drawing-hint {
-  font-size: 12px;
-  color: #f59e0b;
-  white-space: nowrap;
-}
-
-.polygon-count {
-  font-size: 12px;
-  color: #10b981;
-  white-space: nowrap;
-}
-
-/* Marker Styles */
-.barbershop-marker {
-  background: transparent !important;
-  border: none !important;
-}
-
-.shop-marker-content {
-  font-size: 24px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-  transition: transform 0.2s;
-}
-
-.shop-marker-content:hover {
-  transform: scale(1.2);
-}
-
-.chain-logo {
-  width: 24px;
-  height: 24px;
-  display: block;
-}
-
-.chain-logo[alt="Billa"],
-.chain-logo[alt="Fantastico"] {
-  width: auto;
-  height: 18px;
-}
-
-
-/* Opportunity Zone Styles */
-.opportunity-marker-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transform: translate(-50%, -50%);
-}
-
-.opportunity-icon {
-  font-size: 32px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
-}
-
-.opportunity-label {
-  background: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 10px;
-  white-space: nowrap;
-  margin-top: -5px;
-}
-
-.opportunity-title {
-  color: #059669;
-}
-
-.opportunity-note {
-  margin-top: 12px;
-  padding: 8px;
-  background: #ecfdf5;
-  border-radius: 6px;
-  color: #047857;
-  font-size: 0.85rem;
-  border: 1px solid #d1fae5;
-}
-
-
-/* Metro Stop Marker Styles */
-:deep(.metro-stop-marker) {
-  background: transparent !important;
-  border: none !important;
-}
-
-:deep(.metro-stop-icon) {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
+:deep(.shop-pin-marker) {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-  border: 2px solid white;
-  cursor: pointer;
   transition: transform 0.2s;
 }
 
-:deep(.metro-stop-icon:hover) {
-  transform: scale(1.2);
+:deep(.shop-pin-marker:hover) {
+  transform: scale(1.18);
 }
 
-:deep(.metro-stop-inner) {
-  color: white;
-  font-weight: bold;
-  font-size: 14px;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+:deep(.shop-pin-head) {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(250, 248, 244, 0.72);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--pin-color, #d97757);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.25);
+  position: relative;
 }
 
-/* Metro Stop Popup Styles */
-:deep(.metro-stop-popup) {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+:deep(.map-dark .shop-pin-head) {
+  background: rgba(15, 15, 20, 0.65);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 2px 8px rgba(0,0,0,0.5);
 }
 
-:deep(.metro-stop-header) {
-  padding-left: 12px;
-  margin-bottom: 8px;
+:deep(.shop-pin-head .material-symbols-outlined) {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--pin-color, #d97757);
 }
 
-:deep(.metro-stop-header h3) {
-  margin: 0 0 4px 0;
-  font-size: 1rem;
+/* Comparison pin markers */
+:deep(.comparison-pin-dot) {
+  width: 26px;
+  height: 26px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
   font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-:deep(.metro-stop-header .stop-name) {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #333;
-  font-weight: 600;
+:deep(.comparison-pin-dot.dot-1) {
+  background: #d97757;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-2) {
+  background: #10b981;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-3) {
+  background: #f59e0b;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-4) {
+  background: #c05e3a;
+  color: #fff;
+}
+:deep(.comparison-pin-dot.dot-5) {
+  background: #c4b8ae;
+  color: #161B16;
 }
 
-:deep(.metro-stop-info) {
-  padding: 8px 0 0 0;
-  border-top: 1px solid #e2e8f0;
+:deep(.comparison-pin-dot > span) {
+  transform: rotate(45deg);
 }
 
-:deep(.metro-stop-info small) {
-  color: #718096;
-  font-size: 0.75rem;
+:deep(.geocoding-marker) {
+  cursor: pointer;
+  transform: translate(-50%, -100%);
+}
+
+:deep(.geocoding-marker-dot) {
+  width: 32px;
+  height: 32px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: #6366f1;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
-

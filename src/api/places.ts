@@ -33,6 +33,8 @@ export interface Place {
     reservable?: boolean;
     wheelchair_accessible?: boolean;
     utc_offset_minutes?: number;
+    estimated_monthly_visitors?: number;
+    visitor_location_score?: number;
     tags?: string[];
     photo_url?: string | null;
     is_open_now?: boolean | null;

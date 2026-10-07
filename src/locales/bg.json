@@ -12,8 +12,12 @@
         "map": "Карта",
         "list": "Списък"
     },
+    "search": {
+        "placeholder": "Търси адрес..."
+    },
     "stats": {
         "totalBarbershops": "Общо бръснарници:",
+        "total": "Общо:",
         "shops": "Обекти:",
         "avgRating": "Ср. Оценка:"
     },
@@ -83,7 +87,9 @@
             "edit": "Редактиране",
             "editInfo": "Редактирай инфо",
             "reviews": "отзива",
-            "moreDays": "още дни"
+            "moreDays": "още дни",
+            "estimatedVisitors": "Прогн. посетители/мес.",
+            "perMonth": "/месец"
         },
         "opportunity": {
             "title": "Зона на възможност",

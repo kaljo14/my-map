@@ -1,30 +1,29 @@
 <template>
   <div class="popup-content enhanced">
-    <!-- Photo Header -->
-    <div v-if="shop.photo_url" class="popup-photo">
-      <img :src="shop.photo_url" :alt="shop.name" @error="(e) => (e.target as HTMLImageElement).style.display='none'" />
-    </div>
-    
     <!-- Title and Rating with Edit Button -->
     <div class="popup-header">
       <div class="popup-header-content">
         <h3 class="popup-title">{{ shop.name }}</h3>
         <div class="popup-rating">
-          <span class="stars">{{ getStars(shop.rating || 0) }}</span>
+          <div class="stars">
+            <span v-for="i in getStarData(shop.rating || 0).full" :key="`f${i}`" class="material-symbols-outlined star-icon">star</span>
+            <span v-if="getStarData(shop.rating || 0).half" class="material-symbols-outlined star-icon">star_half</span>
+            <span v-for="i in getStarData(shop.rating || 0).empty" :key="`e${i}`" class="material-symbols-outlined star-icon">star_border</span>
+          </div>
           <span class="rating-value">{{ shop.rating || 'N/A' }}</span>
           <span class="rating-count" v-if="shop.user_ratings_total">({{ shop.user_ratings_total }} {{ $t('map.popup.reviews') }})</span>
         </div>
       </div>
       <div class="edit-menu-container" v-if="isAuthenticated">
         <button @click="toggleEditMenu(shop.place_id)" class="edit-btn" :title="$t('map.popup.edit')">
-          ⚙️
+          <span class="material-symbols-outlined">settings</span>
         </button>
         <div v-if="activeEditMenu === shop.place_id" class="edit-dropdown">
           <button @click="$emit('edit', shop)" class="dropdown-item">
-            ✏️ {{ $t('map.popup.editInfo') }}
+            <span class="material-symbols-outlined">edit</span> {{ $t('map.popup.editInfo') }}
           </button>
           <button @click="$emit('delete', shop)" class="dropdown-item delete">
-            🗑️ {{ $t('common.delete') }}
+            <span class="material-symbols-outlined">delete</span> {{ $t('common.delete') }}
           </button>
         </div>
       </div>
@@ -32,23 +31,22 @@
 
     <!-- Status Badge -->
     <div v-if="shop.is_open_now !== null" class="status-badge" :class="{ open: shop.is_open_now }">
-      {{ shop.is_open_now ? `🟢 ${$t('map.popup.openNow')}` : `🔴 ${$t('map.popup.closed')}` }}
+      <span class="material-symbols-outlined status-dot">circle</span>
+      {{ shop.is_open_now ? $t('map.popup.openNow') : $t('map.popup.closed') }}
     </div>
 
     <!-- Info Grid -->
     <div class="popup-info">
-      <div class="info-row" v-if="shop.price_level">
-        <strong>💰 {{ $t('map.popup.price') }}:</strong> {{ '€'.repeat(shop.price_level) }}
-      </div>
-      <div class="info-row" v-if="shop.address">
-        <strong>📍 {{ $t('map.popup.address') }}:</strong> {{ shop.address }}
-      </div>
-      <div class="info-row" v-if="shop.formatted_phone_number">
-        <strong>📞 {{ $t('map.popup.phone') }}:</strong> 
+      <InfoRow v-if="shop.price_level" icon="payments" :label="`${$t('map.popup.price')}:`">
+        {{ '€'.repeat(shop.price_level) }}
+      </InfoRow>
+      <InfoRow v-if="shop.address" icon="location_on" :label="`${$t('map.popup.address')}:`">
+        {{ shop.address }}
+      </InfoRow>
+      <InfoRow v-if="shop.formatted_phone_number" icon="phone" :label="`${$t('map.popup.phone')}:`">
         <a :href="`tel:${shop.formatted_phone_number}`">{{ shop.formatted_phone_number }}</a>
-      </div>
-      <div class="info-row" v-if="shop.opening_hours_text">
-        <strong>🕒 {{ $t('map.popup.hours') }}:</strong>
+      </InfoRow>
+      <InfoRow v-if="shop.opening_hours_text" icon="schedule" :label="`${$t('map.popup.hours')}:`">
         <div class="hours-list">
           <div v-for="(line, idx) in shop.opening_hours_text.split('\n').slice(0, 3)" :key="idx" class="hours-line">
             {{ line }}
@@ -57,19 +55,22 @@
             +{{ shop.opening_hours_text.split('\n').length - 3 }} {{ $t('map.popup.moreDays') }}
           </div>
         </div>
-      </div>
-      <div class="info-row" v-if="shop.services && shop.services.length > 0">
-        <strong>🏷️ {{ $t('map.popup.services') }}:</strong> {{ shop.services.slice(0, 3).join(', ') }}
-      </div>
+      </InfoRow>
+      <InfoRow v-if="shop.services?.length" icon="label" :label="`${$t('map.popup.services')}:`">
+        {{ shop.services.slice(0, 3).join(', ') }}
+      </InfoRow>
+      <InfoRow v-if="shop.estimated_monthly_visitors" icon="group" :label="`${$t('map.popup.estimatedVisitors')}:`">
+        <span class="visitor-estimate">{{ shop.estimated_monthly_visitors.toLocaleString() }}</span>
+      </InfoRow>
     </div>
 
     <!-- Action Buttons -->
     <div class="popup-actions">
       <a v-if="shop.website" :href="shop.website" target="_blank" class="action-btn">
-        🌐 {{ $t('map.popup.website') }}
+        <span class="material-symbols-outlined">language</span> {{ $t('map.popup.website') }}
       </a>
       <a v-if="shop.google_maps_url" :href="shop.google_maps_url" target="_blank" class="action-btn">
-        🗺️ {{ $t('map.popup.directions') }}
+        <span class="material-symbols-outlined">directions</span> {{ $t('map.popup.directions') }}
       </a>
     </div>
   </div>
@@ -78,6 +79,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import type { Place } from '@/api/places';
+import InfoRow from '@/components/ui/InfoRow.vue';
 
 defineProps<{
   shop: Place;
@@ -95,10 +97,11 @@ const toggleEditMenu = (placeId: string) => {
   activeEditMenu.value = activeEditMenu.value === placeId ? null : placeId;
 };
 
-const getStars = (rating: number) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 >= 0.5;
-  return "★".repeat(fullStars) + (hasHalfStar ? "½" : "") + "☆".repeat(5 - fullStars - (hasHalfStar ? 1 : 0));
+const getStarData = (rating: number) => {
+  const full = Math.floor(rating);
+  const half = rating % 1 >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+  return { full, half, empty };
 };
 </script>
 
@@ -107,21 +110,6 @@ const getStars = (rating: number) => {
   min-width: 250px;
   max-width: 350px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
-.popup-photo {
-  width: 100%;
-  height: 150px;
-  overflow: hidden;
-  border-radius: 8px 8px 0 0;
-  margin: -14px -20px 12px -20px;
-  position: relative;
-}
-
-.popup-photo img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .popup-header {
@@ -147,8 +135,14 @@ const getStars = (rating: number) => {
 }
 
 .stars {
+  display: flex;
+  align-items: center;
+}
+
+.star-icon {
   color: #d97757;
-  font-size: 1rem;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .rating-value {
@@ -162,7 +156,9 @@ const getStars = (rating: number) => {
 }
 
 .status-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -170,6 +166,11 @@ const getStars = (rating: number) => {
   margin-bottom: 12px;
   background: rgba(192, 94, 58, 0.1);
   color: #c05e3a;
+}
+
+.status-dot {
+  font-size: 10px;
+  line-height: 1;
 }
 
 .status-badge.open {
@@ -182,27 +183,6 @@ const getStars = (rating: number) => {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
-}
-
-.info-row {
-  font-size: 0.9rem;
-  color: #4a4030;
-  line-height: 1.4;
-}
-
-.info-row strong {
-  color: #131314;
-  font-weight: 600;
-}
-
-.info-row a {
-  color: #d97757;
-  text-decoration: none;
-}
-
-.info-row a:hover {
-  color: #c05e3a;
-  text-decoration: underline;
 }
 
 .hours-list {
@@ -223,6 +203,11 @@ const getStars = (rating: number) => {
   margin-top: 2px;
 }
 
+.visitor-estimate {
+  font-weight: 700;
+  color: #2d7d52;
+}
+
 .popup-actions {
   display: flex;
   gap: 8px;
@@ -231,7 +216,10 @@ const getStars = (rating: number) => {
 
 .action-btn {
   flex: 1;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   padding: 8px;
   background: #ede7dc;
   border: 1px solid #e0d8cc;
@@ -241,6 +229,11 @@ const getStars = (rating: number) => {
   font-size: 0.85rem;
   font-weight: 600;
   transition: all 0.2s;
+}
+
+.action-btn .material-symbols-outlined {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .action-btn:hover {
@@ -257,10 +250,17 @@ const getStars = (rating: number) => {
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 1.2rem;
   padding: 4px;
   border-radius: 4px;
   transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  color: #4a4030;
+}
+
+.edit-btn .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
 }
 
 .edit-btn:hover { background: #ede7dc; }
@@ -279,7 +279,9 @@ const getStars = (rating: number) => {
 }
 
 .dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   width: 100%;
   text-align: left;
   padding: 8px 12px;
@@ -290,6 +292,11 @@ const getStars = (rating: number) => {
   font-size: 0.9rem;
   color: #4a4030;
   transition: background 0.2s;
+}
+
+.dropdown-item .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
 }
 
 .dropdown-item:hover { background: #ede7dc; }

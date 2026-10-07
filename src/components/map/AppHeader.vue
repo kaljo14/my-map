@@ -1,55 +1,40 @@
 <template>
   <header class="app-header">
     <div class="header-left">
-      <div class="logo">💈</div>
-      <h1 class="app-title">Barbershop Analysis</h1>
+      <div class="logo">
+        <img src="/log.png" alt="Lonctus" class="logo-img" />
+        <span class="logo-text">Lonctus</span>
+      </div>
     </div>
 
-
-    
     <div class="header-right">
       <div class="auth-controls">
-        <button v-if="!isAuthenticated" @click="$emit('login')" class="auth-btn login">
+        <RouterLink v-if="!isSignedIn" to="/sign-in" class="auth-btn login">
           {{ $t('common.login') }}
-        </button>
-        <div v-else class="user-info">
-          <span class="username">{{ userProfile?.username || 'User' }}</span>
-          <button @click="$emit('logout')" class="auth-btn logout">
-            {{ $t('common.logout') }}
-          </button>
-        </div>
+        </RouterLink>
+        <UserButton v-else />
       </div>
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
+import { UserButton, useAuth } from '@clerk/vue'
 
-
-defineProps<{
-  isAuthenticated: boolean;
-  userProfile: any;
-
-}>();
-
-defineEmits<{
-  (e: 'login'): void;
-  (e: 'login'): void;
-  (e: 'logout'): void;
-}>();
+const { isSignedIn } = useAuth()
 </script>
 
 <style scoped>
 .app-header {
-  height: 64px;
-  background: #161B16;
-  border-bottom: 1px solid rgba(245, 240, 232, 0.08);
+  height: 60px;
+  background: #08090c;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 16px;
   color: #f5f0e8;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
   z-index: 2000;
   position: relative;
 }
@@ -61,7 +46,26 @@ defineEmits<{
 }
 
 .logo {
-  font-size: 24px;
+  display: flex;
+  align-items: center;
+}
+
+.logo-img {
+  height: 42px;
+  width: auto;
+  display: block;
+  filter: drop-shadow(
+    0 0 1px rgba(255, 255, 255, 0.4)
+  ); /* makes the logo appear slightly thicker */
+}
+
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: #f5f0e8;
+  margin-left: 12px;
 }
 
 .app-title {
@@ -75,43 +79,6 @@ defineEmits<{
 .header-right {
   display: flex;
   align-items: center;
-}
-
-.header-center {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-}
-
-.nav-btn {
-  background: rgba(245, 240, 232, 0.06);
-  border: 1px solid rgba(245, 240, 232, 0.12);
-  color: #a89e94;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-.nav-btn:hover {
-  background: rgba(245, 240, 232, 0.1);
-  color: #f5f0e8;
-  border-color: rgba(245, 240, 232, 0.2);
-}
-
-.nav-btn.active {
-  background: rgba(217, 119, 87, 0.15);
-  color: #d97757;
-  border-color: rgba(217, 119, 87, 0.4);
-}
-
-.nav-btn .icon {
-  font-size: 1.1em;
 }
 
 .auth-controls {
@@ -139,29 +106,5 @@ defineEmits<{
   background: #c86843;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(217, 119, 87, 0.4);
-}
-
-.auth-btn.logout {
-  background: rgba(245, 240, 232, 0.06);
-  color: #a89e94;
-  border: 1px solid rgba(245, 240, 232, 0.12);
-}
-
-.auth-btn.logout:hover {
-  background: rgba(245, 240, 232, 0.1);
-  color: #f5f0e8;
-  border-color: rgba(245, 240, 232, 0.2);
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.username {
-  color: #8a7e72;
-  font-size: 0.9rem;
-  font-weight: 500;
 }
 </style>

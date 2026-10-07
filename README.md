@@ -8,7 +8,7 @@ A Vue 3 + TypeScript application for analyzing barbershop locations in Sofia, fe
 -   **Clustering**: Efficiently handle large numbers of markers.
 -   **Filtering**: Filter by rating, price, and services.
 -   **Opportunity Zones**: Identify areas with low competition.
--   **Authentication**: Secure login via Keycloak to protect data modification.
+-   **Authentication**: Secure login via Clerk to protect data modification.
 -   **Management**: Edit and delete barbershop entries (requires login).
 
 ## Prerequisites
@@ -33,29 +33,7 @@ A Vue 3 + TypeScript application for analyzing barbershop locations in Sofia, fe
     - `VITE_API_BASE_URL`: Base URL for the barbershop API (default: `http://localhost:8080`)
     - `VITE_TILE_SERVER_URL`: Base URL for the tile server (default: `http://localhost:8080`)
 
-3.  **Start Keycloak Infrastructure**
-    This project uses Keycloak for authentication. You need to start the local identity server before running the app.
-    ```bash
-    docker-compose up -d
-    ```
-
-3.  **Configure Keycloak**
-    Since this is a local setup, you need to configure the realm manually once:
-    
-    1.  **Access Admin Console**: [http://localhost:8081](http://localhost:8081)
-    2.  **Login**: `admin` / `admin`
-    3.  **Create Realm**:
-        -   Create a new realm named `barbershop-realm`.
-    4.  **Create Client**:
-        -   Create a new client named `barbershop-app`.
-        -   **Client authentication**: Off (Public).
-        -   **Valid redirect URIs**: `http://localhost:5173/*`
-        -   **Web origins**: `+`
-    5.  **Create User**:
-        -   Create a new user (e.g., `user`).
-        -   Set credentials (password) and turn off "Temporary".
-
-4.  **Run the Application**
+3.  **Run the Application**
     ```bash
     npm run dev
     ```
@@ -63,5 +41,5 @@ A Vue 3 + TypeScript application for analyzing barbershop locations in Sofia, fe
 ## Usage
 
 -   **View Map**: Browse barbershops in Sofia.
--   **Login**: Click the "Login" button in the top-right header to authenticate with Keycloak.
+-   **Login**: Click the "Login" button in the top-right header to authenticate with Clerk.
 -   **Edit/Delete**: Once logged in, click on any barbershop marker to see the "Edit" (⚙️) button in the popup.

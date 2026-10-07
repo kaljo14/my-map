@@ -1,9 +1,19 @@
+<script setup lang="ts">
+import { watch } from 'vue'
+import { useAuth, useUser } from '@clerk/vue'
+import auth from './services/auth'
+
+const { isLoaded, isSignedIn } = useAuth()
+const { user } = useUser()
+
+watch([isLoaded, isSignedIn, user], ([loaded, signedIn, u]) => {
+  auth.syncAuthState(signedIn ?? false, u, loaded ?? false)
+}, { immediate: true })
+</script>
+
 <template>
   <RouterView />
 </template>
-
-<script setup lang="ts">
-</script>
 
 <style>
 * {

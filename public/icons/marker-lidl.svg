@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="28" fill="#fff" stroke="#0050aa" stroke-width="4"/>
+  <rect x="14" y="14" width="36" height="36" rx="4" fill="#0050aa"/>
+  <circle cx="32" cy="32" r="16" fill="#fff000"/>
+  <text x="32" y="38" font-family="Arial Black, sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#0050aa">Lidl</text>
+</svg>

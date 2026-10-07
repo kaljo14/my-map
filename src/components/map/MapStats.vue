@@ -1,27 +1,23 @@
 <template>
   <div class="map-stats" :class="{ 'notch': !isMobile }">
-    <div class="stat-item">
-      <span class="stat-label">{{ isMobile ? $t('stats.shops') : $t('stats.totalBarbershops') }}</span>
-      <span class="stat-value">{{ filteredCount }}</span>
-    </div>
+    <StatItem inline :label="label">
+      {{ filteredCount }}
+    </StatItem>
     <div class="stat-divider"></div>
-    <div class="stat-item">
-      <span class="stat-label" v-if="!isMobile">{{ $t('stats.avgRating') }}</span>
-      <span class="stat-value">
-        <span class="star">★</span>
-        {{ averageRating.toFixed(1) }}
-      </span>
-    </div>
+    <StatItem inline :label="!isMobile ? $t('stats.avgRating') : undefined">
+      <span class="material-symbols-outlined star">star</span>{{ averageRating.toFixed(1) }}
+    </StatItem>
   </div>
 </template>
 
 <script setup lang="ts">
-
+import StatItem from '@/components/ui/StatItem.vue';
 
 defineProps<{
   filteredCount: number;
   averageRating: number;
   isMobile: boolean;
+  label: string;
 }>();
 </script>
 
@@ -31,7 +27,7 @@ defineProps<{
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(22, 27, 22, 0.88);
+  background: rgba(8, 9, 12, 0.92);
   backdrop-filter: blur(10px);
   padding: 6px 14px;
   border-radius: 100px;
@@ -40,7 +36,7 @@ defineProps<{
   gap: 12px;
   color: #f5f0e8;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
-  border: 1px solid rgba(245, 240, 232, 0.1);
+  border: 1px solid rgba(245, 240, 232, 0.07);
   z-index: 1000;
   pointer-events: none;
   transition: all 0.3s ease;
@@ -51,31 +47,10 @@ defineProps<{
   top: 0;
   border-radius: 0 0 16px 16px;
   border-top: none;
-  background: rgba(22, 27, 22, 0.96);
+  background: #08090C;
   padding: 8px 24px 10px 24px;
   gap: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #8a7e72;
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: #f5f0e8;
-  display: flex;
-  align-items: center;
-  gap: 2px;
 }
 
 .stat-divider {
@@ -86,7 +61,9 @@ defineProps<{
 
 .star {
   color: #d97757;
-  font-size: 0.85rem;
+  font-size: 14px;
+  line-height: 1;
+  vertical-align: middle;
 }
 </style>
 

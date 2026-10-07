@@ -15,16 +15,32 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* ── Design token palette ─────────────────────────────── */
+  --color-bg:           #08090C;
+  --color-bg-elevated:  #252018;
+  --color-surface:      #f5f0e8;
+  --color-surface-alt:  #ede7dc;
+  --color-accent:       #d97757;
+  --color-accent-dark:  #c86843;
+  --color-text:         #f5f0e8;
+  --color-text-inv:     #131314;
+  --color-muted:        #8a7e72;
+  --color-muted-light:  #c4b8ae;
+  --color-faint:        #5a5048;
+  --color-border:       rgba(245, 240, 232, 0.08);
+  --color-border-light: #e0d8cc;
+  --color-danger:       #c05e3a;
 }
 
 a {
   font-weight: 500;
-  color: #0d9488;
+  color: #d97757;
   text-decoration: inherit;
 }
 
 a:hover {
-  color: #0f766e;
+  color: #c86843;
 }
 
 body {
@@ -50,12 +66,12 @@ button {
 }
 
 button:hover {
-  border-color: #0d9488;
+  border-color: #d97757;
 }
 
-button:focus,
 button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+  outline: 2px solid #d97757;
+  outline-offset: 2px;
 }
 
 .card {
@@ -66,20 +82,6 @@ button:focus-visible {
   height: 100vh;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-
-  a:hover {
-    color: #14b8a6;
-  }
-
-  button {
-    background-color: #f9f9f9;
-  }
-}
 
 .grid-label {
   background: transparent;
@@ -87,8 +89,128 @@ button:focus-visible {
   pointer-events: none;
 }
 
+/* ── Walk Score Legend ──────────────────────────────────────────────────── */
+.walk-legend {
+    position: absolute;
+    bottom: 36px;
+    left: 10px;
+    z-index: 10;
+    background: #f5f0e8;
+    border: 1px solid #e0d8cc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: system-ui, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    min-width: 140px;
+}
+
+.walk-legend-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a4030;
+    margin-bottom: 6px;
+}
+
+.walk-legend-gradient {
+    height: 12px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #d73027, #fee08b, #1a9850);
+    margin-bottom: 4px;
+}
+
+.walk-legend-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #9d9080;
+}
+
+/* ── OSM POI Legend ─────────────────────────────────────────────────────── */
+.poi-legend {
+    position: absolute;
+    bottom: 36px;
+    right: 10px;
+    z-index: 10;
+    background: #f5f0e8;
+    border: 1px solid #e0d8cc;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-family: system-ui, sans-serif;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    min-width: 130px;
+}
+
+.poi-legend-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #4a4030;
+    margin-bottom: 7px;
+}
+
+.poi-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    border-radius: 5px;
+    padding: 2px 3px;
+    transition: opacity 0.15s, background 0.15s;
+}
+
+.poi-legend-row:hover {
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.poi-legend-row.dimmed {
+    opacity: 0.3;
+}
+
+.poi-legend-emoji {
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.poi-legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+}
+
+.poi-legend-label {
+    font-size: 10px;
+    color: #6b5f53;
+}
+
+.poi-legend-clear {
+    margin-top: 6px;
+    font-size: 10px;
+    color: #8b7355;
+    cursor: pointer;
+    text-align: center;
+    padding: 3px 6px;
+    border-radius: 5px;
+    border: 1px solid #d6cfc3;
+    transition: background 0.15s;
+}
+
+.poi-legend-clear:hover {
+    background: rgba(0, 0, 0, 0.07);
+}
+
 /* ── Opportunity Heatmap Legend ─────────────────────────────────────────── */
 .opportunity-legend {
+    position: absolute;
+    bottom: 36px;
+    left: 10px;
+    z-index: 10;
     background: #f5f0e8;
     border: 1px solid #e0d8cc;
     border-radius: 10px;
@@ -119,6 +241,43 @@ button:focus-visible {
     justify-content: space-between;
     font-size: 10px;
     color: #9d9080;
+}
+
+/* ── MapLibre Attribution ───────────────────────────────────────────────── */
+.maplibregl-ctrl-attrib {
+  font-size: 10px !important;
+  opacity: 0.6;
+  background: rgba(255, 255, 255, 0.7) !important;
+}
+
+.maplibregl-ctrl-attrib:hover {
+  opacity: 1;
+}
+
+.maplibregl-ctrl-attrib-button {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* ── MapLibre Popup ────────────────────────────────────────────────────── */
+.maplibregl-popup {
+  z-index: 10 !important;
+}
+
+/* ── MapLibre Popup Close Button ────────────────────────────────────────── */
+.maplibregl-popup-close-button {
+  background-color: transparent;
+  color: #4a4030;
+  border: none;
+  padding: 2px 6px;
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.maplibregl-popup-close-button:hover {
+  background-color: rgba(192, 94, 58, 0.1);
+  border-color: transparent;
+  color: #c05e3a;
 }
 
 .label-content {
