@@ -1,4 +1,4 @@
-import { ref, watch, type Ref } from 'vue';
+import { onScopeDispose, ref, watch, type Ref } from 'vue';
 import maplibregl from 'maplibre-gl';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 
@@ -123,6 +123,12 @@ export function useGeocoding(mapInstance: Ref<MapLibreMap | null>) {
       marker = null;
     }
   }
+
+  onScopeDispose(() => {
+    clearTimeout(debounceTimer);
+    abortController?.abort();
+    marker?.remove();
+  });
 
   return {
     query,

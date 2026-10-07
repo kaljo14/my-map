@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "test": "node --experimental-test-module-mocks --test tests/*.test.mjs",
     "preview": "vite preview",
     "lint": "eslint . --ext .vue,.js,.ts",
     "format": "prettier --write ."

@@ -22,10 +22,10 @@ export function useRetailListingManagement(
         newListingLng.value = 0;
     };
 
-    const onMapClick = (e: { latlng: { lat: number; lng: number } }) => {
+    const onMapClick = (location: { lat: number; lng: number }) => {
         if (!isAddListingMode.value) return;
-        newListingLat.value = e.latlng.lat;
-        newListingLng.value = e.latlng.lng;
+        newListingLat.value = location.lat;
+        newListingLng.value = location.lng;
         showListingModal.value = true;
     };
 

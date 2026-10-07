@@ -24,7 +24,7 @@ import { useUltimateFootTrafficLayer } from '@/composables/useUltimateFootTraffi
 export const useLayerStore = defineStore('layers', () => {
     const mapInstance = shallowRef<MapLibreMap | null>(null);
 
-    function setMap(map: MapLibreMap) {
+    function setMap(map: MapLibreMap | null) {
         mapInstance.value = map;
     }
 

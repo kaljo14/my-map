@@ -1,4 +1,4 @@
-import { shallowRef, watch } from 'vue';
+import { onScopeDispose, shallowRef, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import maplibregl, { type Map as MapLibreMap, type StyleSpecification } from 'maplibre-gl';
 import { useMapView } from '@/stores/mapViewStore';
@@ -98,18 +98,34 @@ function prepareBaseStyle(style: StyleSpecification): StyleSpecification {
 export function useMapInstance() {
     const route = useRoute();
     const { mapCenter, mapZoom, initializeFromURL, updateURL } = useMapView();
+    const mapInstance = shallowRef<MapLibreMap | null>(null);
+    const abortController = new AbortController();
+
+    onScopeDispose(() => {
+        abortController.abort();
+        mapInstance.value?.remove();
+        mapInstance.value = null;
+    });
 
     watch(() => route.query, () => {
         initializeFromURL();
+        const map = mapInstance.value;
+        if (!map) return;
+        const center = map.getCenter();
+        const [lat, lng] = mapCenter.value;
+        // Ignore the rounding from our own URL writes to avoid a feedback loop.
+        if (Math.abs(center.lat - lat) > 0.000001 || Math.abs(center.lng - lng) > 0.000001 ||
+            Math.abs(map.getZoom() - mapZoom.value) > 0.000001) {
+            map.jumpTo({ center: [lng, lat], zoom: mapZoom.value });
+        }
     }, { deep: true, immediate: true });
-
-    const mapInstance = shallowRef<MapLibreMap | null>(null);
 
     const initMap = async (container: HTMLElement): Promise<MapLibreMap> => {
         const activeLayer = baseLayers.value.find(l => l.visible) ?? baseLayers.value[0]!;
-        const response = await fetch(activeLayer.url);
+        const response = await fetch(activeLayer.url, { signal: abortController.signal });
         if (!response.ok) throw new Error(`Base map style failed: ${response.status}`);
         const baseStyle = prepareBaseStyle(await response.json() as StyleSpecification);
+        abortController.signal.throwIfAborted();
         const center = mapCenter.value; // [lat, lng]
 
         const map = new maplibregl.Map({
@@ -136,21 +152,28 @@ export function useMapInstance() {
 
         const resizeObserver = new ResizeObserver(() => map.resize());
         resizeObserver.observe(container);
+        let updateTimeout: ReturnType<typeof setTimeout> | undefined;
+        map.once('remove', () => {
+            resizeObserver.disconnect();
+            clearTimeout(updateTimeout);
+        });
 
         // Surface all MapLibre errors (tile failures, source-layer mismatches, etc.)
         map.on('error', (e) => {
             console.error('[MapLibre]', e.error?.message ?? e);
         });
 
-        return new Promise((resolve) => {
-            map.on('load', () => {
+        return new Promise((resolve, reject) => {
+            const onRemove = () => reject(new DOMException('Map was removed before loading', 'AbortError'));
+            map.once('remove', onRemove);
+            map.once('load', () => {
+                map.off('remove', onRemove);
                 // In dev mode: fetch Martin catalog to verify source-layer names
                 if (import.meta.env.DEV) {
                     checkMartinCatalog();
                 }
 
                 // URL sync
-                let updateTimeout: ReturnType<typeof setTimeout>;
                 map.on('moveend', () => {
                     clearTimeout(updateTimeout);
                     updateTimeout = setTimeout(() => {

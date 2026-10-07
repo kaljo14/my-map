@@ -1,12 +1,16 @@
+// deck.gl 9.2 uses this adapter for both MapLibre and Mapbox renderers.
 import { MapboxOverlay } from '@deck.gl/mapbox';
 import type { Layer } from '@deck.gl/core';
 import type { Map as MapLibreMap, IControl } from 'maplibre-gl';
 
-let overlay: MapboxOverlay | null = null;
-const layerRegistry = new Map<string, Layer[]>();
+interface OverlayState {
+  overlay: MapboxOverlay;
+  layerRegistry: Map<string, Layer[]>;
+}
 
-function flush() {
-  if (!overlay) return;
+const overlays = new WeakMap<MapLibreMap, OverlayState>();
+
+function flush({ overlay, layerRegistry }: OverlayState) {
   const all: Layer[] = [];
   for (const layers of layerRegistry.values()) {
     all.push(...layers);
@@ -15,18 +19,30 @@ function flush() {
 }
 
 export function initDeckOverlay(map: MapLibreMap): MapboxOverlay {
-  if (overlay) return overlay;
-  overlay = new MapboxOverlay({ interleaved: false });
+  const existing = overlays.get(map);
+  if (existing) return existing.overlay;
+  const overlay = new MapboxOverlay({ interleaved: false });
   map.addControl(overlay as unknown as IControl);
+  const state = { overlay, layerRegistry: new Map<string, Layer[]>() };
+  overlays.set(map, state);
+  // MapLibre removes/finalizes its controls when the map is destroyed.
+  map.once('remove', () => {
+    state.layerRegistry.clear();
+    overlays.delete(map);
+  });
   return overlay;
 }
 
-export function setDeckLayers(namespace: string, layers: Layer[]) {
-  layerRegistry.set(namespace, layers);
-  flush();
+export function setDeckLayers(map: MapLibreMap, namespace: string, layers: Layer[]) {
+  const state = overlays.get(map);
+  if (!state) return;
+  state.layerRegistry.set(namespace, layers);
+  flush(state);
 }
 
-export function removeDeckLayers(namespace: string) {
-  layerRegistry.delete(namespace);
-  flush();
+export function removeDeckLayers(map: MapLibreMap, namespace: string) {
+  const state = overlays.get(map);
+  if (!state) return;
+  state.layerRegistry.delete(namespace);
+  flush(state);
 }

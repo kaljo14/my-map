@@ -98,8 +98,9 @@ export function usePlacesDeckLayer(
 
   function updateLayers() {
     const map = mapRef.value;
-    if (!map || !inst.visible) {
-      setDeckLayers(namespace, []);
+    if (!map) return;
+    if (!inst.visible) {
+      setDeckLayers(map, namespace, []);
       return;
     }
 
@@ -121,7 +122,7 @@ export function usePlacesDeckLayer(
         (c) => !c.properties || !('cluster' in c.properties) || !c.properties.cluster,
       );
 
-      setDeckLayers(namespace, [
+      setDeckLayers(map, namespace, [
         new ScatterplotLayer({
           id: `${namespace}-clusters`,
           data: clusterFeatures,
@@ -185,7 +186,7 @@ export function usePlacesDeckLayer(
       ]);
     } else {
       // No clustering — render all filtered places as icons
-      setDeckLayers(namespace, [
+      setDeckLayers(map, namespace, [
         new IconLayer({
           id: `${namespace}-all-points`,
           data: features,
@@ -239,6 +240,7 @@ export function usePlacesDeckLayer(
     if (oldMap) {
       oldMap.off('moveend', onMapUpdate);
       oldMap.off('zoomend', onMapUpdate);
+      removeDeckLayers(oldMap, namespace);
     }
     if (map) {
       map.on('moveend', onMapUpdate);
@@ -253,7 +255,7 @@ export function usePlacesDeckLayer(
     if (map) {
       map.off('moveend', onMapUpdate);
       map.off('zoomend', onMapUpdate);
+      removeDeckLayers(map, namespace);
     }
-    removeDeckLayers(namespace);
   });
 }
