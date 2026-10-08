@@ -56,3 +56,7 @@ npm run build   # Type-check and production bundle
 ```
 
 See [the migration plan and verification checklist](docs/maplibre-migration.md) for the audit, completed changes, and remaining live-browser checks.
+
+## Image releases
+
+See [Semantic image releases](RELEASE.md) for version tags, GitHub secrets, and deployment.

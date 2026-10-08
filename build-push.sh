@@ -1,35 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Configuration
-IMAGE_NAME="my-map"
-TAG="latest"
-REGISTRY="kaljo14"
-FULL_IMAGE="$REGISTRY/$IMAGE_NAME:$TAG"
-
-# Clerk publishable key (public — safe to commit)
-VITE_CLERK_PUBLISHABLE_KEY="${VITE_CLERK_PUBLISHABLE_KEY:-pk_live_Y2xlcmsubG9uY3R1cy5jb20k}"
-
-echo "Building multi-architecture Frontend image: $FULL_IMAGE"
-
-# Ensure a buildx builder with multi-platform support exists
-BUILDER_NAME="multiarch-builder"
-if ! docker buildx inspect "$BUILDER_NAME" > /dev/null 2>&1; then
-    echo "Creating buildx builder: $BUILDER_NAME"
-    docker buildx create --name "$BUILDER_NAME" --use --bootstrap
-else
-    docker buildx use "$BUILDER_NAME"
-fi
-
-# Build and push multi-architecture image
-docker buildx build \
-  --build-arg VITE_CLERK_PUBLISHABLE_KEY="$VITE_CLERK_PUBLISHABLE_KEY" \
-  --platform linux/amd64,linux/arm64 \
-  -t $FULL_IMAGE \
-  --push .
-
-if [ $? -eq 0 ]; then
-    echo "✅ Build and push successful!"
-else
-    echo "❌ Build and push failed. Make sure you're logged in: docker login"
+cd "$(dirname "$0")"
+release_tag="${1:-}"
+if [[ $# -ne 1 || ! "$release_tag" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+    echo "Usage: $0 vMAJOR.MINOR.PATCH (for example v1.2.3)" >&2
     exit 1
 fi
+if [[ -n "$(git status --porcelain)" ]]; then
+    echo 'Commit or stash local changes before releasing.' >&2
+    exit 1
+fi
+if git show-ref --verify --quiet "refs/tags/$release_tag"; then
+    echo "Tag $release_tag already exists; choose a new version." >&2
+    exit 1
+fi
+# Check the remote before creating a local tag; fail on network/auth errors.
+remote_tag=$(git ls-remote --tags origin "refs/tags/$release_tag")
+if [[ -n "$remote_tag" ]]; then
+    echo "Tag $release_tag already exists on origin; choose a new version." >&2
+    exit 1
+fi
+git tag -a "$release_tag" -m "Release $release_tag"
+git push origin "refs/tags/$release_tag"
+echo "Pushed $release_tag. GitHub Actions will check, build, and publish the image."
