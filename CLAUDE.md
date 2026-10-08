@@ -7,6 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev       # Start dev server at http://localhost:8888
 npm run build     # Type-check + production build
+npm test          # Map migration regression checks (Node 22.20+)
 npm run lint      # Run ESLint
 npm run format    # Run Prettier
 npm run preview   # Preview production build
@@ -30,12 +31,14 @@ A Vue 3 + TypeScript SPA for visualizing and managing barbershop/gym locations i
 
 | Layer | Files |
 |-------|-------|
-| Map rendering | `@vue-leaflet/vue-leaflet` + `leaflet.markercluster` + `leaflet.vectorgrid` |
+| Map rendering | `maplibre-gl` for vector/GeoJSON layers, markers, popups, drawing; deck.gl 9.2 + Supercluster for places |
 | Business logic | `src/composables/` — each composable owns one domain (barbershops, gyms, metro lines/stops, analysis grid, population layers, shop management) |
 | API | `src/api/` — `httpClient.ts` injects Bearer token; `places.ts`, `metro.ts`, `tiles.ts` define endpoints |
 | Auth | Clerk (hosted at `clerk.lonctus.com`) |
 | State | `src/stores/mapViewStore.ts` (zoom/center), `src/stores/mapConfig.ts` |
 | i18n | `src/locales/en.json` + `src/locales/bg.json` via Vue-i18n |
+
+MapLibre CSS is bundled in `main.ts`; do not load another map renderer from a CDN. The installed deck.gl 9.2 package `@deck.gl/mapbox` is the MapLibre-compatible overlay adapter, not a Mapbox renderer dependency. Base styles come from OpenFreeMap; source/layer IDs beginning with `basemap-` are reserved so theme switching preserves application overlays. Register map composables synchronously during component setup and release map resources on teardown.
 
 **Dev server proxy** (configured in `vite.config.ts`):
 - `/api/places` → `PLACES_API_URL:8080`

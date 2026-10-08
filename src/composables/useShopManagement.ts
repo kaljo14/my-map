@@ -27,9 +27,9 @@ export function useShopManagement(fetchPlaces: () => Promise<void>) {
         }
     };
 
-    const onMapClick = (e: { latlng: { lat: number; lng: number } }) => {
+    const onMapClick = (location: { lat: number; lng: number }) => {
         if (!isAddShopMode.value) return;
-        newShopPin.value = { lat: e.latlng.lat, lng: e.latlng.lng };
+        newShopPin.value = { lat: location.lat, lng: location.lng };
         newShopName.value = "";
         showShopModal.value = true;
     };

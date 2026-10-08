@@ -22,9 +22,9 @@ export function useMapView() {
     const initializeFromURL = () => {
         const lat = parseFloat(route.query.lat as string);
         const lng = parseFloat(route.query.lng as string);
-        const zoom = parseInt(route.query.zoom as string, 10);
+        const zoom = parseFloat(route.query.zoom as string);
 
-        // Map will update automatically via v-model or explicit setting
+        // useMapInstance applies this state to the MapLibre camera.
         if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
             mapCenter.value = [lat, lng];
         }
@@ -46,7 +46,7 @@ export function useMapView() {
         if (
             parseFloat(route.query.lat as string) === roundedLat &&
             parseFloat(route.query.lng as string) === roundedLng &&
-            parseInt(route.query.zoom as string, 10) === zoom
+            parseFloat(route.query.zoom as string) === zoom
         ) {
             return;
         }

@@ -1,4 +1,4 @@
-import { watch, createApp } from 'vue';
+import { watch, createApp, onBeforeUnmount } from 'vue';
 import maplibregl from 'maplibre-gl';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { Ref } from 'vue';
@@ -53,6 +53,7 @@ export function useMapMarkers(
       .setLngLat(lngLat)
       .setDOMContent(el)
       .addTo(mapInstance.value!);
+    activeShopPopup.once('close', () => app.unmount());
   }
 
   // ── User-added shops sync ───────────────────────────────────────────────
@@ -146,6 +147,15 @@ export function useMapMarkers(
     syncUserAddedShops(map);
     syncNewShopPin(map);
   }
+
+  onBeforeUnmount(() => {
+    activeShopPopup?.remove();
+    newShopPinMarker?.remove();
+    comparisonMarkers.forEach(marker => marker.remove());
+    userShopMarkerCache.forEach(marker => marker.remove());
+    comparisonMarkers.clear();
+    userShopMarkerCache.clear();
+  });
 
   return {
     openShopPopup,

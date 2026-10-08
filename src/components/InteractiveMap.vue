@@ -121,7 +121,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, shallowRef, computed, onMounted, onBeforeUnmount } from 'vue';
+import type { Map as MapLibreMap } from 'maplibre-gl';
+import { getActivePinia } from 'pinia';
 
 import auth from '@/services/auth';
 import i18n from '@/i18n';
@@ -192,6 +194,7 @@ const placeTypesForPanel = computed(() =>
 );
 
 const layerStore = useLayerStore();
+const pinia = getActivePinia()!;
 
 const {
   showShopModal,
@@ -307,20 +310,42 @@ const areaStats = computed(() =>
 
 // ── Map init ─────────────────────────────────────────────────────────────
 
+// Register composables during setup so Vue owns their watchers and cleanup.
+// Publish the map only after its style and the deck.gl control are ready.
+const readyMap = shallowRef<MapLibreMap | null>(null);
+for (const inst of placeInstances) {
+  usePlacesDeckLayer(inst, readyMap, enableClustering, openShopPopup);
+}
+
+let disposed = false;
+onBeforeUnmount(() => {
+  disposed = true;
+  readyMap.value = null;
+  // This store owns the current map's layer state, popups and watchers.
+  layerStore.setMap(null);
+  layerStore.$dispose();
+  delete pinia.state.value[layerStore.$id];
+});
+
 onMounted(async () => {
   isSidebarOpen.value = false;
   fetchAll();
 
   if (!mapContainer.value) return;
-  const map = await initMap(mapContainer.value);
+  let map: MapLibreMap;
+  try {
+    map = await initMap(mapContainer.value);
+  } catch (error) {
+    if (!disposed) console.error('[MapLibre] Initialization failed:', error);
+    return;
+  }
+  if (disposed) return;
   layerStore.setMap(map);
 
   initDrawingLayers(map);
   initDeckOverlay(map);
 
-  for (const inst of placeInstances) {
-    usePlacesDeckLayer(inst, mapInstance, enableClustering, openShopPopup);
-  }
+  readyMap.value = map;
 
   // Map click handler
   map.on('click', (e) => {
@@ -333,9 +358,9 @@ onMounted(async () => {
       }
       if (comparisonPins.value.length >= 5) togglePinMode();
     } else if (isAddListingMode.value) {
-      onListingMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
+      onListingMapClick(e.lngLat);
     } else {
-      onMapClick({ latlng: { lat: e.lngLat.lat, lng: e.lngLat.lng } });
+      onMapClick(e.lngLat);
     }
   });
 
