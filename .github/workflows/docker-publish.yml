@@ -34,6 +34,14 @@ jobs:
             exit 1
           fi
           echo "version=${RELEASE_TAG#v}" >> "$GITHUB_OUTPUT"
+      - name: Validate Clerk publishable key
+        env:
+          VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
+        run: |
+          if [[ -z "$VITE_CLERK_PUBLISHABLE_KEY" ]]; then
+            echo '::error::Set VITE_CLERK_PUBLISHABLE_KEY in repository Actions secrets before building the frontend image.'
+            exit 1
+          fi
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Log in to Docker Hub

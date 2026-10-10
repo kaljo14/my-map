@@ -22,6 +22,9 @@ In this repository's Settings → Secrets and variables → Actions, add:
 - Optional `MAP_INFRA_DISPATCH_TOKEN`: GitHub token with Contents write access to `kaljo14/map-infra`, to trigger Renovate after publishing.
 
 Create the Docker Hub repository before the first release.
+The workflow fails before building if the Clerk key is missing. The key is embedded
+in the static JavaScript bundle, so changing a Kubernetes runtime Secret cannot
+repair an already published image; publish and deploy a new image after setting it.
 
 ## Publish
 
