@@ -19,7 +19,7 @@ jobs:
     env:
       MAP_INFRA_DISPATCH_TOKEN: ${{ secrets.MAP_INFRA_DISPATCH_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Validate release version
