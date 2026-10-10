@@ -9,7 +9,8 @@ RUN npm ci
 COPY . .
 
 ARG VITE_CLERK_PUBLISHABLE_KEY
-RUN echo "VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY" > .env.production
+RUN test -n "$VITE_CLERK_PUBLISHABLE_KEY" || (echo 'VITE_CLERK_PUBLISHABLE_KEY is required at build time' >&2; exit 1)
+RUN printf 'VITE_CLERK_PUBLISHABLE_KEY=%s\n' "$VITE_CLERK_PUBLISHABLE_KEY" > .env.production
 
 RUN npm run build
 
