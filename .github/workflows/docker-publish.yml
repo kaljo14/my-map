@@ -42,21 +42,29 @@ jobs:
             echo '::error::Set VITE_CLERK_PUBLISHABLE_KEY in repository Actions secrets before building the frontend image.'
             exit 1
           fi
+      - name: Validate deployment credentials
+        if: github.ref == 'refs/heads/main'
+        run: |
+          if [ -z "$MAP_INFRA_DISPATCH_TOKEN" ]; then
+            echo '::error::Set MAP_INFRA_DISPATCH_TOKEN with Contents write access to kaljo14/map-infra.'
+            exit 1
+          fi
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
       - name: Log in to Docker Hub
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build image and publish releases
+      - name: Build and publish image
+        id: image
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: ${{ startsWith(github.ref, 'refs/tags/v') }}
-          tags: kaljo14/my-map:${{ steps.version.outputs.version || 'build-check' }}
+          push: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
+          tags: kaljo14/my-map:${{ steps.version.outputs.version || 'latest' }}
           labels: |
             org.opencontainers.image.version=${{ steps.version.outputs.version }}
             org.opencontainers.image.revision=${{ github.sha }}
@@ -71,3 +79,53 @@ jobs:
         run: |
           gh api --method POST repos/kaljo14/map-infra/dispatches \
             -f event_type=image-pushed
+      - name: Check out production infrastructure
+        if: github.ref == 'refs/heads/main'
+        uses: actions/checkout@v4
+        with:
+          repository: kaljo14/map-infra
+          ref: main
+          path: map-infra
+          token: ${{ secrets.MAP_INFRA_DISPATCH_TOKEN }}
+      - name: Update frontend image digest for Flux
+        if: github.ref == 'refs/heads/main'
+        working-directory: map-infra
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python3 - <<'PYTHON'
+          import os
+          from pathlib import Path
+          import re
+
+          digest = os.environ["IMAGE_DIGEST"]
+          if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+              raise SystemExit("Build did not return a valid image digest")
+          path = Path("apps/frontend/deployment.yaml")
+          original = path.read_text()
+          updated, count = re.subn(
+              r"(?m)^(\s*image:\s*)kaljo14/my-map:[^\s]+$",
+              lambda match: match[1] + "kaljo14/my-map:latest@" + digest,
+              original,
+          )
+          if count != 1:
+              raise SystemExit("Expected exactly one frontend image reference")
+          path.write_text(updated)
+          PYTHON
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/frontend/deployment.yaml
+          if git diff --cached --quiet; then
+            echo 'Frontend already uses this image digest.'
+            exit 0
+          fi
+          git commit -m "Deploy frontend from my-map ${SOURCE_SHA}"
+          for attempt in 1 2 3; do
+            git pull --rebase origin main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo '::error::Could not push the frontend digest to map-infra/main.'
+          exit 1
