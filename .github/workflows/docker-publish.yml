@@ -81,7 +81,7 @@ jobs:
             -f event_type=image-pushed
       - name: Check out production infrastructure
         if: github.ref == 'refs/heads/main'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           repository: kaljo14/map-infra
           ref: main
